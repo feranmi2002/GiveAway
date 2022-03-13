@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "910601451552",
+    "firebase_url": "https://talkmore-a3dec-default-rtdb.firebaseio.com",
+    "project_id": "talkmore-a3dec",
+    "storage_bucket": "talkmore-a3dec.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910601451552:android:db5ec5cf222c98228de445",
+        "android_client_info": {
+          "package_name": "com.faithdeveloper.giveaway"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "910601451552-1v3rilmk594aj89nmvslv70g773n0m45.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApUHTAaZPXNAHYBTCVMEN9bCuYCwZorpI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "910601451552-1v3rilmk594aj89nmvslv70g773n0m45.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

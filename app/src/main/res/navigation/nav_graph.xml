@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/splashScreen">
+
+    <fragment
+        android:id="@+id/splashScreen"
+        android:name="com.faithdeveloper.giveaway.fragments.SplashScreen"
+        android:label="layout_splashscreen"
+        tools:layout="@layout/layout_splashscreen" >
+        <action
+            android:id="@+id/action_splashScreen_to_signUp"
+            app:destination="@id/signUp" />
+        <action
+            android:id="@+id/action_splashScreen_to_home2"
+            app:destination="@id/home2" />
+        <action
+            android:id="@+id/action_splashScreen_to_signIn"
+            app:destination="@id/signIn" />
+    </fragment>
+    <fragment
+        android:id="@+id/signUp"
+        android:name="com.faithdeveloper.giveaway.fragments.SignUp"
+        android:label="layout_account_creation"
+        tools:layout="@layout/layout_account_creation" >
+        <action
+            android:id="@+id/action_signUp_to_home2"
+            app:destination="@id/home2" />
+        <action
+            android:id="@+id/action_signUp_to_signIn"
+            app:destination="@id/signIn" />
+    </fragment>
+    <fragment
+        android:id="@+id/home2"
+        android:name="com.faithdeveloper.giveaway.fragments.Home"
+        android:label="layout_feed"
+        tools:layout="@layout/layout_feed" />
+    <fragment
+        android:id="@+id/signIn"
+        android:name="com.faithdeveloper.giveaway.fragments.SignIn"
+        android:label="layout_sign_in"
+        tools:layout="@layout/layout_sign_in" >
+        <action
+            android:id="@+id/action_signIn_to_home2"
+            app:destination="@id/home2" />
+        <argument
+            android:name="unverifiedEmail"
+            app:argType="boolean"
+            android:defaultValue="false" />
+        <argument android:name="forgotPassword"
+            app:argType="boolean"
+            android:defaultValue="false" />
+        <action
+            android:id="@+id/action_signIn_to_signUp"
+            app:destination="@id/signUp" />
+    </fragment>
+</navigation>

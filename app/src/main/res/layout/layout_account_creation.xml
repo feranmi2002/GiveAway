@@ -3,8 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_marginStart="16dp"
-    android:layout_marginEnd="16dp">
+    android:layout_marginEnd="16dp"
+    tools:context=".fragments.SignUp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -23,11 +25,11 @@
             android:id="@+id/create_account"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:gravity="center"
             android:text="@string/create_an_account"
             android:textColor="@color/design_default_color_primary"
             android:textSize="16sp"
-            android:layout_marginTop="8dp"
             app:fontFamily="@android:"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -40,6 +42,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="@string/name_acc_creation"
+            app:errorEnabled="true"
             app:hintAnimationEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -49,8 +52,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/name_edit"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:textColorHint="#757575" />
+                android:layout_height="match_parent" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -60,6 +62,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:hint="@string/email_hint"
+            app:errorEnabled="true"
             app:hintAnimationEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -79,6 +82,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:hint="@string/password_hint"
+            app:passwordToggleEnabled="true"
+            app:errorEnabled="true"
             app:hintAnimationEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -87,6 +92,7 @@
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/password_edit"
+                android:inputType="textPassword"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -116,6 +122,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="@string/continue_button"
+            android:enabled="false"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/phone_layout" />
@@ -137,9 +144,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:textSize="12sp"
             android:text="@string/by_creating_an_account_you_agree_to_our"
             android:textColor="@color/design_default_color_secondary_variant"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/progress_circular" />
@@ -150,9 +157,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:textSize="12sp"
             android:text="@string/terms_of_service_and_privacy_policy"
             android:textColor="@color/design_default_color_primary"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/agreement_note" />
@@ -163,27 +170,40 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:textSize="12sp"
             android:text="@string/forgot_password"
             android:textColor="@color/design_default_color_primary"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/terms_condition" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/already_have_account"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:textSize="12sp"
-            android:linksClickable="true"
-            android:textColorLink="@color/design_default_color_on_primary"
             android:text="@string/already_have_an_account"
-            android:textColor="@color/design_default_color_primary"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:textColor="@color/design_default_color_secondary_variant"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toStartOf="@+id/sign_in"
+            app:layout_constraintHorizontal_bias="0.5"
+            android:paddingRight="3dp"
+            app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/forgot_password" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/sign_in"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sign_in"
+            android:textSize="12sp"
+            android:textColor="@color/design_default_color_primary"
+            app:layout_constraintBaseline_toBaselineOf="@+id/already_have_account"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/already_have_account"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
