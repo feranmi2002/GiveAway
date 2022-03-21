@@ -3,12 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/app_bar_search"
+        android:id="@+id/search"
         android:icon="@drawable/ic_baseline_search_24"
         android:title="@string/search"
         app:showAsAction="ifRoom"
-        android:orderInCategory="2"
-        app:actionViewClass="android.widget.SearchView" />
+        android:orderInCategory="2" />
     <item android:title="@string/app_name"
         app:showAsAction="ifRoom"
         android:orderInCategory="1"

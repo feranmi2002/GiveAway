@@ -10,7 +10,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingBottom="8dp">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/logo"
@@ -153,10 +154,13 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/terms_condition"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
             android:text="@string/terms_of_service_and_privacy_policy"
             android:textColor="@color/design_default_color_primary"
             android:textSize="12sp"
@@ -166,11 +170,14 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/forgot_password"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
             android:text="@string/forgot_password"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
             android:textColor="@color/design_default_color_primary"
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
@@ -186,7 +193,7 @@
             android:text="@string/already_have_an_account"
             android:textColor="@color/design_default_color_secondary_variant"
             android:textSize="12sp"
-            app:layout_constraintEnd_toStartOf="@+id/sign_in"
+            app:layout_constraintEnd_toStartOf="@id/sign_in"
             app:layout_constraintHorizontal_bias="0.5"
             android:paddingRight="3dp"
             app:layout_constraintHorizontal_chainStyle="packed"
@@ -199,6 +206,9 @@
             android:layout_height="wrap_content"
             android:text="@string/sign_in"
             android:textSize="12sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
             android:textColor="@color/design_default_color_primary"
             app:layout_constraintBaseline_toBaselineOf="@+id/already_have_account"
             app:layout_constraintHorizontal_bias="0.5"

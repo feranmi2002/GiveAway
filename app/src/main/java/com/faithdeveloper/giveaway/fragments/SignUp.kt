@@ -11,13 +11,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.faithdeveloper.giveaway.Event
+import com.faithdeveloper.giveaway.*
 import com.faithdeveloper.giveaway.Extensions.disable
 import com.faithdeveloper.giveaway.Extensions.enable
 import com.faithdeveloper.giveaway.Extensions.showDialog
-import com.faithdeveloper.giveaway.MainActivity
-import com.faithdeveloper.giveaway.R
-import com.faithdeveloper.giveaway.VMFactory
 import com.faithdeveloper.giveaway.databinding.LayoutAccountCreationBinding
 import com.faithdeveloper.giveaway.viewmodels.SignUpVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -32,12 +29,30 @@ class SignUp : Fragment() {
     private var nameEmpty = true
     private var emailEmpty = true
     private var passwordEmpty = true
+    private lateinit var activityObserver: ActivityObserver
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        viewModel = ViewModelProvider(
-            this,
-            VMFactory((activity as MainActivity).getRepository())
-        ).get(SignUpVM::class.java)
+
+        savedInstanceState.apply {
+            this?.let {
+                passwordEmpty = it.getBoolean("passwordEmpty", true)
+                emailEmpty = it.getBoolean("emailEmpty", true)
+                nameEmpty = it.getBoolean("nameEmpty", true)
+                phoneEmpty = it.getBoolean("phoneEmpty", true)
+            }
+        }
+
+        activityObserver = object : ActivityObserver() {
+            override fun onCreateAction() {
+                viewModel = ViewModelProvider(
+                    this@SignUp,
+                    VMFactory((activity as MainActivity).getRepository())
+                ).get(SignUpVM::class.java)
+            }
+        }
+        activity?.lifecycle?.addObserver(activityObserver)
+
         super.onCreate(savedInstanceState)
     }
 
@@ -50,6 +65,11 @@ class SignUp : Fragment() {
         return binding.root
     }
 
+    override fun onStart() {
+        handleObserver()
+        super.onStart()
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         watchEmailBox()
         watchNameBox()
@@ -57,12 +77,13 @@ class SignUp : Fragment() {
         watchPasswordBox()
         handleTerms()
         handleForgotPassword()
+        handleContinueButton()
         handleSignIn()
-        handleObserver()
         super.onViewCreated(view, savedInstanceState)
     }
 
     private fun watchNameBox() {
+
         binding.phoneLayout.editText?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(nameText: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 // do nothing
@@ -90,7 +111,7 @@ class SignUp : Fragment() {
     private fun watchPhoneBox() {
         binding.phoneLayout.editText?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(phoneText: CharSequence?, p1: Int, p2: Int, p3: Int) {
-               // do nothing
+                // do nothing
             }
 
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
@@ -111,6 +132,7 @@ class SignUp : Fragment() {
             }
         })
     }
+
 
     private fun watchEmailBox() {
         binding.emailLayout.editText?.addTextChangedListener(object : TextWatcher {
@@ -151,11 +173,9 @@ class SignUp : Fragment() {
             override fun beforeTextChanged(text: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 // do nothing
             }
-
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
 //                do nothing
             }
-
             override fun afterTextChanged(text: Editable?) {
                 text?.let {
                     if (it.isNotEmpty() && it.length > 5) {
@@ -188,7 +208,7 @@ class SignUp : Fragment() {
             dialogBuilder = requireContext().showDialog(
                 cancelable = true,
                 title = "Terms and Privacy Policy",
-                message = "Make sure you adhere to this terms.",
+                message = "Make sure you adhere to these terms.",
                 positiveButtonText = "OK",
                 positiveAction = {
                     // do nothing
@@ -211,7 +231,7 @@ class SignUp : Fragment() {
             when (event) {
                 is Event.Success -> {
                     if (event.msg.contains("Account creation successful")) showVerificationInProgressDialog()
-                    else if (event.msg.contains("Email verified")) navigateToFeedPage()
+                    else if (event.msg.contains("Email verified")) handleEmailVerificationSuccess()
                 }
                 is Event.Failure -> {
                     if (event.msg.contains("Failed to create account")) showAccountCreationFailureDialog()
@@ -222,6 +242,26 @@ class SignUp : Fragment() {
                 }
             }
         })
+    }
+
+    private fun handleEmailVerificationSuccess() {
+        dialog?.dismiss()
+        dialogBuilder = requireContext().showDialog(
+            cancelable = false,
+            message = "Link to verify your email has been sent to ${
+                binding.emailLayout.editText?.toString()?.trim()
+            }",
+            positiveButtonText = "OK",
+            positiveAction = {
+                findNavController().navigate(
+                    SignUpDirections.actionSignUpToSignIn(
+                        signUpVerifiedEmailSuccess = true
+                    )
+                )
+            }
+        )
+        dialog = dialogBuilder?.create()
+        dialog?.show()
     }
 
     private fun showVerificationFailureDialog() {
@@ -239,7 +279,6 @@ class SignUp : Fragment() {
                 handleUnverifiedEmail()
             }
         )
-        binding.continueBtn.text = getString(R.string.verify)
         dialog = dialogBuilder?.create()
         dialog?.show()
     }
@@ -250,7 +289,7 @@ class SignUp : Fragment() {
             cancelable = true,
             message = "We couldn't create your account. ",
             positiveButtonText = "TRY AGAIN",
-            negativeButtonText = "CANCEL",
+            negativeButtonText = "OK",
             positiveAction = {
                 signUp()
             },
@@ -260,10 +299,6 @@ class SignUp : Fragment() {
         )
         dialog = dialogBuilder?.create()
         dialog?.show()
-    }
-
-    private fun navigateToFeedPage() {
-        findNavController().navigate(SignUpDirections.actionSignUpToHome2())
     }
 
     private fun showVerificationInProgressDialog() {
@@ -290,58 +325,6 @@ class SignUp : Fragment() {
         binding.continueBtn.setOnClickListener {
             signUp()
         }
-//        when (binding.continueBtn.text.contentEquals("continue", true)) {
-//            true -> {
-//                binding.continueBtn.setOnClickListener {
-//                    if (binding.nameLayout.editText?.text.toString().trim().isEmpty()) {
-//                        requireContext().showSnackbarShort(binding.root, "Fill in your name")
-//                        return@setOnClickListener
-//                    }
-//                    if (binding.emailLayout.editText?.text.toString().trim().isEmpty()) {
-//                        requireContext().showSnackbarShort(binding.root, "Fll in your email")
-//                        return@setOnClickListener
-//                    }
-//                    if (binding.passwordLayout.editText?.text.toString().trim().isEmpty()) {
-//                        requireContext().showSnackbarShort(binding.root, "Fill in your password")
-//                        return@setOnClickListener
-//                    }
-//                    if (binding.phoneLayout.editText?.text.toString().trim().isEmpty()) {
-//                        requireContext().showSnackbarShort(
-//                            binding.root,
-//                            "Fill in your phone number"
-//                        )
-//                        return@setOnClickListener
-//                    }
-//                    if (binding.passwordLayout.editText?.text.toString().trim().length < 6) {
-//                        requireContext().showSnackbarShort(
-//                            binding.root,
-//                            "Password can't be less than 6 characters"
-//                        )
-//                        return@setOnClickListener
-//                    }
-//                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(
-//                            binding.emailLayout.editText?.text.toString().trim()
-//                        ).matches()
-//                    ) {
-//                        requireContext().showSnackbarShort(binding.root, "Enter a correct email")
-//                        return@setOnClickListener
-//                    }
-//                    if (!android.util.Patterns.PHONE.matcher(binding.phoneLayout.editText?.text.toString())
-//                            .matches()
-//                    ) {
-//                        requireContext().showSnackbarShort(
-//                            binding.root,
-//                            "Enter a correct phone number"
-//                        )
-//                        return@setOnClickListener
-//                    }
-//
-//                    signUp()
-//                }
-//            }
-//            else -> viewModel.verifyEmailAddress()
-//        }
-
     }
 
     private fun signUp() {
@@ -354,12 +337,19 @@ class SignUp : Fragment() {
         )
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.apply {
+            putBoolean("passwordEmpty", passwordEmpty)
+            putBoolean("emailEmpty",emailEmpty)
+            putBoolean("phoneEmpty", phoneEmpty)
+            putBoolean("nameEmpty", nameEmpty)
+        }
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {
         _binding = null
+        activity?.lifecycle?.removeObserver(activityObserver)
         super.onDestroy()
     }
 }

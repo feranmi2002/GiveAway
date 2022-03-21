@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         auth = FirebaseAuth.getInstance()
-        repository = Repository(auth)
+        repository = Repository(auth, this)
     }
 
     fun getRepository() = repository

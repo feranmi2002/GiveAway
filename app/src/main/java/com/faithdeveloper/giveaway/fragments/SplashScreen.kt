@@ -50,12 +50,14 @@ class SplashScreen : Fragment() {
     }
 
     private fun checkRegistration() {
-        if (repository.checkUserRegistration() == null){
+        if (requireActivity().intent.data!=null){
+            findNavController().navigate(SplashScreenDirections.actionSplashScreenToSignIn())
+        }
+        else if (repository.checkUserRegistration() == null){
             findNavController().navigate(SplashScreenDirections.actionSplashScreenToSignUp())
         }else {
             if (!repository.emailIsVerified()!!) findNavController().navigate(SplashScreenDirections.actionSplashScreenToSignIn(true))
             else findNavController().navigate(SplashScreenDirections.actionSplashScreenToHome2())
-
         }
     }
 
