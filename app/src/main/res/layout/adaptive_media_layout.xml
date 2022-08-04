@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/media"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/remove"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:background="@color/black"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/media"
+        app:shapeAppearanceOverlay="@style/CircularImage"
+        app:srcCompat="@drawable/ic_baseline_clear_24" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/play"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="3dp"
+        android:background="@color/grey_lighter"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@id/media"
+        app:layout_constraintEnd_toEndOf="@id/media"
+        app:layout_constraintStart_toStartOf="@id/media"
+        app:layout_constraintTop_toTopOf="@id/media"
+        app:shapeAppearanceOverlay="@style/CircularImage"
+        app:srcCompat="@drawable/ic_baseline_play_arrow_24" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="2dp"
+        android:background="@drawable/counter_background"
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        app:layout_constraintEnd_toEndOf="@id/media"
+        app:layout_constraintTop_toTopOf="@id/media"
+        tools:text="1/2" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,8 +3,8 @@ package com.faithdeveloper.giveaway.viewmodels
 import android.os.CountDownTimer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.faithdeveloper.giveaway.Event
-import com.faithdeveloper.giveaway.LiveEvent
+import com.faithdeveloper.giveaway.utils.Event
+import com.faithdeveloper.giveaway.utils.LiveEvent
 import com.faithdeveloper.giveaway.data.Repository
 import kotlinx.coroutines.launch
 
@@ -26,22 +26,29 @@ class SignInVM(private val repository: Repository) : ViewModel() {
         }
     }
 
-    fun signIn(email: String, password: String, userDetails: Array<String>) {
+    fun signIn(email: String, password: String) {
         viewModelScope.launch {
-            if (repository.signIn(email, password, userDetails) is Event.Success) {
-                if (repository.emailIsVerified() == true) _result.postValue(
+            val result = repository.signIn(email, password)
+            if (result is Event.Success) {
+                _result.postValue(
                     Event.Success(
                         null,
                         "Sign in successful"
                     )
                 )
-                else _result.postValue(Event.Success(null, "Email unverified"))
             } else {
-                _result.postValue(Event.Failure(null, "Sign in failed"))
+                if (result.data == "User email not verified") _result.postValue(
+                    Event.Failure(
+                        null,
+                        "Email unverified"
+                    )
+                )
+                else {
+                    _result.postValue(Event.Failure(null, "Sign in failed"))
+                }
             }
         }
     }
-
 
     fun startCounter() {
         val timer = object : CountDownTimer(120000, 1000) {

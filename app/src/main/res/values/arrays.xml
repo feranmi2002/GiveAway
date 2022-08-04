@@ -1,0 +1,55 @@
+<resources>
+    <!-- Reply Preference -->
+    <string-array name="reply_entries">
+        <item>Reply</item>
+        <item>Reply to all</item>
+    </string-array>
+
+    <string-array name="reply_values">
+        <item>reply</item>
+        <item>reply_all</item>
+    </string-array>
+
+    <string-array name="timeline_options">
+        <item>All</item>
+        <item>Open</item>
+        <item>Closed</item>
+    </string-array>
+
+    <string-array name="tags">
+        <item>Electronics</item>
+        <item>Books</item>
+        <item>Foodstuff</item>
+        <item>Cutleries</item>
+        <item>Academic tools</item>
+        <item>Finance</item>
+        <item>Furniture</item>
+    </string-array>
+
+    <string-array name="feedTags">
+        <item>All</item>
+        <item>Electronics</item>
+        <item>Books</item>
+        <item>Foodstuff</item>
+        <item>Cutleries</item>
+        <item>Academic tools</item>
+        <item>Finance</item>
+        <item>Furniture</item>
+    </string-array>
+
+    <string-array name="picture_options">
+        <item>Gallery</item>
+        <item>Camera</item>
+    </string-array>
+
+    <string-array name="search_options">
+        <item>People</item>
+        <item>Electronics</item>
+        <item>Books</item>
+        <item>Foodstuff</item>
+        <item>Cutleries</item>
+        <item>Academic tools</item>
+        <item>Finance</item>
+        <item>Furniture</item>
+    </string-array>
+</resources>

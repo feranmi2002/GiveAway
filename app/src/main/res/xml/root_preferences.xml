@@ -1,0 +1,42 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.fragments.SettingsFragment">
+
+    <PreferenceCategory app:title="Account">
+        <Preference
+            app:key="profileEdit"
+            app:summary="Edit your profile"
+            app:title="Profile" />
+
+        <Preference
+            app:key="signOut"
+            app:title="Sign out" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Preferences">
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="dataSaving"
+            app:summaryOff="Media won't load automatically"
+            app:summaryOn="Load media automatically"
+            app:title="Data Saving Mode" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="comments"
+            app:summaryOff="Comments on new posts will be disabled by default"
+            app:summaryOn="Comments on new posts will be enabled by default"
+            app:title="Comments" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="About">
+        <Preference
+            app:key="contactDev"
+            app:title="Contact Developer" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/profiePic"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/CircularImage"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/profile_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif"
+        android:maxLines="1"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+        app:layout_constraintBottom_toBottomOf="@id/profiePic"
+        app:layout_constraintEnd_toStartOf="@id/time_view"
+        app:layout_constraintStart_toEndOf="@id/profiePic"
+        app:layout_constraintTop_toTopOf="@id/profiePic"
+        tools:text="@string/app_name" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/time_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="3dp"
+        android:textColor="@color/teal_200"
+        android:textSize="11sp"
+        app:layout_constraintBottom_toBottomOf="@+id/profile_name"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/profile_name"
+        tools:text="2wks" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:autoLink="all"
+        android:ellipsize="end"
+        android:linksClickable="true"
+        android:longClickable="true"
+        android:maxLines="4"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:textColor="@color/postTextColor"
+        app:layout_constraintTop_toBottomOf="@id/profiePic"
+        tools:text="I need a plate of rice, beans, amala, gbegiri, puffpuff. I beg you in the name
+of jesus Christ that you serve. God will continkue to bless you if you can do thiskfor me because i havent aten siknce morning
+nm,dsdnskldnskldksndlksndksndlsdklsdslkdjskljdlskjdskljdskdjskl" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/media"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/description" />
+
+    <include
+        android:id="@+id/reaction"
+        layout="@layout/layout_post_reaction"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

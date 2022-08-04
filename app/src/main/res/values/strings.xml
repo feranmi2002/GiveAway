@@ -15,7 +15,7 @@
     <string name="search">Search</string>
     <string name="settings">Settings</string>
     <string name="follow">Follow</string>
-    <string name="need_hint">Describe your need, add pictures, videos and tags so people can easily spot your need</string>
+    <string name="need_hint">New post...</string>
     <string name="gift_hint">Describe your gift, add pictures, videos and tags so people can easily spot your gift</string>
     <string name="done">Done</string>
     <string name="profile">Profile</string>
@@ -31,9 +31,35 @@
     <string name="enter_correct_email">Enter a correct email</string>
     <string name="phone_num_error">Enter a correct phone number</string>
     <string name="correct_name">Enter a correct name</string>
+    <string name="max_pictures_info">\"Max of 5 pictures can be added \"</string>
+    <string name="cancel">Cancel</string>
+    <string name="request">Request</string>
+    <string name="empty_post_warning">Post is empty</string>
+    <string name="permission_denied">We couldn\'t choose media due to lack of permission</string>
+    <string name="new_post">New Post</string>
+    <string name="max_videos_info">Max of 3 videos can be added</string>
+    <string name="discard_post">Discard Post?</string>
+    <string name="discard_post_msg">This post will not be saved</string>
+    <string name="create_new_post_msg">Creating new post...</string>
+    <string name="addLink_error">Add correct web url</string>
+    <string name="error_occurred_during_load">Error occurred during load</string>
+    <string name="retry">retry</string>
+    <string name="write_a_comment">Add a comment…</string>
+    <string name="reply">Reply</string>
 
-    <string-array name="new_post_options">
-        <item>Need/Gift</item>
-        <item>Exchange</item>
-    </string-array>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
 </resources>
