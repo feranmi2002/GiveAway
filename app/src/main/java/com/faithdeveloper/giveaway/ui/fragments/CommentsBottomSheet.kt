@@ -44,6 +44,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     private lateinit var adapter: CommentsPagerAdapter
     private lateinit var newCommentsAdapter: NewCommentsAdapter
     private lateinit var arrayOfNewComments: MutableList<CommentData>
+    private lateinit var concatAdapter:ConcatAdapter
     private var _binding: LayoutCommentsBinding? = null
     private val binding get() = _binding!!
     private var _dialogBuilder: MaterialAlertDialogBuilder? = null
@@ -66,6 +67,8 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 arguments?.getString(POST_ID)
             )
         ).get(CommentsVM::class.java)
+
+        setUpAdapter()
         super.onCreate(savedInstanceState)
     }
 
@@ -78,22 +81,30 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         return binding.root
     }
 
-    override fun onStart() {
-
-//        setup dialog view
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        //        setup dialog view
         (dialog as? BottomSheetDialog)?.behavior?.isFitToContents = false
         (dialog as? BottomSheetDialog)?.behavior?.state = BottomSheetBehavior.STATE_HALF_EXPANDED
         (dialog as? BottomSheetDialog)?.behavior?.isHideable = false
-        setUpAdapter()
+
+        binding.commentRecycler.addItemDecoration(
+            androidx.recyclerview.widget.DividerItemDecoration(
+                requireContext(),
+                LinearLayoutManager.VERTICAL
+            )
+        )
+        binding.commentRecycler.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+        binding.commentRecycler.adapter = concatAdapter
+
         handleObserver()
         setUpLoadState()
         updateSendButtonStatus()
         watchCommentBox()
         sendNewComment()
         closeDialog()
-        super.onStart()
+        super.onViewCreated(view, savedInstanceState)
     }
-
     private fun updateSendButtonStatus() {
 //        this is used before the textbox watcher is activated
         if (binding.commentsLayout.editText?.text.toString().isBlank()) binding.send.disable()
@@ -184,12 +195,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 }
             }
         )
-        binding.commentRecycler.addItemDecoration(
-            androidx.recyclerview.widget.DividerItemDecoration(
-                requireContext(),
-                LinearLayoutManager.VERTICAL
-            )
-        )
 
 //        set up new comments adapter
         arrayOfNewComments = mutableListOf()
@@ -213,49 +218,51 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                         }
                     }
                 })
-        val concatAdapter = ConcatAdapter(newCommentsAdapter, adapter)
-        binding.commentRecycler.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-        binding.commentRecycler.adapter = concatAdapter
+        concatAdapter = ConcatAdapter(newCommentsAdapter, adapter)
     }
 
     private fun setUpLoadState() {
         lifecycleScope.launch {
             adapter.loadStateFlow.collectLatest { loadStates ->
-                when (loadStates.refresh) {
-                    is LoadState.Error -> {
-                        // initial load failed
-                        makeErrorLayoutVisible()
-                        binding.error.progressCircular.makeInVisible()
-                    }
-                    is LoadState.Loading -> {
-                        // initial load has begun
-                        binding.error.progressCircular.makeVisible()
-                        makeErrorLayoutInvisible()
-                    }
-                    is LoadState.NotLoading -> {
-                        binding.error.progressCircular.makeInVisible()
-                        makeErrorLayoutInvisible()
-                        Log.i(getString(R.string.app_name), "Not loading feed")
-                    }
-                }
-
-                when (loadStates.append) {
-                    is LoadState.Error -> {
-                        requireContext().showSnackbarShort(
-                            binding.root,
-                            "Failed to retrieve more feed"
-                        )
-                    }
-                    is LoadState.Loading -> {
-                        // additional load has begun
-                    }
-                    is LoadState.NotLoading -> {
-                        if (loadStates.append.endOfPaginationReached) {
-                            // all data has been loaded
+                if (loadStates.source.refresh is LoadState.NotLoading && loadStates.append.endOfPaginationReached && adapter.itemCount == 0) {
+                    makeEmptyResultLayoutVisible()
+                } else {
+                    makeEmptyResultLayoutInvisible()
+                    when (loadStates.refresh) {
+                        is LoadState.Error -> {
+                            // initial load failed
+                            makeErrorLayoutVisible()
+                            binding.error.progressCircular.makeInVisible()
                         }
-                        if (loadStates.refresh is LoadState.NotLoading) {
-                            // the previous load either initial or additional completed
+                        is LoadState.Loading -> {
+                            // initial load has begun
+                            binding.error.progressCircular.makeVisible()
+                            makeErrorLayoutInvisible()
+                        }
+                        is LoadState.NotLoading -> {
+                            binding.error.progressCircular.makeInVisible()
+                            makeErrorLayoutInvisible()
+                            Log.i(getString(R.string.app_name), "Not loading feed")
+                        }
+                    }
+
+                    when (loadStates.append) {
+                        is LoadState.Error -> {
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Failed to retrieve more feed"
+                            )
+                        }
+                        is LoadState.Loading -> {
+                            // additional load has begun
+                        }
+                        is LoadState.NotLoading -> {
+                            if (loadStates.append.endOfPaginationReached) {
+                                // all data has been loaded
+                            }
+                            if (loadStates.refresh is LoadState.NotLoading) {
+                                // the previous load either initial or additional completed
+                            }
                         }
                     }
                 }
@@ -337,7 +344,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         cleanUpAfterUserAction()
     }
 
-
     private fun makeErrorLayoutInvisible() {
         binding.error.errorText.makeInVisible()
         binding.error.retryButton.makeInVisible()
@@ -348,7 +354,15 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         binding.error.retryButton.makeVisible()
     }
 
+    private fun makeEmptyResultLayoutVisible() {
+        makeErrorLayoutInvisible()
+        binding.error.progressCircular.makeInVisible()
+        binding.emptyResultLayout.emptyText.makeVisible()
+    }
 
+    private fun makeEmptyResultLayoutInvisible() {
+        binding.emptyResultLayout.emptyText.makeInVisible()
+    }
     private fun closeDialog() {
         binding.dismiss.setOnClickListener {
             dialog?.dismiss()
@@ -384,8 +398,9 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         action = ""
     }
 
-    override fun onDestroy() {
+    override fun onDestroyView() {
+        binding.commentRecycler.adapter = null
         _binding = null
-        super.onDestroy()
+        super.onDestroyView()
     }
 }

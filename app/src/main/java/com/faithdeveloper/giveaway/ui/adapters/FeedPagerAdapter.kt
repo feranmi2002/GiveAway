@@ -99,6 +99,7 @@ class FeedPagerAdapter(
         }
     }
 
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FeedViewHolder {
      val binding = FeedItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return FeedViewHolder(binding)

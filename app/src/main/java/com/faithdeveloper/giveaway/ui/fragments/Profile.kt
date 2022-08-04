@@ -28,6 +28,7 @@ import com.faithdeveloper.giveaway.ui.adapters.ProfilePagerAdapter
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutProfileBinding
+import com.faithdeveloper.giveaway.utils.Extensions.getUserDetails
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.viewmodels.ProfileVM
@@ -69,6 +70,8 @@ class Profile : Fragment() {
             }
         }
 
+        setUpAdapter()
+
         userProfile = requireArguments().getBoolean("userProfile")
 
         activity?.lifecycle?.addObserver(activityObserver)
@@ -84,13 +87,26 @@ class Profile : Fragment() {
         return binding.root
     }
 
-    override fun onStart() {
-        setUpAdapter()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         handleViewPresentation()
         handleObserver()
         setUpLoadState()
         clickListeners()
-        super.onStart()
+        binding.recycler.addItemDecoration(
+            androidx.recyclerview.widget.DividerItemDecoration(
+                requireContext(),
+                LinearLayoutManager.VERTICAL
+            )
+        )
+        binding.recycler.adapter = adapter.withLoadStateFooter(
+            FeedLoadStateAdapter {
+                adapter.retry()
+            }
+        )
+        binding.recycler.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+        binding.recycler.setHasFixedSize(true)
+        super.onViewCreated(view, savedInstanceState)
     }
 
     private fun handleViewPresentation() {
@@ -141,23 +157,8 @@ class Profile : Fragment() {
 
             }, { images, hasVideo ->
                 showImages(images.toList(), hasVideo)
-            }, { menuAction -> }, viewModel.getUserProfile()
+            }, { menuAction -> }, (activity as MainActivity).getRepository().getUserProfile()
         )
-        binding.recycler.addItemDecoration(
-            androidx.recyclerview.widget.DividerItemDecoration(
-                requireContext(),
-                LinearLayoutManager.VERTICAL
-            )
-        )
-        binding.recycler.adapter = adapter.withLoadStateFooter(
-            FeedLoadStateAdapter {
-                adapter.retry()
-            }
-        )
-        binding.recycler.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-        binding.recycler.setHasFixedSize(true)
-        viewModel.adapterIsSetUp = true
     }
 
     private fun showImages(images: List<String>, hasVideo: Boolean) {
@@ -218,46 +219,61 @@ class Profile : Fragment() {
         binding.errorLayout.retryButton.makeVisible()
     }
 
+    private fun makeEmptyResultLayoutVisible() {
+        makeErrorLayoutInvisible()
+        binding.errorLayout.progressCircular.makeInVisible()
+        binding.emptyResultLayout.emptyText.makeVisible()
+    }
+
+    private fun makeEmptyResultLayoutInvisible() {
+        binding.emptyResultLayout.emptyText.makeInVisible()
+    }
+
     private fun setUpLoadState() {
         lifecycleScope.launch {
             adapter.loadStateFlow.collectLatest { loadStates ->
-                when (loadStates.refresh) {
-                    is LoadState.Error -> {
-                        // initial load failed
-                        makeErrorLayoutVisible()
-                        binding.errorLayout.progressCircular.makeInVisible()
-                    }
-                    is LoadState.Loading -> {
-                        // initial load has begun
-                        binding.errorLayout.progressCircular.makeVisible()
-                        makeErrorLayoutInvisible()
-                    }
-                    is LoadState.NotLoading -> {
-                        binding.errorLayout.progressCircular.makeInVisible()
-                        makeErrorLayoutInvisible()
-                        Log.i(
-                            getString(com.faithdeveloper.giveaway.R.string.app_name),
-                            "Not loading feed"
-                        )
-                    }
-                }
-
-                when (loadStates.append) {
-                    is LoadState.Error -> {
-                        requireContext().showSnackbarShort(
-                            binding.root,
-                            "Failed to retrieve more feed"
-                        )
-                    }
-                    is LoadState.Loading -> {
-                        // additional load has begun
-                    }
-                    is LoadState.NotLoading -> {
-                        if (loadStates.append.endOfPaginationReached) {
-                            // all data has been loaded
+                if (loadStates.source.refresh is LoadState.NotLoading && loadStates.append.endOfPaginationReached && adapter.itemCount == 0) {
+                    makeEmptyResultLayoutVisible()
+                } else {
+                    makeEmptyResultLayoutInvisible()
+                    when (loadStates.refresh) {
+                        is LoadState.Error -> {
+                            // initial load failed
+                            makeErrorLayoutVisible()
+                            binding.errorLayout.progressCircular.makeInVisible()
                         }
-                        if (loadStates.refresh is LoadState.NotLoading) {
-                            // the previous load either initial or additional completed
+                        is LoadState.Loading -> {
+                            // initial load has begun
+                            binding.errorLayout.progressCircular.makeVisible()
+                            makeErrorLayoutInvisible()
+                        }
+                        is LoadState.NotLoading -> {
+                            binding.errorLayout.progressCircular.makeInVisible()
+                            makeErrorLayoutInvisible()
+                            Log.i(
+                                getString(com.faithdeveloper.giveaway.R.string.app_name),
+                                "Not loading feed"
+                            )
+                        }
+                    }
+
+                    when (loadStates.append) {
+                        is LoadState.Error -> {
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Failed to retrieve more feed"
+                            )
+                        }
+                        is LoadState.Loading -> {
+                            // additional load has begun
+                        }
+                        is LoadState.NotLoading -> {
+                            if (loadStates.append.endOfPaginationReached) {
+                                // all data has been loaded
+                            }
+                            if (loadStates.refresh is LoadState.NotLoading) {
+                                // the previous load either initial or additional completed
+                            }
                         }
                     }
                 }
@@ -269,12 +285,17 @@ class Profile : Fragment() {
         const val ADAPTER_STATE = "adapterState"
         const val VIDEO = "video"
     }
-
-
     override fun onDestroyView() {
+        binding.recycler.adapter = null
         _binding = null
-        activity?.lifecycle?.removeObserver(activityObserver)
         super.onDestroyView()
+    }
+
+
+
+    override fun onDestroy() {
+        activity?.lifecycle?.removeObserver(activityObserver)
+        super.onDestroy()
     }
 
 }

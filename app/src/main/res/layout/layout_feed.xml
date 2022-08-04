@@ -93,5 +93,8 @@
     <include
         android:id="@+id/error_layout"
         layout="@layout/error" />
+    <include
+        android:id= "@+id/empty_result_layout"
+        layout="@layout/empty_result"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

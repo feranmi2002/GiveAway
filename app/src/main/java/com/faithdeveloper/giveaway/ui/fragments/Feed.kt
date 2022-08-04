@@ -3,7 +3,6 @@ package com.faithdeveloper.giveaway.ui.fragments
 import android.Manifest
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
+import androidx.paging.PagingData
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -25,11 +25,24 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageView
 import com.canhub.cropper.options
-import com.faithdeveloper.giveaway.*
+import com.faithdeveloper.giveaway.MainActivity
+import com.faithdeveloper.giveaway.R
+import com.faithdeveloper.giveaway.data.Repository.Companion.APP_PAUSED
+import com.faithdeveloper.giveaway.data.Repository.Companion.APP_STARTED
+import com.faithdeveloper.giveaway.data.models.FeedData
+import com.faithdeveloper.giveaway.data.models.UserProfile
+import com.faithdeveloper.giveaway.databinding.LayoutFeedBinding
+import com.faithdeveloper.giveaway.ui.adapters.FeedPagerAdapter
+import com.faithdeveloper.giveaway.ui.adapters.NewFeedAdapter
+import com.faithdeveloper.giveaway.utils.ActivityObserver
+import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.checkTypeOfMedia
+import com.faithdeveloper.giveaway.utils.Extensions.getDataSavingMode
 import com.faithdeveloper.giveaway.utils.Extensions.getSignInStatus
 import com.faithdeveloper.giveaway.utils.Extensions.getUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.Extensions.launchLink
+import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
+import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.Extensions.sendEmail
 import com.faithdeveloper.giveaway.utils.Extensions.sendPhone
 import com.faithdeveloper.giveaway.utils.Extensions.sendWhatsapp
@@ -38,18 +51,6 @@ import com.faithdeveloper.giveaway.utils.Extensions.showComments
 import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.Extensions.showMedia
 import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
-import com.faithdeveloper.giveaway.ui.adapters.FeedPagerAdapter
-import com.faithdeveloper.giveaway.ui.adapters.NewFeedAdapter
-import com.faithdeveloper.giveaway.data.models.FeedData
-import com.faithdeveloper.giveaway.data.Repository.Companion.APP_PAUSED
-import com.faithdeveloper.giveaway.data.Repository.Companion.APP_STARTED
-import com.faithdeveloper.giveaway.data.models.UserProfile
-import com.faithdeveloper.giveaway.databinding.LayoutFeedBinding
-import com.faithdeveloper.giveaway.utils.ActivityObserver
-import com.faithdeveloper.giveaway.utils.Event
-import com.faithdeveloper.giveaway.utils.Extensions.getDataSavingMode
-import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
-import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.viewmodels.FeedVM
@@ -77,6 +78,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private var dialogBuilder: MaterialAlertDialogBuilder? = null
     private var dialog: AlertDialog? = null
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         newPostData = mutableListOf()
 
@@ -100,8 +102,16 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     VMFactory((activity as MainActivity).getRepository())
                 ).get(FeedVM::class.java)
 
+                setUpAdapter()
+
+                /* 'newSignIn' is true only when user has signed in to a new device
+                * for the first time and has not set a previous profile picture
+     * */
+                newSignIn =
+                    requireContext().getSignInStatus() && requireContext().getUserProfilePicUrl() == null
+
                 arguments?.run {
-                    viewModel.setNewPostAvailable( getBoolean("newPostAvailable"))
+                    viewModel.setNewPostAvailable(getBoolean("newPostAvailable"))
                 }
 
 //                initialize third party library used for taking and cropping user profile picture
@@ -172,30 +182,35 @@ class Feed : Fragment(), FragmentCommentsInterface {
         return binding.root
     }
 
-    override fun onStart() {
-        /* 'newSignIn' is true only when user has signed in to a new device for the first time and has not set a previous profile picture
-        * */
-        newSignIn =
-            requireContext().getSignInStatus() && requireContext().getUserProfilePicUrl() == null
-
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         handleObservers()
         clickListeners()
+
+//        this is used to ask user to upload a profile picture if no profile picture is detected
         handleCreateProfilePicDialog()
-//        Check if adapter has been previously setUp to prevent multiple initalization
-//        if (!viewModel.adapterIsSetUp()) setUpAdapter()
-        setUpAdapter()
+
+//        set up recycler
+        binding.recycler.addItemDecoration(
+            androidx.recyclerview.widget.DividerItemDecoration(
+                requireContext(),
+                LinearLayoutManager.VERTICAL
+            )
+        )
+        binding.recycler.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+        binding.recycler.adapter = concatAdapter
+
         setUpLoadState()
         handleRefresh()
         setUpTags()
 
 //        check if a new post has just been uploaded by the user, then display it if true
         if (viewModel.newPostAvailable()) addNewPost()
-
-        super.onStart()
+        super.onViewCreated(view, savedInstanceState)
     }
 
     /*Tags can be added to Posts to help segment the posts.
- * User can view feed of posts under a particular tag*/
+     * User can view feed of posts under a particular tag*/
     private fun setUpTags() {
         val chipsData = resources.getStringArray(R.array.feedTags)
         binding.chipGroup.apply {
@@ -208,16 +223,14 @@ class Feed : Fragment(), FragmentCommentsInterface {
 //                first clear existing data
                 binding.refresh.isRefreshing = false
                 binding.recycler.removeAllViewsInLayout()
+                adapter.submitData(viewLifecycleOwner.lifecycle, PagingData.empty())
                 newPostData.clear()
                 newPostAdapter.notifyDataSetChanged()
-                concatAdapter = null
 
-                val chip = group.findViewById<Chip>(checkedId)
+                val chip: Chip? = group.findViewById<Chip>(checkedId)
 //                this triggers a reload of data from remote database with the filter
-                setUpAdapter()
-                viewModel.setLoadFilter(chip.text.toString())
+                viewModel.setLoadFilter((chip?.text.toString()) ?: viewModel.filter())
             }
-
 //            init chips
             for (text in chipsData) {
                 val chip = layoutInflater.inflate(
@@ -230,7 +243,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 addView(chip)
             }
         }
-
     }
 
     // this is done because seems there is a problem (bug) with the output uri of the crop library
@@ -281,22 +293,20 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
     //    refreshes the feed
     private fun handleRefresh() {
-        binding.refresh.setOnRefreshListener(object : SwipeRefreshLayout.OnRefreshListener {
-            override fun onRefresh() {
-                newPostData = mutableListOf()
-                adapter.refresh()
-            }
-        })
+        binding.refresh.setOnRefreshListener {
+            newPostData = mutableListOf()
+            adapter.refresh()
+        }
     }
 
     //    observes livedata
     private fun handleObservers() {
 //    observe the feed result
-        viewModel.feedResult.observe(viewLifecycleOwner, Observer {
+        viewModel.feedResult.observe(viewLifecycleOwner) {
             adapter.submitData(viewLifecycleOwner.lifecycle, it)
-        })
+        }
 //    observe result of profile picture upload
-        viewModel.profilePicUpload.observe(viewLifecycleOwner, Observer {
+        viewModel.profilePicUpload.observe(viewLifecycleOwner) {
             when (it) {
                 is Event.Success -> {
                     // do nothing
@@ -308,7 +318,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     // do nothing
                 }
             }
-        })
+        }
     }
 
     private fun handleProfilePicUpdateFailure() {
@@ -386,8 +396,13 @@ class Feed : Fragment(), FragmentCommentsInterface {
         dialog?.show()
     }
 
-    override fun onDestroy() {
+    override fun onDestroyView() {
+        binding.recycler.adapter = null
         _binding = null
+        super.onDestroyView()
+    }
+
+    override fun onDestroy() {
         activity?.lifecycle?.removeObserver(activityObserver)
         super.onDestroy()
     }
@@ -432,7 +447,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 showImages(images.toList(), hasVideo)
             },
             { menuAction -> }, viewModel.userUid(),
-        requireContext().getDataSavingMode()
+            requireContext().getDataSavingMode()
         )
 
         newPostAdapter = NewFeedAdapter(
@@ -473,16 +488,8 @@ class Feed : Fragment(), FragmentCommentsInterface {
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
         newPostAdapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-        binding.recycler.addItemDecoration(
-            androidx.recyclerview.widget.DividerItemDecoration(
-                requireContext(),
-                LinearLayoutManager.VERTICAL
-            )
-        )
-        binding.recycler.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+
         concatAdapter = ConcatAdapter(newPostAdapter, adapter)
-        binding.recycler.adapter = concatAdapter
         viewModel.updateAdapterState(isSetUp = true)
 //        ..withLoadStateFooter(
 //            FeedLoadStateAdapter() {
@@ -505,43 +512,48 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
     private fun setUpLoadState() {
         lifecycleScope.launch {
+            //                        check any result is returned and show appropriate view
             adapter.loadStateFlow.collectLatest { loadStates ->
-                when (loadStates.refresh) {
-                    is LoadState.Error -> {
-                        // initial load failed
-                        binding.refresh.isRefreshing = false
-                        makeErrorLayoutVisible()
-                        binding.errorLayout.progressCircular.makeInVisible()
-                    }
-                    is LoadState.Loading -> {
-                        // initial load has begun
-                        binding.errorLayout.progressCircular.makeVisible()
-                        makeErrorLayoutInvisible()
-                    }
-                    is LoadState.NotLoading -> {
-                        binding.refresh.isRefreshing = false
-                        binding.errorLayout.progressCircular.makeInVisible()
-                        makeErrorLayoutInvisible()
-                        Log.i(getString(R.string.app_name), "Not loading feed")
-                    }
-                }
-
-                when (loadStates.append) {
-                    is LoadState.Error -> {
-                        requireContext().showSnackbarShort(
-                            binding.root,
-                            "Failed to retrieve more feed"
-                        )
-                    }
-                    is LoadState.Loading -> {
-                        // additional load has begun
-                    }
-                    is LoadState.NotLoading -> {
-                        if (loadStates.append.endOfPaginationReached) {
-                            // all data has been loaded
+                if (loadStates.source.refresh is LoadState.NotLoading && loadStates.append.endOfPaginationReached && adapter.itemCount == 0) {
+                    makeEmptyResultLayoutVisible()
+                } else {
+                    makeEmptyResultLayoutInvisible()
+                    when (loadStates.refresh) {
+                        is LoadState.Error -> {
+                            // initial load failed
+                            binding.refresh.isRefreshing = false
+                            makeErrorLayoutVisible()
+                            binding.errorLayout.progressCircular.makeInVisible()
                         }
-                        if (loadStates.refresh is LoadState.NotLoading) {
-                            // the previous load either initial or additional completed
+                        is LoadState.Loading -> {
+                            // initial load has begun
+                            binding.errorLayout.progressCircular.makeVisible()
+                            makeErrorLayoutInvisible()
+                        }
+                        is LoadState.NotLoading -> {
+                            binding.refresh.isRefreshing = false
+                            binding.errorLayout.progressCircular.makeInVisible()
+                            makeErrorLayoutInvisible()
+
+                        }
+                    }
+                    when (loadStates.append) {
+                        is LoadState.Error -> {
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Failed to retrieve more feed"
+                            )
+                        }
+                        is LoadState.Loading -> {
+                            // additional load has begun
+                        }
+                        is LoadState.NotLoading -> {
+                            if (loadStates.append.endOfPaginationReached) {
+                                // all data has been loaded
+                            }
+                            if (loadStates.refresh is LoadState.NotLoading) {
+                                // the previous load either initial or additional completed
+                            }
                         }
                     }
                 }
@@ -557,11 +569,13 @@ class Feed : Fragment(), FragmentCommentsInterface {
     }
 
     private fun makeErrorLayoutInvisible() {
+
         binding.errorLayout.errorText.makeInVisible()
         binding.errorLayout.retryButton.makeInVisible()
     }
 
     private fun makeErrorLayoutVisible() {
+        makeEmptyResultLayoutInvisible()
         binding.errorLayout.errorText.makeVisible()
         binding.errorLayout.retryButton.makeVisible()
     }
@@ -575,5 +589,13 @@ class Feed : Fragment(), FragmentCommentsInterface {
         navigateToProfilePage(poster)
     }
 
+    private fun makeEmptyResultLayoutVisible() {
+        makeErrorLayoutInvisible()
+        binding.errorLayout.progressCircular.makeInVisible()
+        binding.emptyResultLayout.emptyText.makeVisible()
+    }
 
+    private fun makeEmptyResultLayoutInvisible() {
+        binding.emptyResultLayout.emptyText.makeInVisible()
+    }
 }

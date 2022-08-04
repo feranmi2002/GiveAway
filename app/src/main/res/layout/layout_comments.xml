@@ -86,4 +86,12 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/comments"
         android:layout_centerInParent="true" />
+
+    <include
+        android:id= "@+id/empty_result_layout"
+        layout="@layout/empty_result"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/comments"
+        android:layout_centerInParent="true"/>
 </RelativeLayout>

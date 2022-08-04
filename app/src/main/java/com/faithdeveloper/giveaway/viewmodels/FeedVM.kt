@@ -13,17 +13,27 @@ import com.faithdeveloper.giveaway.data.models.UserProfile
 import kotlinx.coroutines.launch
 
 class FeedVM(private val repository: Repository) : ViewModel() {
+/*
+    this flag is used to indicate that the view model has just been initialized which also means that
+   the fragment has just been created
+*/
+    private var fragmentCreatedFlag: Boolean = true
+
     private val _profilePicUpload = LiveEvent<Event>()
-    private var loadFilter = MutableLiveData(DEFAULT_FILTER)
+    private var loadFilter = MutableLiveData<String>()
     private var adapterIsSetUp = false
     private var _newPostAvailable:Boolean = false
-    private val _feedResult  = loadFilter.switchMap {  filter ->
+    private val _feedResult  = loadFilter.distinctUntilChanged().switchMap {  filter ->
         loadFeed(filter)
     }
     val feedResult get() = _feedResult
     val profilePicUpload get() = this._profilePicUpload
 
+    fun fragmentHasJustBeenCreated() = fragmentCreatedFlag
 
+    fun setFragmentCreationFlag(state:Boolean){
+        fragmentCreatedFlag = state
+    }
     //    this is the post that was just uploaded by the user
     fun getUploadedPost() = repository.getUploadedPost()
 
@@ -35,7 +45,7 @@ class FeedVM(private val repository: Repository) : ViewModel() {
         }
     }
 
-    fun filter() = loadFilter
+    fun filter() = loadFilter.value ?: DEFAULT_FILTER
     fun setLoadFilter(filter:String){
         loadFilter.value = filter
     }
