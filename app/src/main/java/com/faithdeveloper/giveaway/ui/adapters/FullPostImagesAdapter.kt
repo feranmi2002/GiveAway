@@ -12,34 +12,40 @@ import com.bumptech.glide.request.target.Target
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.databinding.AdaptiveMediaLayoutBinding
+import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
+import com.faithdeveloper.giveaway.utils.interfaces.FullImageAdapterInterface
 
 class FullPostImagesAdapter(
-    val mediaUrl: Array<String>
+    val mediaUrl: Array<String>,
+    val adapterInterface:FullImageAdapterInterface
 ) :
-    RecyclerView.Adapter<FullPostImagesAdapter.PostPicturesViewHolder>() {
+    RecyclerView.Adapter<FullPostImagesAdapter.ImagesViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostPicturesViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImagesViewHolder {
         val binding =
             AdaptiveMediaLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return PostPicturesViewHolder(binding)
+        return ImagesViewHolder(binding)
     }
 
-    inner class PostPicturesViewHolder(private val binding: AdaptiveMediaLayoutBinding) :
+    inner class ImagesViewHolder(private val binding: AdaptiveMediaLayoutBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
             with(binding) {
                 remove.makeInVisible()
                 play.makeInVisible()
+                progressCircular.makeVisible()
                 Glide.with(itemView)
                     .load(mediaUrl[position])
                     .placeholder(R.drawable.placeholder)
                     .listener(object : RequestListener<Drawable> {
+
                         override fun onLoadFailed(
                             e: GlideException?,
                             model: Any?,
                             target: Target<Drawable>?,
                             isFirstResource: Boolean
                         ): Boolean {
+                            adapterInterface.mediaAvailabilityState(false, null)
                             return false
                         }
 
@@ -50,14 +56,19 @@ class FullPostImagesAdapter(
                             dataSource: DataSource?,
                             isFirstResource: Boolean
                         ): Boolean {
+                            adapterInterface.mediaAvailabilityState(true, mediaUrl[position])
+                            progressCircular.makeInVisible()
                             return false
                         }
                     }).into(media)
+
+//                update count in the bottom sheet
+                adapterInterface.updateCount(position  + 1, itemCount)
             }
         }
     }
 
-    override fun onBindViewHolder(holder: PostPicturesViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ImagesViewHolder, position: Int) {
         holder.bind(position)
     }
 

@@ -6,27 +6,27 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.faithdeveloper.giveaway.utils.Extensions.getDataSavingMode
-import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
-import com.faithdeveloper.giveaway.ui.adapters.comparators.FEED_ITEM_COMPARATOR
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.models.FeedData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.*
+import com.faithdeveloper.giveaway.ui.adapters.comparators.FEED_ITEM_COMPARATOR
 import com.faithdeveloper.giveaway.utils.Extensions
+import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 
 class FeedPagerAdapter(
-    val reactions: (reactionType: String, data: String, posterID:String) -> Unit,
+    val reactions: (reactionType: String, data: String, posterID: String) -> Unit,
     private val profileNameClick: (userUid: UserProfile) -> Unit,
-    private val imagesClick: (images: Array<String>, hasVideo: Boolean ) -> Unit,
+    private val imagesClick: (images: Array<String>, hasVideo: Boolean) -> Unit,
     private val menuAction: (action: String) -> Unit,
     val userUid: String,
-    val dataSavingMode:Boolean
+    val dataSavingMode: Boolean
 ) :
     PagingDataAdapter<FeedData, FeedPagerAdapter.FeedViewHolder>
         (FEED_ITEM_COMPARATOR) {
 
-    inner  class FeedViewHolder(val binding:FeedItemLayoutBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class FeedViewHolder(val binding: FeedItemLayoutBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: FeedData) {
             val post = item.postData
@@ -81,8 +81,17 @@ class FeedPagerAdapter(
                             //setup media
                             if (mediaUrls.isNotEmpty()) {
                                 media.makeVisible()
-                                val adapter = PostPicturesAdapter(mediaUrls, dataSavingMode, imagesClick, hasVideo)
-                                media.layoutManager = LinearLayoutManager(itemView.context, LinearLayoutManager.HORIZONTAL, false)
+                                val adapter = PostPicturesAdapter(
+                                    mediaUrls,
+                                    dataSavingMode,
+                                    imagesClick,
+                                    hasVideo
+                                )
+                                media.layoutManager = LinearLayoutManager(
+                                    itemView.context,
+                                    LinearLayoutManager.HORIZONTAL,
+                                    false
+                                )
                                 media.adapter = adapter
                             }
                         }
@@ -91,6 +100,7 @@ class FeedPagerAdapter(
             }
         }
     }
+
     override fun onBindViewHolder(holder: FeedViewHolder, position: Int) {
         val currentItem = getItem(position)
         if (currentItem != null
@@ -101,7 +111,8 @@ class FeedPagerAdapter(
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FeedViewHolder {
-     val binding = FeedItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            FeedItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return FeedViewHolder(binding)
     }
 }

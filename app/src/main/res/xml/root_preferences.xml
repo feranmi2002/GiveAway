@@ -19,8 +19,8 @@
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:key="dataSaving"
-            app:summaryOff="Media won't load automatically"
-            app:summaryOn="Load media automatically"
+            app:summaryOff="Load media automatically"
+            app:summaryOn="Media won't load automatically"
             app:title="Data Saving Mode" />
 
         <SwitchPreferenceCompat

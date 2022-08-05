@@ -34,36 +34,15 @@ class PostPicturesAdapter(
         @SuppressLint("SetTextI18n")
         fun bind(position: Int) {
             with(binding) {
-//                if (!dataSavingMode){
-//                    image.setImageResource(R.drawable.placeholder)
-//                    touchToLoad.makeVisible()
-//                }else {
+                if (dataSavingMode){
+                    image.setImageResource(R.drawable.placeholder)
+                    touchToLoad.makeVisible()
+                }else {
                     Glide.with(itemView)
                         .load(mediaUrl[position])
-                        .listener(object : RequestListener<Drawable> {
-                            override fun onLoadFailed(
-                                e: GlideException?,
-                                model: Any?,
-                                target: Target<Drawable>?,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                // do nothing
-                                return false
-                            }
-
-                            override fun onResourceReady(
-                                resource: Drawable?,
-                                model: Any?,
-                                target: Target<Drawable>?,
-                                dataSource: DataSource?,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                binding.progressCircular.makeInVisible()
-                                return false
-                            }
-                        })
                         .placeholder(R.drawable.placeholder)
                         .into(image)
+                }
 
                 count.text = "${position + 1}/${mediaUrl.size}"
                 if (hasVideo || mediaUrl.size <= 1) count.makeInVisible()

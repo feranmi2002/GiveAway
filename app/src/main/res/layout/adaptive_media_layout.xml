@@ -48,5 +48,16 @@
         app:layout_constraintTop_toTopOf="@id/media"
         tools:text="1/2" />
 
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/progress_circular"
+        android:visibility="invisible"
+        android:indeterminate="true"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
