@@ -221,6 +221,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
 //              reload feed on tag selected changed
 
 //                first clear existing data
+
                 binding.refresh.isRefreshing = false
                 binding.recycler.removeAllViewsInLayout()
                 adapter.submitData(viewLifecycleOwner.lifecycle, PagingData.empty())

@@ -1,7 +1,6 @@
 package com.faithdeveloper.giveaway.ui.fragments
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -17,14 +16,12 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.faithdeveloper.giveaway.databinding.FullPostMediaLayoutBinding
 import com.faithdeveloper.giveaway.ui.adapters.FullPostImagesAdapter
-import com.faithdeveloper.giveaway.utils.Extensions.disable
-import com.faithdeveloper.giveaway.utils.Extensions.enable
-import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
@@ -97,7 +94,13 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
         binding.dismiss.setOnClickListener {
             dismiss()
         }
-
+//
+////        set visibility of media counter
+//        if (media.size > 1) {
+//            binding.count.makeVisible()
+//        }
+//
+//        handleMediaCountUpdate()
 //        handle appropriate view
         if (mediaType == IMAGES) {
             with(binding) {
@@ -107,28 +110,7 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
                 recycler.adapter = adapter
             }
         }
-
-        if (currentMediaUrl == null) binding.download.disable()
-        else binding.download.enable()
-
-        saveMedia()
         super.onViewCreated(view, savedInstanceState)
-    }
-
-    @SuppressLint("SetTextI18n")
-//    updates the count
-    override fun updateCount(position: Int, size: Int) {
-        if (size > 1) {
-            binding.count.makeVisible()
-            binding.count.text = "$position / $size"
-        }
-    }
-
-    //    this flag checks if media has been loaded by glide and sets the download icon accordingly
-    override fun mediaAvailabilityState(state: Boolean, mediaUrl: String?) {
-        currentMediaUrl = mediaUrl
-        if (state) binding.download.enable()
-        else binding.download.disable()
     }
 
     override fun onDestroyView() {
@@ -161,10 +143,22 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
         dialog?.show()
     }
 
-    private fun saveMedia() {
-        binding.download.setOnClickListener {
-            askPermissions()
-        }
+    private fun handleMediaCountUpdate() {
+        binding.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                if (newState == RecyclerView.SCROLL_STATE_SETTLING) {
+                    val layoutPosition = (recyclerView.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+                    currentMediaUrl = media[layoutPosition]
+//                    binding.count.text = "${layoutPosition + 1} / ${media.size}"
+                }
+                super.onScrollStateChanged(recyclerView, newState)
+            }
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+//                do nothing
+                super.onScrolled(recyclerView, dx, dy)
+            }
+        })
     }
 
     private fun downloadMedia() {
@@ -173,11 +167,13 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
             .onlyRetrieveFromCache(true)
             .into(object : CustomTarget<Drawable>() {
                 override fun onResourceReady(resource: Drawable, p1: Transition<in Drawable>?) {
-                   saveMediaToStorage ((resource as BitmapDrawable).bitmap)
+                    saveImageToStorage((resource as BitmapDrawable).bitmap)
                 }
+
                 override fun onLoadCleared(p0: Drawable?) {
 //                            do nothing
                 }
+
                 override fun onLoadFailed(errorDrawable: Drawable?) {
                     requireContext().showSnackbarShort(binding.root, "Failed to save image")
                     super.onLoadFailed(errorDrawable)
@@ -186,18 +182,25 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
 
     }
 
-    fun saveMediaToStorage(bitmap:Bitmap) {
+    fun saveImageToStorage(bitmap: Bitmap) {
         val resolver = requireContext().applicationContext.contentResolver
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Find all image files on the primary external storage device.
-                val imageCollection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                val imageCollection =
+                    MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
 
                 val newImageDetails = ContentValues().apply {
-                    put(MediaStore.MediaColumns.DISPLAY_NAME, "IMG-${System.currentTimeMillis()}.jpg")
+                    put(
+                        MediaStore.MediaColumns.DISPLAY_NAME,
+                        "IMG-${System.currentTimeMillis()}.jpg"
+                    )
                     put(MediaStore.MediaColumns.DATE_ADDED, dateFormatter.format(Date()))
                     put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
-                    put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/Giveaway")
+                    put(
+                        MediaStore.MediaColumns.RELATIVE_PATH,
+                        "${Environment.DIRECTORY_PICTURES}/Giveaway"
+                    )
                 }
                 with(resolver) {
                     val imageUri = insert(imageCollection, newImageDetails)
@@ -206,22 +209,26 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
                         stream.close()
                     }
                 }
-            }else{
-                val directory = requireContext().getExternalFilesDir("${Environment.DIRECTORY_PICTURES}/Giveaway")
+            } else {
+                val directory =
+                    requireContext().getExternalFilesDir("${Environment.DIRECTORY_PICTURES}/Giveaway")
                 if (!directory?.exists()!!) directory.mkdir()
                 val newImageDetails = ContentValues().apply {
-                    put(MediaStore.Images.Media.DISPLAY_NAME, "IMG-${System.currentTimeMillis()}.jpg")
+                    put(
+                        MediaStore.Images.Media.DISPLAY_NAME,
+                        "IMG-${System.currentTimeMillis()}.jpg"
+                    )
                     put(MediaStore.Images.Media.DATE_ADDED, dateFormatter.format(Date()))
                     put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
                 }
-                 resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, newImageDetails)
-                val file = File(directory, "IMG-${System.currentTimeMillis()}.jpg" )
+                resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, newImageDetails)
+                val file = File(directory, "IMG-${System.currentTimeMillis()}.jpg")
                 val fileOutputStream = FileOutputStream(file)
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream)
                 fileOutputStream.close()
-                }
+            }
             requireContext().showSnackbarShort(binding.dismiss, "Image saved")
-        }catch (e:Exception){
+        } catch (e: Exception) {
             requireContext().showSnackbarShort(binding.dismiss, "Failed to save image")
         }
     }
@@ -240,5 +247,10 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
                 }
             }
         }
+    }
+
+    override fun saveImage(mediaUrl: String) {
+        currentMediaUrl = mediaUrl
+        askPermissions()
     }
 }

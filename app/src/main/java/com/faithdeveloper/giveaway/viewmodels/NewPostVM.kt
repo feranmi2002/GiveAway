@@ -1,6 +1,7 @@
 package com.faithdeveloper.giveaway.viewmodels
 
 import android.net.Uri
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.faithdeveloper.giveaway.utils.Event
@@ -10,14 +11,15 @@ import kotlinx.coroutines.launch
 
 class NewPostVM(private val repository: Repository) : ViewModel() {
     private var _link: String? = null
-    val link get() = _link
     private var _hasComments = false
-    val hasComments get() = _hasComments
     private val _newPostResult = LiveEvent<Event>()
-    val newPostResult get() = _newPostResult
     private val _mediaUri = mutableListOf<Uri>()
-    val mediaUri get() = _mediaUri
     private val _tags: HashMap<Int, Boolean> = HashMap()
+
+    val link get() = _link
+    val hasComments get() = _hasComments
+    val newPostResult get()  = _newPostResult
+    val mediaUri get() = _mediaUri
     val tags get() = _tags
 
     init {

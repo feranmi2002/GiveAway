@@ -548,7 +548,7 @@ class NewPost : Fragment() {
     private fun postingNewPost() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
-            cancelable = true,
+            cancelable = false,
             message = getString(R.string.create_new_post_msg)
         )
         dialog = dialogBuilder?.create()

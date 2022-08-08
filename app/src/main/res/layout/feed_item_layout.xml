@@ -43,22 +43,37 @@
         app:layout_constraintTop_toTopOf="@+id/profile_name"
         tools:text="2wks" />
 
-    <com.google.android.material.textview.MaterialTextView
+    <com.ms.square.android.expandabletextview.ExpandableTextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:id="@+id/description"
+        app:ellipsizeText="Read more"
+        app:animDuration="100"
+        app:maxCollapsedLines="5"
+        app:layout_constraintTop_toBottomOf="@id/profiePic"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        app:ellipsizeTextColor="@color/common_google_signin_btn_text_dark_disabled">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/expandable_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:autoLink="all"
-        android:ellipsize="end"
         android:linksClickable="true"
         android:longClickable="true"
-        android:maxLines="4"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
         android:textColor="@color/postTextColor"
-        app:layout_constraintTop_toBottomOf="@id/profiePic"
         tools:text="I need a plate of rice, beans, amala, gbegiri, puffpuff. I beg you in the name
 of jesus Christ that you serve. God will continkue to bless you if you can do thiskfor me because i havent aten siknce morning
 nm,dsdnskldnskldksndlksndksndlsdklsdslkdjskljdlskjdskljdskdjskl" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/expand_collapse"
+            android:layout_gravity="right|bottom"
+            android:background="@android:color/transparent"/>
+    </com.ms.square.android.expandabletextview.ExpandableTextView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/media"

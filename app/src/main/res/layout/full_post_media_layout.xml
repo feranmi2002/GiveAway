@@ -11,29 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/count"
-            android:visibility="invisible"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/design_default_color_primary"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="@id/dismiss"
-            app:layout_constraintEnd_toStartOf="@id/dismiss"
-            app:layout_constraintStart_toEndOf="@id/download"
-            app:layout_constraintTop_toTopOf="@id/dismiss"
-            tools:text="1/2" />
-
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/download"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_round_download_24" />
-
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/dismiss"
             android:layout_width="wrap_content"
