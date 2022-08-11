@@ -499,13 +499,17 @@ class Repository(
 //        'firebaseComments' is the returned comments in firebase model. It will be converted to the model @class Comment
         val firebaseComments: QuerySnapshot = if (key.lastSnapshot == null) {
 //            no previous data loaded
-            database().collection(POST_COMMENTS)
+            database().collection(POST_DATA)
+                .document(postID)
+                .collection(COMMENTS)
                 .limit(key.loadSize)
                 .whereEqualTo("idOfPostThatIsCommented", postID)
                 .get().await()
         } else {
 //            previous data has been loaded, continues from where it stopped last which is based on the last snapshot from the key
-            database().collection(POST_COMMENTS)
+            database().collection(POST_DATA)
+                .document(postID)
+                .collection(COMMENTS)
                 .limit(key.loadSize)
                 .whereEqualTo("idOfPostThatIsCommented", postID)
                 .startAfter(key.lastSnapshot)
@@ -733,9 +737,10 @@ class Repository(
         return try {
             val map = mutableMapOf<String, Any>(
                 "commentText" to newComment,
-                "updated" to true
+                "updated" to true,
+                "time" to System.currentTimeMillis()
             )
-            database().collection(POST_COMMENTS).document(idOfPostThatIsCommentedOn).update(map)
+            database().collection(POST_DATA).document(idOfPostThatIsCommentedOn).update(map)
                 .await()
             Event.Success(newComment, "comment_edited")
         } catch (e: Exception) {
@@ -745,7 +750,7 @@ class Repository(
 
     suspend fun deleteComment(postID: String): Event {
         return try {
-            database().collection(POST_COMMENTS).document(postID).delete().await()
+            database().collection(POST_DATA).document(postID).delete().await()
             Event.Success("DELETED", "comment_deleted")
         } catch (e: Exception) {
             Event.Failure(null, "comment_undeleted")
@@ -798,8 +803,8 @@ class Repository(
                 profileOfUserThisCommentIsAReplyTo?.id ?: "",
                 false
             )
-            database().collection(POST_COMMENTS).document("${userUid()!!}${timePosted}")
-                .set(comment).await()
+            database().collection(POST_DATA).document(idOfPostThatIsCommentedOn).collection(COMMENTS)
+                .add(comment)
             Event.Success(
                 CommentData(
                     comment,
@@ -814,7 +819,7 @@ class Repository(
 
 
     companion object {
-        const val POST_COMMENTS = "post_comments"
+        const val POST_DATA = "post_data"
         const val APP_URL = "https://faithdeveloper.page.link.pass"
         const val POSTS = "posts"
         const val USERS = "users"
@@ -826,5 +831,6 @@ class Repository(
         const val POST_VIDEOS = "Post_videos"
         const val APP_STARTED = "app_started"
         const val APP_PAUSED = "app_paused"
+        const val COMMENTS = "comments"
     }
 }

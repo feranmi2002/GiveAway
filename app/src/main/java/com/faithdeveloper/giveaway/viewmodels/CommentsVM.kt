@@ -65,7 +65,6 @@ class CommentsVM(private val repository: Repository, val postID:String) : ViewMo
                 )
             }
         }
-
     }
 
   fun deleteComment(postID: String) {
