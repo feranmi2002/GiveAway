@@ -91,7 +91,7 @@ class NewCommentsAdapter(val comments: MutableList<CommentData>,
                     }
                     with(comment) {
                         commentsText.text = commentText
-                        binding.time.text = Extensions.convertTime(time)
+                        binding.time.text = Extensions.convertTime(time!!)
                         if (idOfTheUserThisCommentIsAReplyTo != "") {
                             tag.makeVisible()
                             tag.text = userRepliedTo?.name

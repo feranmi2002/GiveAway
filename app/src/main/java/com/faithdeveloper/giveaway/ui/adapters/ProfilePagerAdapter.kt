@@ -49,7 +49,7 @@ class ProfilePagerAdapter(
                             reactions.invoke("comments", item.postID, userProfile.id)
                         }
                     }
-                    if (link != "noLink") {
+                    if (link != "") {
                         reaction.launchLink.makeVisible()
                         reaction.launchLink.setOnClickListener {
                             reactions.invoke("launchLink", item.link, userProfile.id)
@@ -57,7 +57,7 @@ class ProfilePagerAdapter(
                     }
 
                     // show time
-                    timeView.text = Extensions.convertTime(time)
+                    timeView.text = Extensions.convertTime(time!!)
 
                     //setup media
                     if (mediaUrls.isNotEmpty()) {

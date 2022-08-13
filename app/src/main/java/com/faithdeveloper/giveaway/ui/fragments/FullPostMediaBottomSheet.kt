@@ -1,6 +1,7 @@
 package com.faithdeveloper.giveaway.ui.fragments
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
@@ -12,9 +13,13 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.VideoView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -26,6 +31,10 @@ import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.utils.interfaces.FullImageAdapterInterface
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.util.Util
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -48,6 +57,10 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
     private var _binding: FullPostMediaLayoutBinding? = null
     private val binding get() = _binding!!
     private var currentMediaUrl: String? = null
+    private var player:ExoPlayer? = null
+    private var playWhenReady = true
+    private var currentItem = 0
+    private var playbackPosition = 0L
 
     private val dateFormatter = SimpleDateFormat(
         "yyyy.MM.dd 'at' HH:mm:ss z",
@@ -56,7 +69,6 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
 
     override fun onCreate(savedInstanceState: Bundle?) {
 //        get all arguments
-
         media = requireArguments().getStringArray(MEDIA)!!
         mediaType = requireArguments().getString(TYPE)!!
         if (mediaType == IMAGES) {
@@ -94,14 +106,7 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
         binding.dismiss.setOnClickListener {
             dismiss()
         }
-//
-////        set visibility of media counter
-//        if (media.size > 1) {
-//            binding.count.makeVisible()
-//        }
-//
-//        handleMediaCountUpdate()
-//        handle appropriate view
+
         if (mediaType == IMAGES) {
             with(binding) {
                 recycler.makeVisible()
@@ -109,8 +114,41 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
                     LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
                 recycler.adapter = adapter
             }
+        }else{
+            binding.videoView.makeVisible()
         }
         super.onViewCreated(view, savedInstanceState)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (mediaType == VIDEO) {
+            hideSystemUi()
+            if (Util.SDK_INT > 23) {
+                initializePlayer()
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if ((Util.SDK_INT <= 23 || player == null)){
+            initializePlayer()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (Util.SDK_INT <= 23){
+            releasePlayer()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (Util.SDK_INT > 23){
+            releasePlayer()
+        }
     }
 
     override fun onDestroyView() {
@@ -141,6 +179,24 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
         )
         mDialog = dialogBuilder?.create()
         dialog?.show()
+    }
+    @SuppressLint("InlinedApi")
+    private fun hideSystemUi() {
+        WindowCompat.setDecorFitsSystemWindows(requireActivity().window, false)
+        WindowInsetsControllerCompat(requireActivity().window, binding.videoView).let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+    private fun releasePlayer() {
+        player?.let { exoPlayer ->
+            playbackPosition = exoPlayer.currentPosition
+            currentItem = exoPlayer.currentMediaItemIndex
+            playWhenReady = exoPlayer.playWhenReady
+            exoPlayer.release()
+        }
+        player = null
     }
 
     private fun handleMediaCountUpdate() {
@@ -234,7 +290,7 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
     }
 
     companion object {
-        const val TAG = "PictureDialog"
+        const val TAG = "MediaBottomSheet"
         private const val MEDIA = "media"
         private const val TYPE = "type"
         const val IMAGES = "images"
@@ -253,4 +309,29 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
         currentMediaUrl = mediaUrl
         askPermissions()
     }
+
+    private fun initializePlayer(){
+        player = ExoPlayer.Builder(requireContext())
+            .build()
+            .also {exoPlayer ->
+            binding.videoView.player = exoPlayer
+                val mediaItem = MediaItem.fromUri(media[0])
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.playWhenReady = playWhenReady
+                exoPlayer.seekTo(currentItem, playbackPosition)
+                exoPlayer.prepare()
+            }
+    }
+
+    private fun playbackStateListener() = object: Player.Listener{
+        override fun onIsLoadingChanged(isLoading: Boolean) {
+            super.onIsLoadingChanged(isLoading)
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            super.onPlaybackStateChanged(playbackState)
+        }
+    }
+
+
 }

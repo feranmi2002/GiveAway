@@ -38,6 +38,7 @@ import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.disable
 import com.faithdeveloper.giveaway.utils.Extensions.enable
+import com.faithdeveloper.giveaway.utils.Extensions.hideKeyboard
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.NewPostVM
 import com.google.android.material.chip.Chip
@@ -506,13 +507,9 @@ class NewPost : Fragment() {
                 is Event.Success -> {
 //                    new post successfully created
                     dialog?.dismiss()
+                    requireContext().hideKeyboard(binding.root)
 //                        navigate to feed page
-                    findNavController().navigate(
-                        NewPostDirections.actionNewpostToFeed(
-//                                    inform Feed fragment of new post by user
-                            newPostAvailable = true
-                        )
-                    )
+                    findNavController().popBackStack()
                 }
                 is Event.Failure -> {
 //                    failed to create  new post
@@ -530,7 +527,7 @@ class NewPost : Fragment() {
     private fun showPostFailureDialog() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
-            cancelable = false,
+            cancelable = true,
             message = "We couldn't upload your post. Please try again",
             positiveButtonText = "Try again",
             positiveAction = {

@@ -101,7 +101,7 @@ class CommentsPagerAdapter(
                     }
                     with(comment) {
                         commentsText.text = commentText
-                        binding.time.text = Extensions.convertTime(time)
+                        binding.time.text = Extensions.convertTime(time!!)
                         if (idOfTheUserThisCommentIsAReplyTo != "" && idOfTheUserThisCommentIsAReplyTo != userUid) {
                             tag.makeVisible()
                             tag.text = userRepliedTo?.name

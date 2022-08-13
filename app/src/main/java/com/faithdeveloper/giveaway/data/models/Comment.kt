@@ -1,16 +1,20 @@
 package com.faithdeveloper.giveaway.data.models
 
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.*
+
 //@Entity(tableName = "CommentsTable", indices = [Index(value = ["localDbId"], unique = true)])
 data class Comment(
     var authorId:String,
     var commentText:String,
     var commentID:String,
-    var time:Long,
+    @ServerTimestamp
+    val time: Date?,
     var idOfPostThatIsCommented:String,
     var idOfTheUserThisCommentIsAReplyTo:String,
     var updated:Boolean
 ){
-    constructor(): this("", "", "", -1, "", "", false)
+    constructor(): this("", "", "", Date(), "", "", false)
 }
 /*
 @Entity(tableName = "CommentsTable", indices = [Index(value = ["localDbId"], unique = true)])

@@ -2,7 +2,7 @@ package com.faithdeveloper.giveaway.pagingsources
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.faithdeveloper.giveaway.data.models.FeedPagerKey
+import com.faithdeveloper.giveaway.data.models.PagerKey
 import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.PagerResponse
 import com.faithdeveloper.giveaway.data.Repository
@@ -12,13 +12,13 @@ class CommentsPagingSource(
     var firstTimeLoad: Boolean,
     private val postID: String
 ) :
-    PagingSource<FeedPagerKey, CommentData>() {
+    PagingSource<PagerKey, CommentData>() {
     override val jumpingSupported = false
     override val keyReuseSupported = false
 
-    override fun getRefreshKey(state: PagingState<FeedPagerKey, CommentData>) = null
+    override fun getRefreshKey(state: PagingState<PagerKey, CommentData>) = null
 
-    override suspend fun load(params: LoadParams<FeedPagerKey>): LoadResult<FeedPagerKey, CommentData> {
+    override suspend fun load(params: LoadParams<PagerKey>): LoadResult<PagerKey, CommentData> {
         return try {
             val response = repository.getComments(params.key!!, postID).data as PagerResponse<CommentData>
             val nextKey = if (response.data.isNotEmpty()) {
@@ -28,7 +28,7 @@ class CommentsPagingSource(
                     null
                 }
                 // new data still available in the database
-                else FeedPagerKey(lastSnapshot = response.lastSnapshot, filter = params.key!!.filter , loadSize = params.key!!.loadSize)
+                else PagerKey(lastSnapshot = response.lastSnapshot, filter = params.key!!.filter , loadSize = params.key!!.loadSize)
             } else {
                 // no new data found
                 null
@@ -37,7 +37,7 @@ class CommentsPagingSource(
             val prevKey = if (firstTimeLoad) {
                 firstTimeLoad = false
                 null
-            } else FeedPagerKey(lastSnapshot = params.key?.lastSnapshot , filter = params.key!!.filter, loadSize = params.key!!.loadSize)
+            } else PagerKey(lastSnapshot = params.key?.lastSnapshot , filter = params.key!!.filter, loadSize = params.key!!.loadSize)
             LoadResult.Page(
                 data = response.data,
                 nextKey = nextKey,

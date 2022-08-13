@@ -9,7 +9,7 @@ import androidx.paging.liveData
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.LiveEvent
 import com.faithdeveloper.giveaway.data.Repository
-import com.faithdeveloper.giveaway.data.models.FeedPagerKey
+import com.faithdeveloper.giveaway.data.models.PagerKey
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.pagingsources.CommentsPagingSource
 import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.POST
@@ -36,7 +36,7 @@ class CommentsVM(private val repository: Repository, val postID:String) : ViewMo
             prefetchDistance = 5
         ), pagingSourceFactory = {
             CommentsPagingSource(repository, true, postID)
-        }, initialKey = FeedPagerKey(null, DEFAULT_FILTER, 10)
+        }, initialKey = PagerKey(null, DEFAULT_FILTER, 10)
     ).liveData.cachedIn(viewModelScope)
 
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.core.content.edit
 import androidx.core.net.toFile
 import androidx.core.view.isVisible
@@ -20,6 +21,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import java.net.URLEncoder
+import java.util.*
 
 object Extensions {
     fun Context.showSnackbarShort(view: View, msg: String) {
@@ -213,26 +215,6 @@ object Extensions {
         ).getString("ProfilePicUrl", null)
     )
 
-
-//    suspend fun NeedVM.compressVideo(
-//        uri: Uri, repository: Repository
-//    ) {
-//        repository.compress(uri = uri,
-//            result = { returnedUri, size ->
-//                this.compressedUri(returnedUri, size)
-//            },
-//            progress = { percent ->
-//                this.updateVideoCompression(percent.toString())
-//            },
-//            failure = { failureMessage ->
-//                this.failure(failureMessage)
-//            },
-//            cancelled = { index ->
-//                this.cancelled(index)
-//            }
-//        )
-//    }
-
     fun Context.checkTypeOfMedia(uri: Uri): String {
         val mediaType = contentResolver.getType(uri)
         if (mediaType?.startsWith("image") == true)
@@ -240,7 +222,8 @@ object Extensions {
         else return "video"
     }
 
-    fun convertTime(time: Long): String {
+    fun convertTime(date: Date?): String {
+        val time = (date?: Date()).time
         var timeDiff: String = ""
         val diff = System.currentTimeMillis().minus(time)
         if (diff <= 1000) {
@@ -343,6 +326,11 @@ object Extensions {
         } else {
             Event.Failure("")
         }
+    }
+
+    fun Context.hideKeyboard(rootView: View) {
+        val inputMethodManager = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(rootView.windowToken, InputMethodManager.RESULT_UNCHANGED_SHOWN)
     }
 
     fun mediaSize(uri: Uri) = File(uri.path!!).length()

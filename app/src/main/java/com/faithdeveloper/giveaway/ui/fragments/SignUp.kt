@@ -1,11 +1,13 @@
 package com.faithdeveloper.giveaway.ui.fragments
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -19,6 +21,7 @@ import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.disable
 import com.faithdeveloper.giveaway.utils.Extensions.enable
+import com.faithdeveloper.giveaway.utils.Extensions.hideKeyboard
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.SignUpVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -238,13 +241,16 @@ class SignUp : Fragment() {
         /*Navigate to sign in page for user to enter email in order
         * to receive a reset password link in email*/
         binding.forgotPassword.setOnClickListener {
+            requireContext().hideKeyboard(binding.root)
             findNavController().navigate(SignUpDirections.actionSignUpToSignIn(forgotPassword = true))
         }
     }
 
+
     private fun handleTerms() {
         // open up terms and conditions
         binding.termsCondition.setOnClickListener {
+            requireContext().hideKeyboard(binding.root)
             dialog?.dismiss()
             dialogBuilder = requireContext().showDialog(
                 cancelable = true,
@@ -263,6 +269,7 @@ class SignUp : Fragment() {
     private fun handleSignIn() {
         // users wants to sign in. Navigate to sign in page
         binding.signIn.setOnClickListener {
+            requireContext().hideKeyboard(binding.root)
             findNavController().navigate(SignUpDirections.actionSignUpToSignIn())
         }
 
@@ -370,6 +377,7 @@ class SignUp : Fragment() {
     private fun handleContinueButton() {
         // user has filled in all necessary inputs
         binding.continueBtn.setOnClickListener {
+           requireContext().hideKeyboard(binding.root)
             signUp()
         }
     }

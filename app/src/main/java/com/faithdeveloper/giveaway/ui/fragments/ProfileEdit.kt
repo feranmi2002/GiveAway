@@ -25,8 +25,8 @@ import com.faithdeveloper.giveaway.*
 import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.data.Repository
-import com.faithdeveloper.giveaway.data.Repository.Companion.PHONE_NUMBER
-import com.faithdeveloper.giveaway.data.Repository.Companion.USERNAME
+import com.faithdeveloper.giveaway.data.Repository.Companion.PHONE_NUMBER_INDEX
+import com.faithdeveloper.giveaway.data.Repository.Companion.USERNAME_INDEX
 import com.faithdeveloper.giveaway.databinding.LayoutProfileEditBinding
 import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
@@ -174,8 +174,8 @@ class ProfileEdit : Fragment() {
     }
 
     private fun fillUserDetails() {
-        binding.nameLayout.editText?.setText(userDetails[USERNAME])
-        binding.phoneLayout.editText?.setText(userDetails[PHONE_NUMBER])
+        binding.nameLayout.editText?.setText(userDetails[USERNAME_INDEX])
+        binding.phoneLayout.editText?.setText(userDetails[PHONE_NUMBER_INDEX])
         if (viewModel.newPicture == null) {
             Glide.with(this)
                 .load(viewModel.getUserProfilePic())
@@ -201,7 +201,7 @@ class ProfileEdit : Fragment() {
                 p0?.let {
                     if (it.isNotEmpty()) {
                         binding.nameLayout.error = null
-                        nameSame = it.toString() == userDetails[USERNAME]
+                        nameSame = it.toString() == userDetails[USERNAME_INDEX]
                         handleContinueBox()
                     } else {
                         binding.nameLayout.error = getString(R.string.correct_name)
@@ -232,7 +232,7 @@ class ProfileEdit : Fragment() {
 
                     if (it.isNotEmpty() && android.util.Patterns.PHONE.matcher(it).matches()) {
                         binding.phoneLayout.error = null
-                        phoneSame = it.toString() == userDetails[PHONE_NUMBER]
+                        phoneSame = it.toString() == userDetails[PHONE_NUMBER_INDEX]
                         handleContinueBox()
                     } else {
                         binding.phoneLayout.error = getString(R.string.phone_num_error)

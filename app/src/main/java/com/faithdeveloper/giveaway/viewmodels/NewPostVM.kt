@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class NewPostVM(private val repository: Repository) : ViewModel() {
     private var _link: String? = null
-    private var _hasComments = false
+    private var _hasComments = true
     private val _newPostResult = LiveEvent<Event>()
     private val _mediaUri = mutableListOf<Uri>()
     private val _tags: HashMap<Int, Boolean> = HashMap()

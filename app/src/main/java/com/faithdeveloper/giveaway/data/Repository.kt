@@ -22,20 +22,25 @@ import com.faithdeveloper.giveaway.utils.Extensions.storeUserDetails
 import com.faithdeveloper.giveaway.utils.Extensions.storeUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.NotificationUtil
 import com.faithdeveloper.giveaway.viewmodels.FeedVM.Companion.DEFAULT_FILTER
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.CancellableTask
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.tasks.asDeferred
+import kotlinx.coroutines.tasks.asTask
 import kotlinx.coroutines.tasks.await
+import java.util.*
+import kotlin.collections.HashMap
 
 class Repository(
     private val auth: FirebaseAuth,
@@ -50,7 +55,7 @@ class Repository(
     private lateinit var authorProfileForProfileView: UserProfile
 
     //    the latest post uploaded by a user is stored in this variable
-    private lateinit var uploadedPost: Post
+    private var uploadedPost: Post? = null
 
     fun checkUserRegistration() = auth.currentUser
 
@@ -122,7 +127,7 @@ class Repository(
             val reference = database().collection(USERS).document(userUid()!!).get().await()
             if (reference.exists()) {
                 // user is already a verified user
-                if (userDetails[USERNAME] == null) {
+                if (userDetails[USERNAME_INDEX] == null) {
                     val userProfile = reference.toObject<UserProfile>()
                     context.storeUserDetails(
                         userProfile!!.name,
@@ -134,11 +139,11 @@ class Repository(
             } else {
                 if (emailIsVerified() == true) {
                     // signing in from normal process of sign up
-                    if (userDetails[USERNAME] != null) {
+                    if (userDetails[USERNAME_INDEX] != null) {
                         createUserProfile(
-                            userDetails[USERNAME]!!,
-                            userDetails[PHONE_NUMBER]!!,
-                            userDetails[EMAIL]!!
+                            userDetails[USERNAME_INDEX]!!,
+                            userDetails[PHONE_NUMBER_INDEX]!!,
+                            userDetails[EMAIL_INDEX]!!
                         )
                     }
                 } else {
@@ -240,7 +245,7 @@ class Repository(
                 post = Post(
                     authorId = userUid()!!,
                     postID = "${userUid()}$timePosted",
-                    time = timePosted,
+                    time = null,
                     text = postText,
                     tags = getTags(tags),
                     mediaUrls = mediaUrlsList,
@@ -279,7 +284,7 @@ class Repository(
 
 
     suspend fun getProfileFeed(
-        key: FeedPagerKey,
+        key: PagerKey,
         authorId: String
     ): Event {
         //        set up query
@@ -289,11 +294,13 @@ class Repository(
             database().collection(POSTS)
                 .limit(key.loadSize)
                 .whereEqualTo("authorId", authorId)
+                .orderBy("time", Query.Direction.DESCENDING)
                 .get().await()
         } else {
 //            previous data has been loaded, continues from where it stopped last which is based on the last snapshot from the key
             database().collection(POSTS)
                 .limit(key.loadSize)
+                .orderBy("time", Query.Direction.DESCENDING)
                 .whereEqualTo("authorId", authorId)
                 .startAfter(key.lastSnapshot)
                 .get().await()
@@ -318,7 +325,7 @@ class Repository(
         return result
     }
 
-    suspend fun getFeed(key: FeedPagerKey): Event {
+    suspend fun getFeed(key: PagerKey): Event {
 //        set up query
 //        'firebasePosts' is the returned posts in firebase model. It will be converted to the model @class Post
         val firebasePosts: QuerySnapshot = if (key.lastSnapshot == null) {
@@ -327,11 +334,13 @@ class Repository(
 //        gets all posts
                 database().collection(POSTS)
                     .limit(key.loadSize)
+                    .orderBy("time", Query.Direction.DESCENDING)
                     .get().await()
             } else {
 //            get posts under specific tag
                 database().collection(POSTS)
                     .limit(key.loadSize)
+                    .orderBy("time", Query.Direction.DESCENDING)
                     .whereArrayContains("tags", key.filter)
                     .get().await()
             }
@@ -340,11 +349,13 @@ class Repository(
             if (key.filter == DEFAULT_FILTER) {
                 database().collection(POSTS)
                     .limit(key.loadSize)
+                    .orderBy("time", Query.Direction.DESCENDING)
                     .startAfter(key.lastSnapshot)
                     .get().await()
             } else {
                 database().collection(POSTS)
                     .limit(key.loadSize)
+                    .orderBy("time", Query.Direction.DESCENDING)
                     .startAfter(key.lastSnapshot)
                     .whereArrayContains("tags", key.filter)
                     .get().await()
@@ -376,14 +387,61 @@ class Repository(
         return result
     }
 
+    suspend fun getLatestFeed(timestamp: Long, filter: String):Event{
+        var result:Event = Event.InProgress(null)
+        return try {
+
+            val firebasePosts  = if (filter== DEFAULT_FILTER) {
+                database().collection(POSTS)
+                    .whereGreaterThan("time", Date(timestamp))
+                    .limit(10)
+                    .orderBy("time", Query.Direction.DESCENDING)
+                    .get().await()
+            }else{
+                database().collection(POSTS)
+                    .whereGreaterThan("time", timestamp)
+                    .whereArrayContains("tags", filter)
+                    .limit(10)
+                    .orderBy("time", Query.Direction.DESCENDING)
+                    .get().await()
+            }
+            if (firebasePosts.size() > 0) {
+//            found data
+                coroutineScope {
+                    //            get the data of those who made the posts and converts the posts from the firebase snapshot to @class Post
+                    val getAuthorDataAndConvertItJob =
+                        async { getProfileOfPostAuthors(firebasePosts.documents) }
+                    val convertPostsJob =
+                        async { convertSnapshotToClass<Post>(firebasePosts.documents) }
+
+                    //            results of above two jobs
+                    val authorData = getAuthorDataAndConvertItJob.await()
+                    val posts = convertPostsJob.await()
+
+                    //            combine above two results
+                    val feedDataList = combineAuthorDataAndPostsData(authorData, posts)
+                    result = Event.Success(PagerResponse(feedDataList, firebasePosts.documents.last()))
+                }
+            }else{
+                result = Event.Success(null)// do nothing
+            }
+            result
+        }catch (e:Exception){
+            result = Event.Failure(null)
+            result
+        }
+    }
+
     private fun combineAuthorDataAndPostsData(
         authorData: List<UserProfile?>,
         posts: List<Post?>
     ): List<FeedData> {
         val result = authorData.mapIndexed { index, it ->
             FeedData(posts[index], it)
+
         }
         return result
+
 
     }
 
@@ -494,7 +552,7 @@ class Repository(
     }
 
     fun getUserProfilePicUrl(): String? = context.getUserProfilePicUrl()
-    suspend fun getComments(key: FeedPagerKey, postID: String): Event {
+    suspend fun getComments(key: PagerKey, postID: String): Event {
         //        set up query
 //        'firebaseComments' is the returned comments in firebase model. It will be converted to the model @class Comment
         val firebaseComments: QuerySnapshot = if (key.lastSnapshot == null) {
@@ -503,14 +561,17 @@ class Repository(
                 .document(postID)
                 .collection(COMMENTS)
                 .limit(key.loadSize)
+                .orderBy("time", Query.Direction.DESCENDING)
                 .whereEqualTo("idOfPostThatIsCommented", postID)
                 .get().await()
+
         } else {
 //            previous data has been loaded, continues from where it stopped last which is based on the last snapshot from the key
             database().collection(POST_DATA)
                 .document(postID)
                 .collection(COMMENTS)
                 .limit(key.loadSize)
+                .orderBy("time", Query.Direction.DESCENDING)
                 .whereEqualTo("idOfPostThatIsCommented", postID)
                 .startAfter(key.lastSnapshot)
                 .get().await()
@@ -735,10 +796,10 @@ class Repository(
 
     suspend fun updateComment(newComment: String, idOfPostThatIsCommentedOn: String): Event {
         return try {
-            val map = mutableMapOf<String, Any>(
+            val map = mutableMapOf<String, Any?>(
                 "commentText" to newComment,
                 "updated" to true,
-                "time" to System.currentTimeMillis()
+                "time" to null
             )
             database().collection(POST_DATA).document(idOfPostThatIsCommentedOn).update(map)
                 .await()
@@ -778,9 +839,15 @@ class Repository(
     }
 
     fun getUploadedPost() = FeedData(
-        uploadedPost,
+        uploadedPost!!,
         getUserProfile()
     )
+
+    fun checkIfNewUploadedPostIsAvailable() = uploadedPost != null
+    fun makeNewUploadedPostNull(){
+        uploadedPost = null
+    }
+
 
     fun setAuthorProfileForProfileView(authorProfile: UserProfile) {
         authorProfileForProfileView = authorProfile
@@ -798,13 +865,13 @@ class Repository(
                 userUid()!!,
                 commentText,
                 "${userUid()!!}${timePosted}",
-                System.currentTimeMillis(),
+                null,
                 idOfPostThatIsCommentedOn,
                 profileOfUserThisCommentIsAReplyTo?.id ?: "",
                 false
             )
             database().collection(POST_DATA).document(idOfPostThatIsCommentedOn).collection(COMMENTS)
-                .add(comment)
+                .add(comment).await()
             Event.Success(
                 CommentData(
                     comment,
@@ -823,9 +890,9 @@ class Repository(
         const val APP_URL = "https://faithdeveloper.page.link.pass"
         const val POSTS = "posts"
         const val USERS = "users"
-        const val USERNAME = 0
-        const val EMAIL = 1
-        const val PHONE_NUMBER = 2
+        const val USERNAME_INDEX = 0
+        const val EMAIL_INDEX = 1
+        const val PHONE_NUMBER_INDEX = 2
         const val PROFILE_PHOTOS = "Profile_pictures"
         const val POST_PHOTOS = "Post_photos"
         const val POST_VIDEOS = "Post_videos"

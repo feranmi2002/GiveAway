@@ -1,12 +1,14 @@
 package com.faithdeveloper.giveaway.ui.fragments
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -272,7 +274,12 @@ class SignIn : Fragment() {
 
     private fun handleSignInSuccess() {
         dialog?.dismiss()
+        hideKeyboard()
         findNavController().navigate(SignInDirections.actionSignInToHome2())
+    }
+    private fun hideKeyboard() {
+        val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(binding.root.windowToken, InputMethodManager.RESULT_UNCHANGED_SHOWN)
     }
 
     private fun handleViewPresentation() {

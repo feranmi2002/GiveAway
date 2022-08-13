@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -20,7 +19,6 @@ import androidx.paging.PagingData
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageView
@@ -41,6 +39,7 @@ import com.faithdeveloper.giveaway.utils.Extensions.getDataSavingMode
 import com.faithdeveloper.giveaway.utils.Extensions.getSignInStatus
 import com.faithdeveloper.giveaway.utils.Extensions.getUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.Extensions.launchLink
+import com.faithdeveloper.giveaway.utils.Extensions.makeGone
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.Extensions.sendEmail
@@ -109,10 +108,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
      * */
                 newSignIn =
                     requireContext().getSignInStatus() && requireContext().getUserProfilePicUrl() == null
-
-                arguments?.run {
-                    viewModel.setNewPostAvailable(getBoolean("newPostAvailable"))
-                }
 
 //                initialize third party library used for taking and cropping user profile picture
                 cropImage = registerForActivityResult(CropImageContract()) { result ->
@@ -186,6 +181,9 @@ class Feed : Fragment(), FragmentCommentsInterface {
         handleObservers()
         clickListeners()
 
+//        this is used to load the latest that been pre loaded in the background
+        handleLatestFeed()
+
 //        this is used to ask user to upload a profile picture if no profile picture is detected
         handleCreateProfilePicDialog()
 
@@ -205,7 +203,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
         setUpTags()
 
 //        check if a new post has just been uploaded by the user, then display it if true
-        if (viewModel.newPostAvailable()) addNewPost()
+        if (viewModel.checkIfNewPostAvailable()) addNewPost()
         super.onViewCreated(view, savedInstanceState)
     }
 
@@ -253,7 +251,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
 //        add the just uploaded post to the feed as user feedback that post was uploaded
         newPostData.add(viewModel.getUploadedPost())
         newPostAdapter.notifyItemInserted(newPostData.size + 1)
-        viewModel.setNewPostAvailable(false)
+        viewModel.makeNewUploadedPostNull()
     }
 
     //    handles permissions not granted by user
@@ -296,7 +294,9 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private fun handleRefresh() {
         binding.refresh.setOnRefreshListener {
             newPostData = mutableListOf()
+
             adapter.refresh()
+            viewModel
         }
     }
 
@@ -305,6 +305,15 @@ class Feed : Fragment(), FragmentCommentsInterface {
 //    observe the feed result
         viewModel.feedResult.observe(viewLifecycleOwner) {
             adapter.submitData(viewLifecycleOwner.lifecycle, it)
+        }
+
+//        observe latest feed result
+        viewModel.newFeedAvailableFlag.observe(viewLifecycleOwner) {
+            if (it) {
+                binding.latestFeed.makeVisible()
+            } else {
+                binding.latestFeed.makeGone()
+            }
         }
 //    observe result of profile picture upload
         viewModel.profilePicUpload.observe(viewLifecycleOwner) {
@@ -319,6 +328,13 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     // do nothing
                 }
             }
+        }
+    }
+
+    private fun handleLatestFeed() {
+        binding.latestFeed.setOnClickListener {
+            binding.latestFeed.makeGone()
+            adapter.refresh()
         }
     }
 
@@ -491,7 +507,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
 
         concatAdapter = ConcatAdapter(newPostAdapter, adapter)
-        viewModel.updateAdapterState(isSetUp = true)
+
 //        ..withLoadStateFooter(
 //            FeedLoadStateAdapter() {
 //                adapter.retry()
@@ -570,7 +586,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
     }
 
     private fun makeErrorLayoutInvisible() {
-
         binding.errorLayout.errorText.makeInVisible()
         binding.errorLayout.retryButton.makeInVisible()
     }

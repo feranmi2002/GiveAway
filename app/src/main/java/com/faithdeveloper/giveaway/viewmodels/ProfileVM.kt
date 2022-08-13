@@ -7,7 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
-import com.faithdeveloper.giveaway.data.models.FeedPagerKey
+import com.faithdeveloper.giveaway.data.models.PagerKey
 import com.faithdeveloper.giveaway.pagingsources.ProfilePagingSource
 
 class ProfileVM(val repository: Repository, private val getUserProfile: Boolean) : ViewModel() {
@@ -33,7 +33,7 @@ class ProfileVM(val repository: Repository, private val getUserProfile: Boolean)
         pagingSourceFactory = {
             ProfilePagingSource(repository, true, uid)
         },
-        initialKey = FeedPagerKey(
+        initialKey = PagerKey(
             lastSnapshot = null,
             filter = repository.getTimelineOption()!!,
             loadSize = 10

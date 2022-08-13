@@ -115,17 +115,7 @@
         android:id="@+id/newpost"
         android:name="com.faithdeveloper.giveaway.ui.fragments.NewPost"
         android:label="New Post"
-        tools:layout="@layout/layout_need_request">
-        <action
-            android:id="@+id/action_newpost_to_feed"
-            app:destination="@id/feed"
-            app:popUpTo="@id/newpost"
-            app:popUpToInclusive="true" >
-            <argument
-                android:name="newPostAvailable"
-                android:defaultValue="false" />
-        </action>
-    </fragment>
+        tools:layout="@layout/layout_need_request"/>
     <fragment
         android:id="@+id/comments"
         android:name="com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet"

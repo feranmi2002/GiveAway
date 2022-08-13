@@ -28,6 +28,7 @@ class NewFeedAdapter(
             val post = item.postData
             val poster = item.authorData
             with(binding) {
+                expandableText.setBackgroundColor(binding.root.context.resources.getColor(R.color.purple_200))
                 // load poster's profile picture
                 Glide.with(itemView)
                     .load(poster?.profilePicUrl)
@@ -70,7 +71,7 @@ class NewFeedAdapter(
                                 }
                             }
 
-                            // show time
+//                             show time
                             timeView.text = Extensions.convertTime(time)
 
                             //setup media
