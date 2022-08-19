@@ -53,7 +53,8 @@ class FeedPagingSource(
                 if (!responseFromCachedLatestFeed) viewmodelCallbackInterface.latestFeedTimestamp(response.data.first().postData?.time!!.time)
                 firstTimeLoad = false
                 null
-            } else {
+            }else if (firstTimeLoad && response.data.isEmpty()) null
+            else {
                 if (responseFromCachedLatestFeed) null
                 else PagerKey(lastSnapshot = params.key?.lastSnapshot , filter = params.key!!.filter, loadSize = params.key!!.loadSize)
             }

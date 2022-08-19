@@ -5,11 +5,11 @@ import com.faithdeveloper.giveaway.data.models.FeedData
 
 object FEED_ITEM_COMPARATOR : DiffUtil.ItemCallback<FeedData>() {
 
-    override fun areItemsTheSame(oldItem: FeedData, newItem: FeedData) = false
+    override fun areItemsTheSame(oldItem: FeedData, newItem: FeedData) = oldItem == newItem
 
     override fun areContentsTheSame(
         oldItem: FeedData,
         newItem: FeedData
     ) =
-    oldItem == newItem
+    oldItem.postData?.postID == newItem.postData?.postID
 }

@@ -6,12 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.viewmodels.*
-
 class VMFactory(private val repository: Repository, val postID:String?=null, val getUserProfile:Boolean = true) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SignUpVM::class.java))
-
             return SignUpVM(repository) as T
         if (modelClass.isAssignableFrom(SignInVM::class.java))
             return SignInVM(repository) as T
@@ -29,6 +27,8 @@ class VMFactory(private val repository: Repository, val postID:String?=null, val
             return ProfileEditVM(repository) as T
         if (modelClass.isAssignableFrom(SearchVM::class.java))
             return SearchVM(repository) as T
+        if (modelClass.isAssignableFrom(UserUnverifiedVM::class.java))
+            return UserUnverifiedVM(repository) as T
         else throw IllegalArgumentException("Unknown Class")
     }
 }

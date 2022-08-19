@@ -25,6 +25,9 @@
             app:destination="@id/signIn"
             app:popUpTo="@id/splashScreen"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_splashScreen_to_userUnverified"
+            app:destination="@id/userUnverified" />
     </fragment>
     <fragment
         android:id="@+id/signUp"
@@ -36,6 +39,9 @@
             app:destination="@id/signIn"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_signUp_to_userUnverified"
+            app:destination="@id/userUnverified" />
     </fragment>
     <fragment
         android:id="@+id/feed"
@@ -73,21 +79,12 @@
             app:destination="@id/feed"
             app:popUpTo="@id/splashScreen"
             app:popUpToInclusive="true" />
-        <argument
-            android:name="unverifiedEmail"
-            android:defaultValue="false"
-            app:argType="boolean" />
-        <argument
-            android:name="forgotPassword"
-            android:defaultValue="false"
-            app:argType="boolean" />
         <action
             android:id="@+id/action_signIn_to_signUp"
             app:destination="@id/signUp" />
-        <argument
-            android:name="signUpVerifiedEmailSuccess"
-            android:defaultValue="false"
-            app:argType="boolean" />
+        <action
+            android:id="@+id/action_signIn_to_userUnverified"
+            app:destination="@id/userUnverified" />
     </fragment>
     <fragment
         android:id="@+id/search"
@@ -147,4 +144,18 @@
         android:id="@+id/profileEdit"
         android:name="com.faithdeveloper.giveaway.ui.fragments.ProfileEdit"
         android:label="ProfileEdit" />
+    <fragment
+        android:id="@+id/userUnverified"
+        android:name="com.faithdeveloper.giveaway.ui.fragments.UserUnverified"
+        android:label="layout_unverified_email"
+        tools:layout="@layout/layout_unverified_email" >
+        <argument
+            android:name="email"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="linkSent"
+            app:argType="boolean"
+            android:defaultValue="false" />
+    </fragment>
 </navigation>

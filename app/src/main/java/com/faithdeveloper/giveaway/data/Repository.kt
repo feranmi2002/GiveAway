@@ -128,6 +128,7 @@ class Repository(
             if (reference.exists()) {
                 // user is already a verified user
                 if (userDetails[USERNAME_INDEX] == null) {
+//                    store user details if not found on device
                     val userProfile = reference.toObject<UserProfile>()
                     context.storeUserDetails(
                         userProfile!!.name,

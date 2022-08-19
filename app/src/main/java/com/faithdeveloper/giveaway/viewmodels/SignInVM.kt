@@ -11,18 +11,13 @@ import kotlinx.coroutines.launch
 class SignInVM(private val repository: Repository) : ViewModel() {
     private val _result = LiveEvent<Event>()
     val result get() = _result
-    private val _timer = LiveEvent<String>()
+    private val _timer = LiveEvent<Long>()
     val timer get() = _timer
 
     fun forgotPassword(email: String) {
         viewModelScope.launch {
-            _result.postValue(repository.forgotPassword(email))
-        }
-    }
-
-    fun verifyEmail() {
-        viewModelScope.launch {
-            _result.postValue(repository.verifyEmail())
+            if (repository.emailIsVerified() == true) _result.postValue(repository.forgotPassword(email))
+            else _result.postValue(Event.Failure(null, msg = "Email unverified"))
         }
     }
 
@@ -53,7 +48,7 @@ class SignInVM(private val repository: Repository) : ViewModel() {
     fun startCounter() {
         val timer = object : CountDownTimer(120000, 1000) {
             override fun onTick(time: Long) {
-                _timer.postValue((time.div(1000)).toString())
+                _timer.postValue(time)
             }
 
             override fun onFinish() {

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">GiveAway</string>
-    <string name="create_an_account">Create an Account</string>
+    <string name="create_an_account">>Let\'s help you connect by first creating your account</string>
     <string name="name_acc_creation">Name</string>
     <string name="email_hint">Email</string>
     <string name="password_hint">Password</string>
@@ -23,8 +23,8 @@
     <string name="gift">Gift</string>
     <string name="filter">Filter</string>
     <string name="verify">VERIFY</string>
-    <string name="create_account">Create Account</string>
-    <string name="don_t_have_an_account">Don\'t have an account?</string>
+    <string name="create_account">Sign Up</string>
+    <string name="don_t_have_an_account">New User?</string>
     <string name="resetPassword_text">Enter email and click continue to reset your password</string>
     <string name="verify_email">Enter email and click Verify to verify your email</string>
     <string name="password_characters">Password can\'t be less than 6 characters</string>
@@ -36,11 +36,6 @@
     <string name="request">Request</string>
     <string name="empty_post_warning">Post is empty</string>
     <string name="retry">retry</string>
-
-    <string-array name="new_post_options">
-        <item>Need/Gift</item>
-        <item>Exchange</item>
-    </string-array>
 
     <string-array name="tags">
         <item>Electronics</item>

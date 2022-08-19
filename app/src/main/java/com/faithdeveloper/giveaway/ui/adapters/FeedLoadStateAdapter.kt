@@ -26,8 +26,10 @@ class FeedLoadStateAdapter(private val retry: () -> Unit) :
                         retryButton.makeInVisible()
                         progressCircular.makeVisible()
                     }
-                    else -> {
-                        // do nothing
+                    is LoadState.NotLoading -> {
+                        errorText.makeInVisible()
+                        retryButton.makeInVisible()
+                        progressCircular.makeInVisible()
                     }
                 }
                 retryButton.setOnClickListener {

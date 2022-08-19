@@ -101,11 +101,8 @@ class SignUp : Fragment() {
         // opens terms and condition of app
         handleTerms()
 
-        /*These functions update the
-        * a) forgot_password view
-        * b) continue_button view
+        /*These function updates the continue_button view
         * based on the user inputs.*/
-        handleForgotPassword()
         handleContinueButton()
 
         // Navigates to the sign in page.
@@ -232,19 +229,11 @@ class SignUp : Fragment() {
 
     private fun handleUnverifiedEmail() {
         /*user has signed up and has to verify email. So navigate to
-        * sSignIn fragment so user can sign in after verification of email or request
+        *UserUnverified fragment so user can request
         * for another email verification link*/
-        findNavController().navigate(SignUpDirections.actionSignUpToSignIn(unverifiedEmail = true))
+     findNavController().navigate(SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString().trim()))
     }
 
-    private fun handleForgotPassword() {
-        /*Navigate to sign in page for user to enter email in order
-        * to receive a reset password link in email*/
-        binding.forgotPassword.setOnClickListener {
-            requireContext().hideKeyboard(binding.root)
-            findNavController().navigate(SignUpDirections.actionSignUpToSignIn(forgotPassword = true))
-        }
-    }
 
 
     private fun handleTerms() {
@@ -308,7 +297,7 @@ class SignUp : Fragment() {
             positiveButtonText = "OK",
             positiveAction = {
                 findNavController().navigate(
-                    SignUpDirections.actionSignUpToSignIn(signUpVerifiedEmailSuccess = true)
+                   SignUpDirections.actionSignUpToUserUnverified(null, true)
                 )
             }
         )

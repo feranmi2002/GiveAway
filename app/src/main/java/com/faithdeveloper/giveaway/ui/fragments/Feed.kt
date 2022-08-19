@@ -30,6 +30,7 @@ import com.faithdeveloper.giveaway.data.Repository.Companion.APP_STARTED
 import com.faithdeveloper.giveaway.data.models.FeedData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutFeedBinding
+import com.faithdeveloper.giveaway.ui.adapters.FeedLoadStateAdapter
 import com.faithdeveloper.giveaway.ui.adapters.FeedPagerAdapter
 import com.faithdeveloper.giveaway.ui.adapters.NewFeedAdapter
 import com.faithdeveloper.giveaway.utils.ActivityObserver
@@ -62,13 +63,9 @@ import kotlin.properties.Delegates
 
 class Feed : Fragment(), FragmentCommentsInterface {
     // init properties
-
-    private lateinit var newPostData: MutableList<FeedData>
     private lateinit var cropImage: ActivityResultLauncher<CropImageContractOptions>
     private lateinit var requestMultiplePermissions: ActivityResultLauncher<Array<String>>
     private lateinit var adapter: FeedPagerAdapter
-    private lateinit var newPostAdapter: NewFeedAdapter
-    private var concatAdapter: ConcatAdapter? = null
     private lateinit var viewModel: FeedVM
     private lateinit var activityObserver: ActivityObserver
     private var _binding: LayoutFeedBinding? = null
@@ -77,10 +74,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private var dialogBuilder: MaterialAlertDialogBuilder? = null
     private var dialog: AlertDialog? = null
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        newPostData = mutableListOf()
-
         /*
       * activityObserver observes the lifecycle of the activity and performs corresponding actions
       * */
@@ -196,14 +190,16 @@ class Feed : Fragment(), FragmentCommentsInterface {
         )
         binding.recycler.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-        binding.recycler.adapter = concatAdapter
-
+        binding.recycler.adapter = adapter.withLoadStateHeaderAndFooter(
+            FeedLoadStateAdapter(){adapter.retry()},
+            FeedLoadStateAdapter(){adapter.retry()},
+        )
         setUpLoadState()
         handleRefresh()
         setUpTags()
 
 //        check if a new post has just been uploaded by the user, then display it if true
-        if (viewModel.checkIfNewPostAvailable()) addNewPost()
+         viewModel.checkIfNewPostAvailable()
         super.onViewCreated(view, savedInstanceState)
     }
 
@@ -219,12 +215,9 @@ class Feed : Fragment(), FragmentCommentsInterface {
 //              reload feed on tag selected changed
 
 //                first clear existing data
-
                 binding.refresh.isRefreshing = false
-                binding.recycler.removeAllViewsInLayout()
                 adapter.submitData(viewLifecycleOwner.lifecycle, PagingData.empty())
-                newPostData.clear()
-                newPostAdapter.notifyDataSetChanged()
+                binding.recycler.removeAllViewsInLayout()
 
                 val chip: Chip? = group.findViewById<Chip>(checkedId)
 //                this triggers a reload of data from remote database with the filter
@@ -246,13 +239,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
     // this is done because seems there is a problem (bug) with the output uri of the crop library
     private fun convertFilePathToUri(path: String) = File(path).toUri()
-
-    private fun addNewPost() {
-//        add the just uploaded post to the feed as user feedback that post was uploaded
-        newPostData.add(viewModel.getUploadedPost())
-        newPostAdapter.notifyItemInserted(newPostData.size + 1)
-        viewModel.makeNewUploadedPostNull()
-    }
 
     //    handles permissions not granted by user
     private fun permissionDenied() {
@@ -293,10 +279,11 @@ class Feed : Fragment(), FragmentCommentsInterface {
     //    refreshes the feed
     private fun handleRefresh() {
         binding.refresh.setOnRefreshListener {
-            newPostData = mutableListOf()
-
+            binding.latestFeed.makeGone()
+            viewModel.clearViewModelPreloadedData()
+            viewModel.stopPreloadingLatestFeed()
+            adapter.submitData(viewLifecycleOwner.lifecycle, PagingData.empty())
             adapter.refresh()
-            viewModel
         }
     }
 
@@ -455,7 +442,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     launchLink(data)
                     return@FeedPagerAdapter
                 }
-
             },
             { profileName ->
                 navigateToProfilePage(profileName)
@@ -464,54 +450,10 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 showImages(images.toList(), hasVideo)
             },
             { menuAction -> }, viewModel.userUid(),
-            requireContext().getDataSavingMode()
-        )
-
-        newPostAdapter = NewFeedAdapter(
-            { action, data, posterID ->
-                if (action == "email") {
-                    if (sendEmail(data) is Event.Failure) noAppToHandleRequest()
-                    return@NewFeedAdapter
-                }
-                if (action == "whatsapp") {
-                    if (sendWhatsapp(data) is Event.Failure) noAppToHandleRequest()
-                    return@NewFeedAdapter
-                }
-                if (action == "phone") {
-                    if (sendPhone(data) is Event.Failure) noAppToHandleRequest()
-                    return@NewFeedAdapter
-                }
-                if (action == "comments") {
-                    showComments(data, posterID, fragmentCommentsInterface = this)
-                    return@NewFeedAdapter
-                }
-                if (action == "launchLink") {
-                    launchLink(data)
-                    return@NewFeedAdapter
-                }
-
-            },
-            { profileName ->
-                navigateToProfilePage(profileName)
-            },
-            { images, hasVideo ->
-                showImages(images.toList(), hasVideo)
-            },
-            { menuAction -> }, viewModel.userUid(),
-            newPostData,
             requireContext().getDataSavingMode()
         )
         adapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-        newPostAdapter.stateRestorationPolicy =
-            RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
-
-        concatAdapter = ConcatAdapter(newPostAdapter, adapter)
-
-//        ..withLoadStateFooter(
-//            FeedLoadStateAdapter() {
-//                adapter.retry()
-//            }
     }
 
     private fun showImages(images: List<String>, hasVideo: Boolean) {

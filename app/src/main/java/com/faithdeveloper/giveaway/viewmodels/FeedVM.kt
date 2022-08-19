@@ -8,10 +8,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
-import com.faithdeveloper.giveaway.data.models.FeedData
-import com.faithdeveloper.giveaway.data.models.PagerKey
-import com.faithdeveloper.giveaway.data.models.PagerResponse
-import com.faithdeveloper.giveaway.data.models.UserProfile
+import com.faithdeveloper.giveaway.data.models.*
 import com.faithdeveloper.giveaway.pagingsources.FeedPagingSource
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.LiveEvent
@@ -53,10 +50,14 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
 
     private val _feedResult = loadFilter.distinctUntilChanged().switchMap { filter ->
         clearViewModelPreloadedData()
+       stopPreloadingLatestFeed()
+        loadFeed(filter)
+    }
+
+    fun stopPreloadingLatestFeed(){
         countDownTimer?.cancel()
         countDownTimer = null
         latestFeedJob?.cancel()
-        loadFeed(filter)
     }
     val feedResult get() = _feedResult
 
@@ -78,13 +79,11 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
                         else _newFeedAvailableFlag.postValue(false)
                     }
                 }
-                countDownTimer?.start()
+//                stop prefetching feed dta when there is already above 30 prefetched feed items
+                if (preloadedLatestFeed.size < 30) countDownTimer?.start()
             }
         }
     }
-
-    //    this is the post that was just uploaded by the user
-    fun getUploadedPost() = repository.getUploadedPost()
 
     fun uploadProfilePicture(profilePicPath: Uri) {
         viewModelScope.launch {
@@ -95,13 +94,17 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     }
 
     fun filter() = loadFilter.value ?: DEFAULT_FILTER
+
     fun setLoadFilter(filter: String) {
         loadFilter.value = filter
     }
 
-    fun checkIfNewPostAvailable() = repository.checkIfNewUploadedPostIsAvailable()
-    fun makeNewUploadedPostNull() {
-        repository.makeNewUploadedPostNull()
+    fun checkIfNewPostAvailable() {
+        if (repository.checkIfNewUploadedPostIsAvailable()){
+            preloadedLatestFeed.add(repository.getUploadedPost())
+            _newFeedAvailableFlag.postValue(true)
+            repository.makeNewUploadedPostNull()
+        }
     }
 
     private fun loadFeed(filter: String) =
@@ -127,7 +130,6 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
                 loadSize = 10,
             )
         ).liveData.cachedIn(viewModelScope)
-
 
     fun userUid() = repository.userUid()!!
 
@@ -163,7 +165,6 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     companion object {
         const val DEFAULT_FILTER = "All"
     }
-
 
 }
 

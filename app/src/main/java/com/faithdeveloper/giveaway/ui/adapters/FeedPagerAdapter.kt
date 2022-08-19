@@ -76,7 +76,7 @@ class FeedPagerAdapter(
                             }
 
                             // show time
-                            timeView.text = Extensions.convertTime(time!!)
+                            timeView.text = Extensions.convertTime(time)
 
                             //setup media
                             if (mediaUrls.isNotEmpty()) {
