@@ -148,7 +148,7 @@ class Repository(
                         )
                     }
                 } else {
-                    throw Exception("User email not verified")
+                    throw Exception("Email unverified")
                 }
             }
             context.setSignInStatus(true)

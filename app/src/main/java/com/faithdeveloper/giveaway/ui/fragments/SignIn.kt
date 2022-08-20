@@ -75,7 +75,7 @@ class SignIn : Fragment() {
         // initialize live data observer
         handleObserver()
 
-        /*This functions navigate to their respective fragments*/
+       // navigate to sign up fragment
         onClickCreateAccount()
 
 //        sends link to user's mail to reset password
@@ -117,18 +117,18 @@ class SignIn : Fragment() {
         })
 
         viewModel.timer.observe(viewLifecycleOwner, Observer {
-            binding.forgotPassword.text = DateUtils.formatElapsedTime(it / 1000)
-            if (it < 1)
+            binding.forgotPassword.text  = DateUtils.formatElapsedTime(it / 1000)
+            if (it < 1000) {
                 binding.loginBtn.enable()
-            binding.signUp.enable()
-            binding.forgotPassword.text = "Forgot Password?"
-            binding.forgotPassword.isClickable = true
-
+                binding.signUp.enable()
+                binding.forgotPassword.text = "Forgot Password?"
+                binding.forgotPassword.isClickable = true
+            }
         })
     }
 
     private fun handleUnverifiedEmail() {
-        findNavController().navigate(SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString()))
+        findNavController().navigate(SignInDirections.actionSignInToUserUnverified(binding.emailLayout.editText?.text.toString()))
     }
 
     private fun handlePasswordResetFailure() {
@@ -170,10 +170,10 @@ class SignIn : Fragment() {
     private fun handlePasswordResetSuccess() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
-            cancelable = true,
+            cancelable = false,
             message = "Link to reset your password has been sent to ${
                 binding.emailLayout.editText?.text.toString().trim()
-            }",
+            }. Go to your inbox to reset your password",
             positiveButtonText = "OK",
             positiveAction = {
                 // do nothing

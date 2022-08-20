@@ -14,7 +14,7 @@ class UserUnverifiedVM(val repository: Repository) : ViewModel() {
     private val _timer = LiveEvent<Long>()
     val timer get() = _timer
 
-    fun verifyEmail(email: String) {
+    fun verifyEmail() {
         viewModelScope.launch {
             _result.postValue(repository.verifyEmail())
         }
@@ -33,6 +33,8 @@ class UserUnverifiedVM(val repository: Repository) : ViewModel() {
         }
         timer.start()
     }
+
+    fun getUserEmail(): String = repository.getUserProfile().email
 
 
 }

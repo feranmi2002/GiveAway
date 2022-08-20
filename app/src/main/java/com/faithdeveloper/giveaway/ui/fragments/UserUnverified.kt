@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import com.faithdeveloper.giveaway.MainActivity
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository
@@ -19,6 +20,8 @@ import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.disable
 import com.faithdeveloper.giveaway.utils.Extensions.enable
+import com.faithdeveloper.giveaway.utils.Extensions.makeGone
+import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.UserUnverifiedVM
@@ -69,26 +72,25 @@ class UserUnverified : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-        watchEmailBox()
         handleObserver()
 
         binding.verify.setOnClickListener {
             handleVerify()
         }
 
+        binding.signIn.setOnClickListener {
+            findNavController().navigate(UserUnverifiedDirections.actionUserUnverifiedToSignIn())
+        }
+
         if (verificationLinkAlreadySent) {
             binding.verify.disable()
+            binding.signIn.disable()
+            binding.time.makeVisible()
             viewModel.startCounter()
             verificationLinkAlreadySent = false
         }
-
-        if (emailAddress != null) {
-            binding.emailLayout.editText!!.setText(emailAddress!!)
-            handleVerify()
-            emailAddress = null
-        }
-
+        binding.emailLayout.editText!!.setText(emailAddress ?: viewModel.getUserEmail())
+        binding.emailLayout.disable()
         super.onViewCreated(view, savedInstanceState)
     }
 
@@ -106,21 +108,42 @@ class UserUnverified : Fragment() {
     private fun handleObserver() {
         viewModel.result.observe(viewLifecycleOwner) {
             if (it is Event.Success) {
+                showVerificationSuccessDialog()
+                binding.signIn.disable()
                 binding.verify.disable()
+                binding.time.makeVisible()
                 viewModel.startCounter()
             } else showVerificationFailureDialog()
         }
         viewModel.timer.observe(viewLifecycleOwner) {
-            binding.verify.text = DateUtils.formatElapsedTime(it / 1000)
-            if (it < 1)
+            binding.time.text = DateUtils.formatElapsedTime(it / 1000)
+            if (it < 1000) {
+                binding.signIn.enable()
                 binding.verify.enable()
-            binding.verify.text = "Verify"
+                binding.time.makeGone()
+            }
         }
+    }
+
+    private fun showVerificationSuccessDialog() {
+        dialog?.dismiss()
+        dialogBuilder = requireContext().showDialog(
+            cancelable = false,
+            message = "Link to verify your email has been sent to ${
+                binding.emailLayout.editText?.text.toString().trim()
+            }. Go to your inbox to complete your registration.",
+            positiveButtonText = "OK",
+            positiveAction = {
+                // do nothing
+            }
+        )
+        dialog = dialogBuilder?.create()
+        dialog?.show()
     }
 
     private fun handleVerify() {
         processDialog()
-        viewModel.verifyEmail(binding.emailLayout.editText!!.text.toString().trim())
+        viewModel.verifyEmail()
     }
 
     private fun showVerificationFailureDialog() {
@@ -131,7 +154,7 @@ class UserUnverified : Fragment() {
             positiveButtonText = "TRY AGAIN",
             negativeButtonText = "CANCEL",
             positiveAction = {
-                viewModel.verifyEmail(binding.emailLayout.editText!!.text.toString().trim())
+                viewModel.verifyEmail()
             },
             negativeAction = {
                 // do nothing
@@ -140,33 +163,6 @@ class UserUnverified : Fragment() {
         dialog = dialogBuilder?.create()
         dialog?.show()
     }
-
-    private fun watchEmailBox() {
-        binding.emailLayout.editText?.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(emailText: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                // do nothing
-            }
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                // do nothing
-            }
-
-            override fun afterTextChanged(editable: Editable?) {
-                editable?.let {
-                    if (it.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(editable)
-                            .matches()
-                    ) {
-                        binding.emailLayout.error = null
-                        binding.verify.enable()
-                    } else {
-                        binding.emailLayout.error = getString(R.string.enter_correct_email)
-                    }
-                }
-            }
-
-        })
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

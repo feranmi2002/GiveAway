@@ -16,8 +16,7 @@ class SignInVM(private val repository: Repository) : ViewModel() {
 
     fun forgotPassword(email: String) {
         viewModelScope.launch {
-            if (repository.emailIsVerified() == true) _result.postValue(repository.forgotPassword(email))
-            else _result.postValue(Event.Failure(null, msg = "Email unverified"))
+             _result.postValue(repository.forgotPassword(email))
         }
     }
 

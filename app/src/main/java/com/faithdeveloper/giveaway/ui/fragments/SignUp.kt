@@ -231,10 +231,8 @@ class SignUp : Fragment() {
         /*user has signed up and has to verify email. So navigate to
         *UserUnverified fragment so user can request
         * for another email verification link*/
-     findNavController().navigate(SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString().trim()))
+     findNavController().navigate(SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString()))
     }
-
-
 
     private fun handleTerms() {
         // open up terms and conditions
@@ -293,11 +291,11 @@ class SignUp : Fragment() {
             cancelable = false,
             message = "Link to verify your email has been sent to ${
                 binding.emailLayout.editText?.text.toString().trim()
-            } to complete your registration.",
+            }. Go to your inbox to complete your registration.",
             positiveButtonText = "OK",
             positiveAction = {
                 findNavController().navigate(
-                   SignUpDirections.actionSignUpToUserUnverified(null, true)
+                   SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString(), true)
                 )
             }
         )
@@ -310,7 +308,7 @@ class SignUp : Fragment() {
 
         dialogBuilder = requireContext().showDialog(
             cancelable = false,
-            message = "We couldn't verify your account. ",
+            message = "We couldn't verify your account. Please try again ",
             positiveButtonText = "TRY AGAIN",
             negativeButtonText = "CANCEL",
             positiveAction = {
