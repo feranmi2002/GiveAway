@@ -25,20 +25,21 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageView
 import com.canhub.cropper.options
-import com.faithdeveloper.giveaway.*
-import com.faithdeveloper.giveaway.utils.Extensions.checkTypeOfMedia
-import com.faithdeveloper.giveaway.utils.Extensions.mediaSize
-import com.faithdeveloper.giveaway.utils.Extensions.showDialog
-import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
-import com.faithdeveloper.giveaway.ui.adapters.NewPostMediaAdapter
+import com.faithdeveloper.giveaway.MainActivity
+import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository
-import com.faithdeveloper.giveaway.databinding.LayoutNeedRequestBinding
+import com.faithdeveloper.giveaway.databinding.LayoutPostBinding
 import com.faithdeveloper.giveaway.databinding.LinkLayoutBinding
+import com.faithdeveloper.giveaway.ui.adapters.NewPostMediaAdapter
 import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
+import com.faithdeveloper.giveaway.utils.Extensions.checkTypeOfMedia
 import com.faithdeveloper.giveaway.utils.Extensions.disable
 import com.faithdeveloper.giveaway.utils.Extensions.enable
 import com.faithdeveloper.giveaway.utils.Extensions.hideKeyboard
+import com.faithdeveloper.giveaway.utils.Extensions.mediaSize
+import com.faithdeveloper.giveaway.utils.Extensions.showDialog
+import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.NewPostVM
 import com.google.android.material.chip.Chip
@@ -49,12 +50,13 @@ import kotlin.properties.Delegates
 @SuppressLint("NotifyDataSetChanged")
 class NewPost : Fragment() {
     // init properties
-    private var _binding: LayoutNeedRequestBinding? = null
+    private var _binding: LayoutPostBinding? = null
     private val binding get() = _binding!!
     private var dialogBuilder: MaterialAlertDialogBuilder? = null
     private var dialog: AlertDialog? = null
     private var videoChosen by Delegates.notNull<Boolean>()
     private var imageChosen by Delegates.notNull<Boolean>()
+
     //    'imageMax' is used to know that max number of images for a post have been selected
     private var imageMax by Delegates.notNull<Boolean>()
 
@@ -298,7 +300,7 @@ class NewPost : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = LayoutNeedRequestBinding.inflate(inflater, container, false)
+        _binding = LayoutPostBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -615,7 +617,7 @@ class NewPost : Fragment() {
 //                update comment option and its view
                 if (viewModel.hasComments) {
                     viewModel.setComment(false)
-                    mediaControls.addComment.setImageResource(R.drawable.ic_outline_insert_comment_24)
+                    mediaControls.addComment.setImageResource(R.drawable.ic_outline_insert_comment_diasbled_24)
                     requireContext().showSnackbarShort(
                         binding.root,
                         "Comments on this Post is disabled"
@@ -663,6 +665,7 @@ class NewPost : Fragment() {
 //                    check if max allowed number of tags have been reached
             if (viewModel.tagsSize() == MAX_NUMBER_OF_TAGS) {
                 dialog?.dismiss()
+                binding.mediaControls.newTag.setImageResource(R.drawable.ic_baseline_add_box_disabled_24)
                 requireContext().showSnackbarShort(binding.root, "Max of 3 tags allowed")
             }
         } else {
@@ -676,6 +679,7 @@ class NewPost : Fragment() {
     private fun removeMedia() {
         mediaRecycler.notifyDataSetChanged()
     }
+
     private fun showTags() {
         binding.chipGroup.removeAllViews()
         val chipsData = resources.getStringArray(R.array.tags)
@@ -691,6 +695,7 @@ class NewPost : Fragment() {
                 chip.setOnCloseIconClickListener {
                     viewModel.removeTag(item.key)
                     binding.chipGroup.removeView(chip)
+                    binding.mediaControls.newTag.setImageResource(R.drawable.ic_baseline_add_box_24)
                 }
                 binding.chipGroup.addView(chip)
             }

@@ -41,6 +41,8 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.7.0'
 //    implementation "androix.room:room-ktx:2.4.2"
+    implementation 'com.github.chrisbanes:PhotoView:2.0.0'
+    implementation 'com.github.vinodbaste:ImageCompressor:1.0.1'
     implementation 'io.github.glailton.expandabletextview:expandabletextview:1.0.2'
     implementation 'com.ms-square:expandableTextView:0.1.4'
       implementation "androidx.room:room-runtime:2.4.0"
@@ -65,13 +67,10 @@ dependencies {
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
     implementation 'androidx.datastore:datastore:1.0.0'
     implementation 'com.google.android.exoplayer:exoplayer:2.18.1'
-//   implementation 'com.wayne.expandabletextview:expandable-textview:1.1.3'
     //    implementation 'androidx.webkit:webkit:1.4.0'
 //    implementation 'id.zelory:compressor:3.0.1'
     //  implementation 'com.github.Shouheng88:compressor:1.6.0'
-    //  implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-//    implementation 'com.github.GrishinSergey:CollageImageView:2.0.2'
     implementation 'com.google.firebase:firebase-auth:21.0.1'
     implementation 'com.google.firebase:firebase-storage:20.0.0'
     implementation 'com.google.firebase:firebase-messaging:23.0.0'

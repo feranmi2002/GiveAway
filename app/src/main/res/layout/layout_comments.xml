@@ -1,97 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/comments_btmSheet"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
     tools:context=".ui.fragments.CommentsBottomSheet">
 
-    <LinearLayout
-        android:id="@+id/titleLayout"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="15dp">
+        android:nestedScrollingEnabled="true"
+        android:layout_height="match_parent">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/title"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:paddingBottom="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
             android:text="Comments"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-            android:textColor="@color/design_default_color_primary" />
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/count"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginStart="8dp"
+            android:gravity="center"
+            android:text="300"
+            android:textColor="@color/purple_500_lighter"
+            app:layout_constraintBottom_toBottomOf="@+id/title"
+            app:layout_constraintEnd_toStartOf="@+id/dismiss"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toEndOf="@+id/title"
+            app:layout_constraintTop_toTopOf="@+id/title" />
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/dismiss"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@id/title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/title"
             app:srcCompat="@drawable/ic_baseline_close_24" />
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/comments"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/titleLayout"
-        android:orientation="horizontal">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/comments_layout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            app:boxBackgroundColor="@color/purple_200_lighter"
-            app:boxBackgroundMode="none"
-            app:endIconDrawable="@drawable/ic_baseline_send_24">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/comments_text"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:hint="@string/write_a_comment"
-                android:inputType="textAutoComplete" />
-        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/send"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:srcCompat="@drawable/ic_baseline_send_24" />
-    </LinearLayout>
+            android:id="@+id/divider1"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/title"
+            app:srcCompat="@drawable/square_divider" />
 
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/profile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="3dp"
+            app:layout_constraintStart_toStartOf="@id/title"
+            app:layout_constraintTop_toBottomOf="@id/divider1"
+            app:shapeAppearanceOverlay="@style/CircularImage"
+            app:srcCompat="@drawable/ic_baseline_account_circle_grey_24" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/commentRecycler"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/comments"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:nestedScrollingEnabled="false"
-        android:overScrollMode="never"
-        tools:listitem="@layout/comments_item"/>
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="Add a comment..."
+            app:layout_constraintBottom_toBottomOf="@id/profile"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/profile"
+            app:layout_constraintTop_toTopOf="@id/profile" />
 
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/divider2"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/profile"
+            app:srcCompat="@drawable/square_divider" />
 
-    <include
-        android:id="@+id/error"
-        layout="@layout/error"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/comments"
-        android:layout_centerInParent="true" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/commentRecycler"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="3dp"
+            android:overScrollMode="never"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/title"
+            app:layout_constraintTop_toBottomOf="@id/divider2"
+            tools:itemCount="300"
+            tools:listitem="@layout/comments_item" />
 
-    <include
-        android:id= "@+id/empty_result_layout"
-        layout="@layout/empty_result"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/comments"
-        android:layout_centerInParent="true"/>
-</RelativeLayout>
+        <include
+            android:id="@+id/error_layout"
+            layout="@layout/error_comment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            app:layout_constraintTop_toBottomOf="@id/profile" />
+
+        <include
+            android:id="@+id/empty_result_layout"
+            layout="@layout/empty_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintTop_toBottomOf="@id/divider2"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

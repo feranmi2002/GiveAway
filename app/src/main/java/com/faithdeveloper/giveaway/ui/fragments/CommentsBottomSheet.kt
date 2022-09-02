@@ -2,13 +2,10 @@ package com.faithdeveloper.giveaway.ui.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
@@ -16,19 +13,18 @@ import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.faithdeveloper.giveaway.*
-import com.faithdeveloper.giveaway.utils.Extensions.disable
-import com.faithdeveloper.giveaway.utils.Extensions.enable
-import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
-import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
-import com.faithdeveloper.giveaway.utils.Extensions.showDialog
-import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
+import com.faithdeveloper.giveaway.MainActivity
+import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutCommentsBinding
 import com.faithdeveloper.giveaway.ui.adapters.CommentsPagerAdapter
 import com.faithdeveloper.giveaway.ui.adapters.NewCommentsAdapter
 import com.faithdeveloper.giveaway.utils.Event
+import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
+import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
+import com.faithdeveloper.giveaway.utils.Extensions.showDialog
+import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.viewmodels.CommentsVM
@@ -44,7 +40,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     private lateinit var adapter: CommentsPagerAdapter
     private lateinit var newCommentsAdapter: NewCommentsAdapter
     private lateinit var arrayOfNewComments: MutableList<CommentData>
-    private lateinit var concatAdapter:ConcatAdapter
+    private lateinit var concatAdapter: ConcatAdapter
     private var _binding: LayoutCommentsBinding? = null
     private val binding get() = _binding!!
     private var _dialogBuilder: MaterialAlertDialogBuilder? = null
@@ -53,8 +49,8 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     //    this is interface is used to communicate with the main fragment
     private var fragmentCommentsInterface: FragmentCommentsInterface? = null
     private var newFragmentCommentsInterface: FragmentCommentsInterface? = null
-    private  var profileOfAuthorBeingReplied: UserProfile? = null
-    private  var idOfPostThatIsCommented: String = ""
+    private var profileOfAuthorBeingReplied: UserProfile? = null
+    private var idOfPostThatIsCommented: String = ""
     private var action: String = POST
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,15 +96,16 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         handleObserver()
         setUpLoadState()
         updateSendButtonStatus()
-        watchCommentBox()
-        sendNewComment()
+//        watchCommentBox()
+//        sendNewComment()
         closeDialog()
         super.onViewCreated(view, savedInstanceState)
     }
+
     private fun updateSendButtonStatus() {
 //        this is used before the textbox watcher is activated
-        if (binding.commentsLayout.editText?.text.toString().isBlank()) binding.send.disable()
-        else binding.send.enable()
+//        if (binding.commentsLayout.editText?.text.toString().isBlank()) binding.send.disable()
+//        else binding.send.enable()
     }
 
     private fun handleObserver() {
@@ -155,32 +152,13 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun watchCommentBox() {
-
-//        updates the send button. Disables it when text hasn't been entered and vice versa
-        binding.commentsLayout.editText?.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                // do nothing
-            }
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                // do nothing
-            }
-
-            override fun afterTextChanged(p0: Editable?) {
-                if (p0.isNullOrBlank()) binding.send.disable()
-                else binding.send.enable()
-            }
-        })
-    }
-
     private fun setUpAdapter() {
         adapter = CommentsPagerAdapter(
             profileNameClick = { author: UserProfile ->
                 fragmentCommentsInterface?.onClick(author)
             },
-            reply = {profileOfTheAuthorBeingReplied: UserProfile ->
-                    setUpReply(profileOfTheAuthorBeingReplied)
+            reply = { profileOfTheAuthorBeingReplied: UserProfile ->
+                setUpReply(profileOfTheAuthorBeingReplied)
             },
             viewModel.userUid(),
             moreClick = { action: String, postID: String, postText: String ->
@@ -203,7 +181,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 profileNameClick = { poster: UserProfile ->
                     newFragmentCommentsInterface?.onClick(poster)
                 },
-                reply = {_profileOfAuthorBeingReplied: UserProfile ->
+                reply = { _profileOfAuthorBeingReplied: UserProfile ->
                     setUpReply(_profileOfAuthorBeingReplied)
                 },
                 viewModel.userUid(),
@@ -232,15 +210,15 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                         is LoadState.Error -> {
                             // initial load failed
                             makeErrorLayoutVisible()
-                            binding.error.progressCircular.makeInVisible()
+                            binding.errorLayout.progressCircular.makeInVisible()
                         }
                         is LoadState.Loading -> {
                             // initial load has begun
-                            binding.error.progressCircular.makeVisible()
+                            binding.errorLayout.progressCircular.makeVisible()
                             makeErrorLayoutInvisible()
                         }
                         is LoadState.NotLoading -> {
-                            binding.error.progressCircular.makeInVisible()
+                            binding.errorLayout.progressCircular.makeInVisible()
                             makeErrorLayoutInvisible()
                             Log.i(getString(R.string.app_name), "Not loading feed")
                         }
@@ -270,19 +248,19 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun sendNewComment() {
-        binding.send.setOnClickListener {
-//            dismiss any showing dialog
-            if (action !=UPDATE) action = POST
-            userFeedback()
-            hideKeyboard()
-            viewModel.addOrUpdateComment(
-                binding.commentsLayout.editText?.text.toString().trim(),
-                profileOfAuthorBeingReplied,
-                action
-            )
-        }
-    }
+//    private fun sendNewComment() {
+//        binding.send.setOnClickListener {
+////            dismiss any showing dialog
+//            if (action != UPDATE) action = POST
+//            userFeedback()
+//            hideKeyboard()
+//            viewModel.addOrUpdateComment(
+//                binding.commentsLayout.editText?.text.toString().trim(),
+//                profileOfAuthorBeingReplied,
+//                action
+//            )
+//        }
+//    }
 
     private fun userFeedback() {
         _dialog?.dismiss()
@@ -300,18 +278,23 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun hideKeyboard() {
-        val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputMethodManager.hideSoftInputFromWindow(binding.root.windowToken, InputMethodManager.RESULT_UNCHANGED_SHOWN)
-    }
-    private fun showKeyboard() {
-        requireActivity().window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
-        binding.commentsLayout.editText?.requestFocus()
-        val inputManager =
+        val inputMethodManager =
             requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputManager.showSoftInput(
-            binding.commentsLayout.editText,
-            InputMethodManager.SHOW_IMPLICIT
+        inputMethodManager.hideSoftInputFromWindow(
+            binding.root.windowToken,
+            InputMethodManager.RESULT_UNCHANGED_SHOWN
         )
+    }
+
+    private fun showKeyboard() {
+//        requireActivity().window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+//        binding.commentsLayout.editText?.requestFocus()
+//        val inputManager =
+//            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+//        inputManager.showSoftInput(
+//            binding.commentsLayout.editText,
+//            InputMethodManager.SHOW_IMPLICIT
+//        )
     }
 
     private fun setUpReply(_profileOfAuthorBeingReplied: UserProfile) {
@@ -328,7 +311,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     private fun setUpEditOfComment(postID: String, postText: String) {
         action = UPDATE
         this.idOfPostThatIsCommented = postID
-        binding.commentsText.setText(postText)
+//        binding.commentsText.setText(postText)
         showKeyboard()
     }
 
@@ -345,24 +328,28 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun makeErrorLayoutInvisible() {
-        binding.error.errorText.makeInVisible()
-        binding.error.retryButton.makeInVisible()
+        binding.errorLayout.errorText.makeInVisible()
+        binding.errorLayout.retryButton.makeInVisible()
+        binding.errorLayout.errorImage.makeInVisible()
     }
 
     private fun makeErrorLayoutVisible() {
-        binding.error.errorText.makeVisible()
-        binding.error.retryButton.makeVisible()
+        makeEmptyResultLayoutInvisible()
+        binding.errorLayout.errorText.makeVisible()
+        binding.errorLayout.retryButton.makeVisible()
+        binding.errorLayout.errorImage.makeVisible()
     }
 
     private fun makeEmptyResultLayoutVisible() {
         makeErrorLayoutInvisible()
-        binding.error.progressCircular.makeInVisible()
+        binding.errorLayout.progressCircular.makeInVisible()
         binding.emptyResultLayout.emptyText.makeVisible()
     }
 
     private fun makeEmptyResultLayoutInvisible() {
         binding.emptyResultLayout.emptyText.makeInVisible()
     }
+
     private fun closeDialog() {
         binding.dismiss.setOnClickListener {
             dialog?.dismiss()
@@ -392,9 +379,9 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private  fun cleanUpAfterUserAction(){
-        binding.commentsLayout.editText?.setText("")
-        binding.commentsLayout.editText?.clearFocus()
+    private fun cleanUpAfterUserAction() {
+//        binding.commentsLayout.editText?.setText("")
+//        binding.commentsLayout.editText?.clearFocus()
         action = ""
     }
 

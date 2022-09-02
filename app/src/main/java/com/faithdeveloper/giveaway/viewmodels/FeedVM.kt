@@ -3,10 +3,7 @@ package com.faithdeveloper.giveaway.viewmodels
 import android.net.Uri
 import android.os.CountDownTimer
 import androidx.lifecycle.*
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
-import androidx.paging.liveData
+import androidx.paging.*
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.*
 import com.faithdeveloper.giveaway.pagingsources.FeedPagingSource
@@ -15,16 +12,20 @@ import com.faithdeveloper.giveaway.utils.LiveEvent
 import com.faithdeveloper.giveaway.utils.interfaces.FeedVMAndPagingSourceInterface
 import com.google.firebase.firestore.DocumentSnapshot
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingSourceInterface {
 
+    var newFeed = 0
+    private set
+
     private val _profilePicUpload = LiveEvent<Event>()
     val profilePicUpload get() = this._profilePicUpload
 
     //    this LiveData string is used to store the new feed filter and trigger a reload based on the new filter
-    private var loadFilter = MutableLiveData<String>()
+    private var loadFilter = MutableLiveData<String>("All")
 
     /*   this latest time stamp is used to identify the latest feed fetched by the paging adapter,
     * it is consequently used as a basis to fetch latest posts that will be unknown to the paging adapter*/
@@ -64,7 +65,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     private fun getLatestFeed() {
         latestTimeStamp?.run {
             var result: Event? = null
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 latestFeedJob = async {
                     return@async repository.getLatestFeed(this@run, filter())
                 }
@@ -93,27 +94,31 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
         }
     }
 
+    fun storeSizeOfNewFeed(size:Int){
+        newFeed = size
+    }
+
     fun filter() = loadFilter.value ?: DEFAULT_FILTER
 
     fun setLoadFilter(filter: String) {
         loadFilter.value = filter
     }
 
-    fun checkIfNewPostAvailable() {
-        if (repository.checkIfNewUploadedPostIsAvailable()){
+    fun checkIfNewPostAvailable(): Boolean {
+        val state =  repository.checkIfNewUploadedPostIsAvailable()
+        if (state){
             preloadedLatestFeed.add(repository.getUploadedPost())
-            _newFeedAvailableFlag.postValue(true)
-            repository.makeNewUploadedPostNull()
+     //       repository.makeNewUploadedPostNull()
         }
+        return state
     }
+
+    fun getUploadedPost() = repository.getUploadedPost()
 
     private fun loadFeed(filter: String) =
         Pager(
-            config = PagingConfig(
-                pageSize = 10,
-                maxSize = 20,
-                enablePlaceholders = false,
-                prefetchDistance = 5
+            config =PagingConfig(
+                pageSize = 10
             ),
             pagingSourceFactory = {
                 FeedPagingSource(
@@ -125,7 +130,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
                 )
             },
             initialKey = PagerKey(
-                lastSnapshot = preLoadedFeedLastSnapshot,
+                lastSnapshot = null,
                 filter = filter,
                 loadSize = 10,
             )
@@ -136,6 +141,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     fun setProfileForProfileView(poster: UserProfile) {
         repository.setAuthorProfileForProfileView(poster)
     }
+
 
     override fun latestFeedTimestamp(timeStamp: Long) {
         latestTimeStamp = timeStamp
@@ -158,13 +164,12 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
         }
 
         override fun onFinish() {
-            getLatestFeed()
+            //getLatestFeed()
         }
     }
 
     companion object {
         const val DEFAULT_FILTER = "All"
     }
-
 }
 

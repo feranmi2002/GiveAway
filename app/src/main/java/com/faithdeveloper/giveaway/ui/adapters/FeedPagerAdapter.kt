@@ -2,6 +2,9 @@ package com.faithdeveloper.giveaway.ui.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.doOnLayout
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -9,99 +12,190 @@ import com.bumptech.glide.Glide
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.models.FeedData
 import com.faithdeveloper.giveaway.data.models.UserProfile
-import com.faithdeveloper.giveaway.databinding.*
+import com.faithdeveloper.giveaway.databinding.FeedItemLayoutBinding
+import com.faithdeveloper.giveaway.databinding.FeedItemMediaLayoutBinding
 import com.faithdeveloper.giveaway.ui.adapters.comparators.FEED_ITEM_COMPARATOR
+import com.faithdeveloper.giveaway.utils.BaseViewHolder
 import com.faithdeveloper.giveaway.utils.Extensions
-import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 
 class FeedPagerAdapter(
     val reactions: (reactionType: String, data: String, posterID: String) -> Unit,
     private val profileNameClick: (userUid: UserProfile) -> Unit,
-    private val imagesClick: (images: Array<String>, hasVideo: Boolean) -> Unit,
+    private val imagesClick: (images: Array<String>, hasVideo: Boolean, position: Int) -> Unit,
     private val menuAction: (action: String) -> Unit,
     val userUid: String,
     val dataSavingMode: Boolean
 ) :
-    PagingDataAdapter<FeedData, FeedPagerAdapter.FeedViewHolder>
+    PagingDataAdapter<FeedData, BaseViewHolder>
         (FEED_ITEM_COMPARATOR) {
 
-    inner class FeedViewHolder(val binding: FeedItemLayoutBinding) :
-        RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: FeedData) {
-            val post = item.postData
-            val author = item.authorData
+    inner class FeedViewHolderMedia(val binding: FeedItemMediaLayoutBinding) :
+        BaseViewHolder(binding.root) {
+        private val sharedPool = RecyclerView.RecycledViewPool()
+        private var mItem: FeedData? = null
+        val email = binding.reaction.email
+        val phone = binding.reaction.phone
+        val whatsapp = binding.reaction.whatsapp
+        val profileName = binding.profileName
+        val comments = binding.reaction.comments
+        val launchLink = binding.reaction.launchLink
+        val media = binding.media
+        val readMore = binding.readMore
+        val description = binding.description
+
+        init {
+            email.setOnClickListener {
+                reactions.invoke("email", mItem?.authorData!!.email, mItem?.authorData!!.id)
+            }
+            phone.setOnClickListener {
+                reactions.invoke("phone", mItem?.authorData!!.phoneNumber, mItem?.authorData!!.id)
+            }
+            whatsapp.setOnClickListener {
+                reactions.invoke(
+                    "whatsapp",
+                    mItem?.authorData!!.phoneNumber,
+                    mItem?.authorData!!.id
+                )
+            }
+            profileName.setOnClickListener {
+                profileNameClick.invoke(mItem?.authorData!!)
+            }
+            comments.setOnClickListener {
+                if (mItem?.postData!!.hasComments) {
+                    reactions.invoke("comments", mItem?.postData!!.postID, mItem?.authorData!!.id)
+                }
+            }
+            launchLink.setOnClickListener {
+                if (mItem?.postData!!.link != "") {
+                    reactions.invoke("launchLink", mItem?.postData!!.link, mItem?.authorData!!.id)
+                }
+            }
+
+            media.layoutManager = LinearLayoutManager(
+                itemView.context,
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
+            media.setRecycledViewPool(sharedPool)
+
+            description.doOnLayout {
+                readMore.isVisible = description.layout.text.toString()
+                    .equals(mItem?.postData!!.text, true)
+            }
+        }
+
+        override fun bind(item: FeedData) {
+            mItem = item
+            val post = item.postData!!
+            val author = item.authorData!!
             with(binding) {
-                // load poster's profile picture
-                Glide.with(itemView)
-                    .load(author?.profilePicUrl)
-                    .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
-                    .into(profiePic)
-
                 // setup poster's data and reactions
-                author?.let { authorData ->
+                author.let { authorData ->
                     profileName.text = authorData.name
-                    reaction.email.setOnClickListener {
-                        reactions.invoke("email", authorData.email, authorData.id)
-                    }
-                    reaction.phone.setOnClickListener {
-                        reactions.invoke("phone", authorData.phoneNumber, authorData.id)
-                    }
-                    reaction.whatsapp.setOnClickListener {
-                        reactions.invoke("whatsapp", authorData.phoneNumber, authorData.id)
-                    }
                     // setup post's data
-                    post?.let {
-                        with(it) {
-                            if (post.authorId != userUid) {
-                                profileName.setOnClickListener {
-                                    profileNameClick.invoke(author)
-                                }
-                            }
-                            description.text = text
+                    with(post) {
+                        description.isGone = text.isEmpty()
+                        description.text = text
+                        // setup reaction views
+                        reaction.comments.isVisible = hasComments
+                        reaction.launchLink.isVisible = (link != "")
 
-                            // setup reaction views
-                            if (hasComments) {
-                                reaction.comments.text = "Comments"
-                                reaction.comments.makeVisible()
-                                reaction.comments.setOnClickListener {
-                                    reactions.invoke("comments", post.postID, authorData.id)
-                                }
-                            }
-                            if (link != "") {
-                                reaction.launchLink.makeVisible()
-                                reaction.launchLink.setOnClickListener {
-                                    reactions.invoke("launchLink", post.link, authorData.id)
-                                }
-                            }
-
-                            // show time
-                            timeView.text = Extensions.convertTime(time)
-
-                            //setup media
-                            if (mediaUrls.isNotEmpty()) {
-                                media.makeVisible()
-                                val adapter = PostPicturesAdapter(
-                                    mediaUrls,
-                                    dataSavingMode,
-                                    imagesClick,
-                                    hasVideo
-                                )
-                                media.layoutManager = LinearLayoutManager(
-                                    itemView.context,
-                                    LinearLayoutManager.HORIZONTAL,
-                                    false
-                                )
-                                media.adapter = adapter
-                            }
-                        }
+                        // show time
+                        timeView.text = Extensions.convertTime(time)
+                        val adapter = PostPicturesAdapter(
+                            mediaUrls,
+                            dataSavingMode,
+                            imagesClick,
+                            hasVideo
+                        )
+                        media.adapter = adapter
                     }
                 }
+                Glide.with(itemView)
+                    .load(author.profilePicUrl)
+                    .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
+                    .into(profiePic)
             }
         }
     }
 
-    override fun onBindViewHolder(holder: FeedViewHolder, position: Int) {
+    inner class FeedViewHolder(val binding: FeedItemLayoutBinding) :
+        BaseViewHolder(binding.root) {
+        private var mItem: FeedData? = null
+        val email = binding.reaction.email
+        val phone = binding.reaction.phone
+        val whatsapp = binding.reaction.whatsapp
+        val profileName = binding.profileName
+        val comments = binding.reaction.comments
+        val launchLink = binding.reaction.launchLink
+        val media = binding.media
+        val description = binding.description
+
+        init {
+            email.setOnClickListener {
+                reactions.invoke("email", mItem?.authorData!!.email, mItem?.authorData!!.id)
+            }
+            phone.setOnClickListener {
+                reactions.invoke("phone", mItem?.authorData!!.phoneNumber, mItem?.authorData!!.id)
+            }
+            whatsapp.setOnClickListener {
+                reactions.invoke(
+                    "whatsapp",
+                    mItem?.authorData!!.phoneNumber,
+                    mItem?.authorData!!.id
+                )
+            }
+            profileName.setOnClickListener {
+                profileNameClick.invoke(mItem?.authorData!!)
+            }
+            comments.setOnClickListener {
+                if (mItem?.postData!!.hasComments) {
+                    reactions.invoke("comments", mItem?.postData!!.postID, mItem?.authorData!!.id)
+                }
+            }
+            launchLink.setOnClickListener {
+                if (mItem?.postData!!.link != "") {
+                    reactions.invoke("launchLink", mItem?.postData!!.link, mItem?.authorData!!.id)
+                }
+            }
+            description.doOnLayout {
+                media.isVisible = description.layout.text.toString()
+                    .equals(mItem?.postData!!.text, true)
+            }
+        }
+
+        override fun bind(item: FeedData) {
+            mItem = item
+            val post = item.postData!!
+            val author = item.authorData!!
+            with(binding) {
+                // setup poster's data and reactions
+                author.let { authorData ->
+                    profileName.text = authorData.name
+                    // setup post's data
+                    with(post) {
+                        description.isGone = text.isEmpty()
+                        description.text = text
+                        // setup reaction views
+                        reaction.comments.isVisible = hasComments
+                        reaction.launchLink.isVisible = (link != "")
+
+                        // show time
+                        timeView.text = Extensions.convertTime(time)
+                    }
+                }
+                // load poster's profile picture
+                Glide.with(itemView)
+                    .load(author.profilePicUrl)
+                    .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
+                    .into(profiePic)
+            }
+
+        }
+    }
+
+    override fun onBindViewHolder(holder: BaseViewHolder, position: Int) {
         val currentItem = getItem(position)
         if (currentItem != null
         ) {
@@ -110,9 +204,36 @@ class FeedPagerAdapter(
     }
 
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FeedViewHolder {
-        val binding =
-            FeedItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return FeedViewHolder(binding)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder {
+        return when (viewType) {
+            R.layout.feed_item_layout -> FeedViewHolder(
+                FeedItemLayoutBinding.inflate(
+                    LayoutInflater.from(
+                        parent.context
+                    ), parent, false
+                )
+            )
+            else -> {
+                FeedViewHolderMedia(
+                    FeedItemMediaLayoutBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+        }
     }
+
+    override fun getItemViewType(position: Int): Int {
+        getItem(position)?.let {
+            if (it.postData!!.mediaUrls.isEmpty()) {
+                R.layout.feed_item_layout
+            } else {
+                R.layout.feed_item_media_layout
+            }
+        }
+        return super.getItemViewType(position)
+    }
+
 }

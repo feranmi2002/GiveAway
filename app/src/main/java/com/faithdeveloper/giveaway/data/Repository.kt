@@ -22,25 +22,24 @@ import com.faithdeveloper.giveaway.utils.Extensions.storeUserDetails
 import com.faithdeveloper.giveaway.utils.Extensions.storeUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.NotificationUtil
 import com.faithdeveloper.giveaway.viewmodels.FeedVM.Companion.DEFAULT_FILTER
-import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.firebase.Timestamp
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.*
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.CancellableTask
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.tasks.asDeferred
-import kotlinx.coroutines.tasks.asTask
 import kotlinx.coroutines.tasks.await
 import java.util.*
-import kotlin.collections.HashMap
 
 class Repository(
     private val auth: FirebaseAuth,
@@ -75,9 +74,10 @@ class Repository(
             Log.i("GA", "Account creation successful")
             context.storeUserDetails(name, email, phone)
             Event.Success(data = null, msg = "Account creation successful")
-        } catch (e: Exception) {
-            Log.e("GA", "Failed to create account")
-            Event.Failure(data = null, "Failed to create account")
+        } catch (e: FirebaseAuthUserCollisionException) {
+            Event.Failure(e)
+        } catch (e: FirebaseNetworkException) {
+            Event.Failure(e)
         }
     }
 
@@ -388,17 +388,17 @@ class Repository(
         return result
     }
 
-    suspend fun getLatestFeed(timestamp: Long, filter: String):Event{
-        var result:Event = Event.InProgress(null)
+    suspend fun getLatestFeed(timestamp: Long, filter: String): Event {
+        var result: Event = Event.InProgress(null)
         return try {
 
-            val firebasePosts  = if (filter== DEFAULT_FILTER) {
+            val firebasePosts = if (filter == DEFAULT_FILTER) {
                 database().collection(POSTS)
                     .whereGreaterThan("time", Date(timestamp))
                     .limit(10)
                     .orderBy("time", Query.Direction.DESCENDING)
                     .get().await()
-            }else{
+            } else {
                 database().collection(POSTS)
                     .whereGreaterThan("time", timestamp)
                     .whereArrayContains("tags", filter)
@@ -421,13 +421,14 @@ class Repository(
 
                     //            combine above two results
                     val feedDataList = combineAuthorDataAndPostsData(authorData, posts)
-                    result = Event.Success(PagerResponse(feedDataList, firebasePosts.documents.last()))
+                    result =
+                        Event.Success(PagerResponse(feedDataList, firebasePosts.documents.last()))
                 }
-            }else{
+            } else {
                 result = Event.Success(null)// do nothing
             }
             result
-        }catch (e:Exception){
+        } catch (e: Exception) {
             result = Event.Failure(null)
             result
         }
@@ -845,7 +846,7 @@ class Repository(
     )
 
     fun checkIfNewUploadedPostIsAvailable() = uploadedPost != null
-    fun makeNewUploadedPostNull(){
+    fun makeNewUploadedPostNull() {
         uploadedPost = null
     }
 
@@ -871,7 +872,8 @@ class Repository(
                 profileOfUserThisCommentIsAReplyTo?.id ?: "",
                 false
             )
-            database().collection(POST_DATA).document(idOfPostThatIsCommentedOn).collection(COMMENTS)
+            database().collection(POST_DATA).document(idOfPostThatIsCommentedOn)
+                .collection(COMMENTS)
                 .add(comment).await()
             Event.Success(
                 CommentData(
@@ -883,6 +885,13 @@ class Repository(
         } catch (e: Exception) {
             Event.Failure(null, "comment_unadded")
         }
+    }
+
+    suspend fun compressImage() {
+        coroutineScope {
+
+        }
+
     }
 
 

@@ -35,7 +35,6 @@ class FeedLoadStateAdapter(private val retry: () -> Unit) :
                 retryButton.setOnClickListener {
                     retry.invoke()
                 }
-
             }
         }
     }

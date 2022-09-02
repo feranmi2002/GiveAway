@@ -182,8 +182,8 @@ class Search : Fragment(), FragmentCommentsInterface {
             { profileName ->
                 navigateToProfilePage(profileName)
             },
-            { images, hasVideo ->
-                showImages(images.toList(), hasVideo)
+            { images, hasVideo, position ->
+                showImages(images.toList(), hasVideo, position)
             },
             { menuAction -> }, viewModel.userUid(), requireContext().getDataSavingMode()
         )
@@ -204,17 +204,17 @@ class Search : Fragment(), FragmentCommentsInterface {
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
     }
 
-    private fun showImages(images: List<String>, hasVideo: Boolean) {
+    private fun showImages(images: List<String>, hasVideo: Boolean, position:Int) {
         var array = arrayOf<String>()
         images.onEachIndexed { index, item ->
             array = array.plus(item)
         }
         val mediaType: String = if (hasVideo) {
-            VIDEO
+            Feed.VIDEO
         } else {
             FullPostMediaBottomSheet.IMAGES
         }
-        this.showMedia(array, mediaType)
+        this.showMedia(array, mediaType, position)
     }
 
     private fun setUpLoadState() {

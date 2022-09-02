@@ -6,11 +6,9 @@ import android.net.Uri
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.core.content.edit
-import androidx.core.net.toFile
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.room.util.FileUtil
 import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.databinding.LinkLayoutBinding
@@ -120,7 +118,7 @@ object Extensions {
             putString("Username", userName)
             putString("Email", email)
             putString("Phone number", phoneNumber)
-            commit()
+            apply()
         }
     }
 
@@ -281,8 +279,8 @@ object Extensions {
         commentsBottomSheet.show(requireActivity().supportFragmentManager, CommentsBottomSheet.TAG)
     }
 
-    fun Fragment.showMedia(media: Array<String>, mediaType: String) {
-        val mediaBtmSheet = FullPostMediaBottomSheet.instance(media, mediaType)
+    fun Fragment.showMedia(media: Array<String>, mediaType: String, position:Int) {
+        val mediaBtmSheet = FullPostMediaBottomSheet.instance(media, mediaType, position)
         mediaBtmSheet.show(requireActivity().supportFragmentManager, FullPostMediaBottomSheet.TAG)
     }
 

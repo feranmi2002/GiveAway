@@ -30,10 +30,7 @@ class CommentsVM(private val repository: Repository, val postID:String) : ViewMo
 
     private fun loadFeed() = Pager(
         config = PagingConfig(
-            pageSize = 15,
-            maxSize = 30,
-            enablePlaceholders = false,
-            prefetchDistance = 5
+            pageSize = 15
         ), pagingSourceFactory = {
             CommentsPagingSource(repository, true, postID)
         }, initialKey = PagerKey(null, DEFAULT_FILTER, 10)

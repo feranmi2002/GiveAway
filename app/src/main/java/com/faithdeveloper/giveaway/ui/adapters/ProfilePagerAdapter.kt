@@ -17,7 +17,7 @@ import com.faithdeveloper.giveaway.utils.Extensions
 
 class ProfilePagerAdapter(
     val reactions: (reactionType: String, data: String, posterID:String) -> Unit,
-    private val imagesClick: (images: Array<String>, hasVideo: Boolean ) -> Unit,
+    private val imagesClick: (images: Array<String>, hasVideo: Boolean, positon:Int ) -> Unit,
     private val menuAction: (action: String) -> Unit,
     val userProfile: UserProfile
 ) :
@@ -39,11 +39,10 @@ class ProfilePagerAdapter(
 
                     // setup post's data
                 with(item) {
-                    description.text = text
+//                    description.text = text
 
                     // setup reaction views
                     if (hasComments) {
-                        reaction.comments.text = "Comments"
                         reaction.comments.makeVisible()
                         reaction.comments.setOnClickListener {
                             reactions.invoke("comments", item.postID, userProfile.id)
@@ -60,22 +59,22 @@ class ProfilePagerAdapter(
                     timeView.text = Extensions.convertTime(time!!)
 
                     //setup media
-                    if (mediaUrls.isNotEmpty()) {
-                        media.makeVisible()
-                        val dataSavingMode = itemView.context.getDataSavingMode()
-                        val adapter = PostPicturesAdapter(
-                            item.mediaUrls,
-                            dataSavingMode,
-                            imagesClick,
-                            hasVideo
-                        )
-                        media.layoutManager = LinearLayoutManager(
-                            itemView.context,
-                            LinearLayoutManager.HORIZONTAL,
-                            false
-                        )
-                        media.adapter = adapter
-                    }
+//                    if (mediaUrls.isNotEmpty()) {
+//                        media.makeVisible()
+//                        val dataSavingMode = itemView.context.getDataSavingMode()
+//                        val adapter = PostPicturesAdapter(
+//                            item.mediaUrls,
+//                            dataSavingMode,
+//                            imagesClick,
+//                            hasVideo
+//                        )
+//                        media.layoutManager = LinearLayoutManager(
+//                            itemView.context,
+//                            LinearLayoutManager.HORIZONTAL,
+//                            false
+//                        )
+//                        media.adapter = adapter
+//                    }
                 }
                 }
             }

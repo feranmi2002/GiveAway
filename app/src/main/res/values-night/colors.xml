@@ -3,5 +3,7 @@
     <color name="transparent_input_box_color">#FF000000</color>
     <color name="postTextColor">#FF6200EE</color>
     <color name="divider_color">#FF03DAC5</color>
+    <color name="black">#FFFFFFFF</color>
     <color name="grey">#63FFFFFF</color>
+    <color name="white">#FF000000</color>
 </resources>

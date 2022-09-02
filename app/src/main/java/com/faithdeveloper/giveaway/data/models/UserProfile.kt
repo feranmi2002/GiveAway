@@ -13,7 +13,7 @@ data class UserProfile(
      @ColumnInfo var phoneNumber:String,
      @ColumnInfo var email:String,
      @ColumnInfo var profilePicUrl:String,
-     @ColumnInfo var reports:Int,
+     @ColumnInfo var reports:Int
 ){
      constructor(): this("", "", "", "", "", -1)
 }

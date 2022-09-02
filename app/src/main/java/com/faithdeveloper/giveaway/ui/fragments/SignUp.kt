@@ -1,20 +1,18 @@
 package com.faithdeveloper.giveaway.ui.fragments
 
-import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.faithdeveloper.giveaway.*
-import com.faithdeveloper.giveaway.utils.Extensions.showDialog
+import com.faithdeveloper.giveaway.MainActivity
+import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.databinding.LayoutAccountCreationBinding
 import com.faithdeveloper.giveaway.utils.ActivityObserver
@@ -22,9 +20,12 @@ import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.disable
 import com.faithdeveloper.giveaway.utils.Extensions.enable
 import com.faithdeveloper.giveaway.utils.Extensions.hideKeyboard
+import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.SignUpVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 
 class SignUp : Fragment() {
     // init properties and binding
@@ -64,6 +65,7 @@ class SignUp : Fragment() {
                 // inform repository that app is a paused state
                 (activity as MainActivity).getRepository().setAppState(Repository.APP_PAUSED)
             }
+
             override fun onCreateAction() {
                 // initialize view model
                 viewModel = ViewModelProvider(
@@ -231,7 +233,7 @@ class SignUp : Fragment() {
         /*user has signed up and has to verify email. So navigate to
         *UserUnverified fragment so user can request
         * for another email verification link*/
-     findNavController().navigate(SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString()))
+        findNavController().navigate(SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString()))
     }
 
     private fun handleTerms() {
@@ -274,10 +276,19 @@ class SignUp : Fragment() {
                 }
                 // failed requests
                 is Event.Failure -> {
-                    // failed to sign user up
-                    if (event.msg.contains("Failed to create account")) showAccountCreationFailureDialog()
                     // failed to send verification link to user email
-                    else if (event.msg.contains("Failed to verify email")) showVerificationFailureDialog()
+                    if (event.msg.contains("Failed to verify email")) showVerificationFailureDialog()
+                    else {
+                        when (event.data) {
+                            // failed to sign user up
+                            is FirebaseAuthUserCollisionException -> {
+                                "This email is already in  use by another user. Enter another email".showAccountCreationFailureDialog()
+                            }
+                            is FirebaseNetworkException -> {
+                                "Couldn't create account. Check your internet connection and try again".showAccountCreationFailureDialog()
+                            }
+                        }
+                    }
                 }
                 is Event.InProgress -> {
                 }
@@ -295,7 +306,10 @@ class SignUp : Fragment() {
             positiveButtonText = "OK",
             positiveAction = {
                 findNavController().navigate(
-                   SignUpDirections.actionSignUpToUserUnverified(binding.emailLayout.editText?.text.toString(), true)
+                    SignUpDirections.actionSignUpToUserUnverified(
+                        binding.emailLayout.editText?.text.toString(),
+                        true
+                    )
                 )
             }
         )
@@ -322,16 +336,12 @@ class SignUp : Fragment() {
         dialog?.show()
     }
 
-    private fun showAccountCreationFailureDialog() {
+    private fun String.showAccountCreationFailureDialog() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = true,
-            message = "We couldn't create your account. ",
-            positiveButtonText = "TRY AGAIN",
+            message = this,
             negativeButtonText = "OK",
-            positiveAction = {
-                signUp()
-            },
             negativeAction = {
                 // do nothing
             }
@@ -364,7 +374,7 @@ class SignUp : Fragment() {
     private fun handleContinueButton() {
         // user has filled in all necessary inputs
         binding.continueBtn.setOnClickListener {
-           requireContext().hideKeyboard(binding.root)
+            requireContext().hideKeyboard(binding.root)
             signUp()
         }
     }

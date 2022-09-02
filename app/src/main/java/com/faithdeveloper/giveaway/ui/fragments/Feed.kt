@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -19,6 +20,7 @@ import androidx.paging.PagingData
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageView
@@ -66,13 +68,16 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private lateinit var cropImage: ActivityResultLauncher<CropImageContractOptions>
     private lateinit var requestMultiplePermissions: ActivityResultLauncher<Array<String>>
     private lateinit var adapter: FeedPagerAdapter
+    private lateinit var mAdapter: NewFeedAdapter
     private lateinit var viewModel: FeedVM
     private lateinit var activityObserver: ActivityObserver
     private var _binding: LayoutFeedBinding? = null
     private val binding get() = _binding!!
     private var newSignIn by Delegates.notNull<Boolean>()
     private var dialogBuilder: MaterialAlertDialogBuilder? = null
-    private var dialog: AlertDialog? = null
+    private var alertDialog: AlertDialog? = null
+    private var newFeed = mutableListOf<FeedData>()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         /*
@@ -172,6 +177,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        loadProfilePicture()
         handleObservers()
         clickListeners()
 
@@ -190,28 +196,50 @@ class Feed : Fragment(), FragmentCommentsInterface {
         )
         binding.recycler.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-        binding.recycler.adapter = adapter.withLoadStateHeaderAndFooter(
-            FeedLoadStateAdapter(){adapter.retry()},
-            FeedLoadStateAdapter(){adapter.retry()},
-        )
+        val concatAdapter = ConcatAdapter()
+        concatAdapter.addAdapter(mAdapter)
+        concatAdapter.addAdapter(adapter.withLoadStateFooter(
+            FeedLoadStateAdapter() { adapter.retry() }
+        ))
+        binding.recycler.adapter = concatAdapter
         setUpLoadState()
         handleRefresh()
         setUpTags()
-
-//        check if a new post has just been uploaded by the user, then display it if true
-         viewModel.checkIfNewPostAvailable()
         super.onViewCreated(view, savedInstanceState)
     }
 
+
+    override fun onStart() {
+        //        check if a new post has just been uploaded by the user, then display it if true
+        viewModel.checkIfNewPostAvailable().run {
+            //   binding.latestFeed.isVisible = this
+            if (this) {
+                requireContext().showSnackbarShort(binding.root, "Your Post has been sent.")
+                newFeed.add(viewModel.getUploadedPost())
+                viewModel.storeSizeOfNewFeed(newFeed.size)
+                mAdapter.notifyItemInserted(0)
+            }
+        }
+        super.onStart()
+    }
+
+
+    private fun loadProfilePicture() {
+        Glide.with(this)
+            .load(requireContext().getUserProfilePicUrl())
+            .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
+            .into(binding.profile)
+    }
+
     /*Tags can be added to Posts to help segment the posts.
-     * User can view feed of posts under a particular tag*/
+         * User can view feed of posts under a particular tag*/
     private fun setUpTags() {
         val chipsData = resources.getStringArray(R.array.feedTags)
         binding.chipGroup.apply {
             isSelectionRequired = true
             isSingleSelection = true
             isSingleLine = true
-            setOnCheckedChangeListener { group, checkedId ->
+            setOnCheckedStateChangeListener { group, checkedIds ->
 //              reload feed on tag selected changed
 
 //                first clear existing data
@@ -219,7 +247,9 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 adapter.submitData(viewLifecycleOwner.lifecycle, PagingData.empty())
                 binding.recycler.removeAllViewsInLayout()
 
-                val chip: Chip? = group.findViewById<Chip>(checkedId)
+                val chip: Chip? = group.findViewById<Chip>(checkedIds[0])
+                newFeed = mutableListOf()
+                mAdapter.notifyItemRangeRemoved(0, viewModel.newFeed)
 //                this triggers a reload of data from remote database with the filter
                 viewModel.setLoadFilter((chip?.text.toString()) ?: viewModel.filter())
             }
@@ -242,7 +272,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
     //    handles permissions not granted by user
     private fun permissionDenied() {
-        dialog?.dismiss()
+        alertDialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = false,
             message = getString(R.string.permission_denied),
@@ -251,13 +281,13 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 // do nothing
             }
         )
-        dialog = dialogBuilder?.create()
-        dialog?.show()
+        alertDialog = dialogBuilder?.create()
+        alertDialog?.show()
     }
 
     private fun clickListeners() {
         binding.apply {
-            newPost.setOnClickListener {
+            newpost.setOnClickListener {
 //                navigate to new post fragment
                 findNavController().navigate(FeedDirections.actionHomeToNeed2())
             }
@@ -282,7 +312,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
             binding.latestFeed.makeGone()
             viewModel.clearViewModelPreloadedData()
             viewModel.stopPreloadingLatestFeed()
-            adapter.submitData(viewLifecycleOwner.lifecycle, PagingData.empty())
             adapter.refresh()
         }
     }
@@ -291,6 +320,10 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private fun handleObservers() {
 //    observe the feed result
         viewModel.feedResult.observe(viewLifecycleOwner) {
+            if (binding.errorLayout.progressCircular.isVisible && newFeed.size > 0) {
+                newFeed = mutableListOf()
+                mAdapter.notifyItemRangeRemoved(0, viewModel.newFeed)
+            }
             adapter.submitData(viewLifecycleOwner.lifecycle, it)
         }
 
@@ -326,7 +359,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     }
 
     private fun handleProfilePicUpdateFailure() {
-        dialog?.dismiss()
+        alertDialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = true,
             title = "Profile Picture Update",
@@ -336,30 +369,32 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 // do nothing
             }
         )
-        dialog = dialogBuilder?.create()
-        dialog?.show()
+        alertDialog = dialogBuilder?.create()
+        alertDialog?.show()
     }
 
     private fun handleCreateProfilePicDialog() {
         if (newSignIn) {
-            dialog?.dismiss()
-            dialogBuilder = requireContext().showDialog(
-                cancelable = false,
-                title = "Add a profile picture",
-                message = "Adding a profile picture helps people recognize you easily. Would you like to? ",
-                positiveButtonText = "YES",
-                positiveAction = {
-                    askPermissions()
-                },
-                negativeButtonText = "LATER",
-                negativeAction = {
-                    //do nothing
-                }
-            )
-            dialog = dialogBuilder?.create()
-            dialog?.show()
-            requireContext().setSignInStatus(false)
-            newSignIn = false
+            if (requireContext().getUserProfilePicUrl() == null) {
+                alertDialog?.dismiss()
+                dialogBuilder = requireContext().showDialog(
+                    cancelable = false,
+                    title = "Add a profile picture",
+                    message = "Adding a profile picture helps people recognize you easily. Would you like to? ",
+                    positiveButtonText = "YES",
+                    positiveAction = {
+                        askPermissions()
+                    },
+                    negativeButtonText = "LATER",
+                    negativeAction = {
+                        //do nothing
+                    }
+                )
+                alertDialog = dialogBuilder?.create()
+                alertDialog?.show()
+                requireContext().setSignInStatus(false)
+                newSignIn = false
+            }
         }
     }
 
@@ -374,7 +409,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     }
 
     private fun choosePicture() {
-        dialog?.dismiss()
+        alertDialog?.dismiss()
         cropImage.launch(
             options {
                 setGuidelines(CropImageView.Guidelines.ON)
@@ -386,7 +421,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     }
 
     private fun wrongFileChosen() {
-        dialog?.dismiss()
+        alertDialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = true,
             title = "Wrong file chosen",
@@ -396,8 +431,8 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 // do nothing
             }
         )
-        dialog = dialogBuilder?.create()
-        dialog?.show()
+        alertDialog = dialogBuilder?.create()
+        alertDialog?.show()
     }
 
     override fun onDestroyView() {
@@ -446,17 +481,49 @@ class Feed : Fragment(), FragmentCommentsInterface {
             { profileName ->
                 navigateToProfilePage(profileName)
             },
-            { images, hasVideo ->
-                showImages(images.toList(), hasVideo)
+            { images, hasVideo, position ->
+                showImages(images.toList(), hasVideo, position)
             },
             { menuAction -> }, viewModel.userUid(),
             requireContext().getDataSavingMode()
         )
         adapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+        mAdapter = NewFeedAdapter(
+            { action, data, posterID ->
+                if (action == "email") {
+                    if (sendEmail(data) is Event.Failure) noAppToHandleRequest()
+                    return@NewFeedAdapter
+                }
+                if (action == "whatsapp") {
+                    if (sendWhatsapp(data) is Event.Failure) noAppToHandleRequest()
+                    return@NewFeedAdapter
+                }
+                if (action == "phone") {
+                    if (sendPhone(data) is Event.Failure) noAppToHandleRequest()
+                    return@NewFeedAdapter
+                }
+                if (action == "comments") {
+                    showComments(data, posterID, fragmentCommentsInterface = this)
+                    return@NewFeedAdapter
+                }
+                if (action == "launchLink") {
+                    launchLink(data)
+                    return@NewFeedAdapter
+                }
+            }, { profileName ->
+                navigateToProfilePage(profileName)
+            },
+            { images, hasVideo, position ->
+                showImages(images.toList(), hasVideo, position)
+            },
+            { menuAction -> }, viewModel.userUid(),
+            newFeed,
+            requireContext().getDataSavingMode()
+        )
     }
 
-    private fun showImages(images: List<String>, hasVideo: Boolean) {
+    private fun showImages(images: List<String>, hasVideo: Boolean, position: Int) {
         var array = arrayOf<String>()
         images.onEachIndexed { index, item ->
             array = array.plus(item)
@@ -466,7 +533,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
         } else {
             FullPostMediaBottomSheet.IMAGES
         }
-        this.showMedia(array, mediaType)
+        this.showMedia(array, mediaType, position)
     }
 
     private fun setUpLoadState() {
@@ -530,12 +597,14 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private fun makeErrorLayoutInvisible() {
         binding.errorLayout.errorText.makeInVisible()
         binding.errorLayout.retryButton.makeInVisible()
+        binding.errorLayout.errorImage.makeInVisible()
     }
 
     private fun makeErrorLayoutVisible() {
         makeEmptyResultLayoutInvisible()
         binding.errorLayout.errorText.makeVisible()
         binding.errorLayout.retryButton.makeVisible()
+        binding.errorLayout.errorImage.makeVisible()
     }
 
     companion object {
@@ -549,6 +618,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
     private fun makeEmptyResultLayoutVisible() {
         makeErrorLayoutInvisible()
+        binding.refresh.isRefreshing = false
         binding.errorLayout.progressCircular.makeInVisible()
         binding.emptyResultLayout.emptyText.makeVisible()
     }

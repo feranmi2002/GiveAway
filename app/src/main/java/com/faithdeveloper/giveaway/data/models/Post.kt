@@ -1,8 +1,5 @@
 package com.faithdeveloper.giveaway.data.models
 
-import com.google.firebase.Timestamp
-import com.google.firebase.database.ServerValue
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.*
 
@@ -18,5 +15,15 @@ data class Post(
     val hasVideo: Boolean,
     val link: String
 ) {
-    constructor() : this("", "", Date(), "", listOf<String>(), listOf<String>(), false, false, "")
+    constructor() : this(
+        "",
+        "",
+        Date(),
+        "",
+        listOf<String>(),
+        listOf<String>(),
+        false,
+        false,
+        ""
+    )
 }

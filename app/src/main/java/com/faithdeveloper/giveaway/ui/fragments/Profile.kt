@@ -14,23 +14,25 @@ import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
-import com.faithdeveloper.giveaway.utils.ActivityObserver
-import com.faithdeveloper.giveaway.utils.Extensions.launchLink
-import com.faithdeveloper.giveaway.utils.Extensions.showComments
-import com.faithdeveloper.giveaway.utils.Extensions.showDialog
-import com.faithdeveloper.giveaway.utils.Extensions.showMedia
-import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.MainActivity
 import com.faithdeveloper.giveaway.R
-import com.faithdeveloper.giveaway.utils.VMFactory
-import com.faithdeveloper.giveaway.ui.adapters.FeedLoadStateAdapter
-import com.faithdeveloper.giveaway.ui.adapters.ProfilePagerAdapter
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutProfileBinding
-import com.faithdeveloper.giveaway.utils.Extensions.getUserDetails
+import com.faithdeveloper.giveaway.ui.adapters.FeedLoadStateAdapter
+import com.faithdeveloper.giveaway.ui.adapters.ProfilePagerAdapter
+import com.faithdeveloper.giveaway.utils.ActivityObserver
+import com.faithdeveloper.giveaway.utils.Event
+import com.faithdeveloper.giveaway.utils.Extensions.launchLink
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
+import com.faithdeveloper.giveaway.utils.Extensions.sendEmail
+import com.faithdeveloper.giveaway.utils.Extensions.sendPhone
+import com.faithdeveloper.giveaway.utils.Extensions.sendWhatsapp
+import com.faithdeveloper.giveaway.utils.Extensions.showComments
+import com.faithdeveloper.giveaway.utils.Extensions.showMedia
+import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
+import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.ProfileVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
@@ -45,6 +47,7 @@ class Profile : Fragment() {
     private var dialog: AlertDialog? = null
     private var _binding: LayoutProfileBinding? = null
     private val binding get() = _binding!!
+    private lateinit var profile: UserProfile
 
     //    this is a flag used to know whether to load the profile of the user or of the author of a post.
     private var userProfile = true
@@ -64,7 +67,8 @@ class Profile : Fragment() {
                 viewModel = ViewModelProvider(
                     this@Profile,
                     VMFactory(
-                        repository = (requireActivity() as MainActivity).getRepository(), getUserProfile = requireArguments().getBoolean("userProfile")
+                        repository = (requireActivity() as MainActivity).getRepository(),
+                        getUserProfile = requireArguments().getBoolean("userProfile")
                     )
                 ).get(ProfileVM::class.java)
             }
@@ -91,7 +95,10 @@ class Profile : Fragment() {
         handleViewPresentation()
         handleObserver()
         setUpLoadState()
-        clickListeners()
+        onClickSettings()
+        onClickEdit()
+        onClickNewPost()
+        onClickBack()
         binding.recycler.addItemDecoration(
             androidx.recyclerview.widget.DividerItemDecoration(
                 requireContext(),
@@ -109,18 +116,33 @@ class Profile : Fragment() {
         super.onViewCreated(view, savedInstanceState)
     }
 
+    private fun onClickBack() {
+        binding.back.setOnClickListener {
+            findNavController().popBackStack()
+        }
+    }
+
+    private fun onClickNewPost() {
+        binding.fab.setOnClickListener {
+            findNavController().navigate(ProfileDirections.actionProfileToNewpost())
+        }
+    }
+
     private fun handleViewPresentation() {
         if (userProfile) {
 //            user wants to check his/her profile
             loadView(viewModel.getUserProfile())
+            binding.edit.makeVisible()
         } else {
 //            user is checking the profile of another user (author of a post)
             loadView(viewModel.getAuthorProfile())
         }
 
+
     }
 
     private fun loadView(profile: UserProfile) {
+        this.profile = profile
 //        load the views with their data
         binding.apply {
             Glide.with(this@Profile)
@@ -128,11 +150,16 @@ class Profile : Fragment() {
                 .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
                 .into(profilePic)
             profileName.text = profile.name
-            email.text = profile.email
-            phone.text = profile.phoneNumber
-
         }
-
+        binding.email.setOnClickListener {
+            if (sendEmail(profile.email) is Event.Failure) noAppToHandleRequest()
+        }
+        binding.phone.setOnClickListener {
+            if (sendPhone(profile.phoneNumber) is Event.Failure) noAppToHandleRequest()
+        }
+        binding.whatsapp.setOnClickListener {
+            if (sendWhatsapp(profile.phoneNumber) is Event.Failure) noAppToHandleRequest()
+        }
     }
 
     //    informs user of no app on the device to handle intended action
@@ -155,23 +182,23 @@ class Profile : Fragment() {
                     return@ProfilePagerAdapter
                 }
 
-            }, { images, hasVideo ->
-                showImages(images.toList(), hasVideo)
+            }, { images, hasVideo, position ->
+                showImages(images.toList(), hasVideo, position)
             }, { menuAction -> }, (activity as MainActivity).getRepository().getUserProfile()
         )
     }
 
-    private fun showImages(images: List<String>, hasVideo: Boolean) {
+    private fun showImages(images: List<String>, hasVideo: Boolean, position: Int) {
         var array = arrayOf<String>()
         images.onEachIndexed { index, item ->
             array = array.plus(item)
         }
         val mediaType: String = if (hasVideo) {
-            VIDEO
+            Feed.VIDEO
         } else {
             FullPostMediaBottomSheet.IMAGES
         }
-        this.showMedia(array, mediaType)
+        this.showMedia(array, mediaType, position)
     }
 
     private fun handleObserver() {
@@ -180,43 +207,29 @@ class Profile : Fragment() {
         })
     }
 
-    private fun clickListeners() {
+    private fun onClickSettings() {
         binding.settings.setOnClickListener {
             findNavController().navigate(ProfileDirections.actionProfileToSettingsFragment())
         }
-        binding.home.setOnClickListener {
-            findNavController().popBackStack()
-        }
     }
 
-    private fun handleSort() {
-        binding.sortLayout.setOnClickListener {
-            dialog?.dismiss()
-            dialogBuilder = requireContext().showDialog(
-                cancelable = true,
-                title = "Filter Timeline",
-                itemsId = R.array.timeline_options,
-                itemsAction = {
-                    viewModel.setTimeLineOption(resources.getStringArray(R.array.timeline_options)[it])
-                },
-                negativeButtonText = "CANCEL",
-                negativeAction = {
-                    // do nothing
-                }
-            )
-            dialog = dialogBuilder?.create()
-            dialog?.show()
+    private  fun onClickEdit(){
+        binding.edit.setOnClickListener {
+            findNavController().navigate(ProfileDirections.actionProfileToProfileEdit())
         }
     }
 
     private fun makeErrorLayoutInvisible() {
         binding.errorLayout.errorText.makeInVisible()
         binding.errorLayout.retryButton.makeInVisible()
+        binding.errorLayout.errorImage.makeInVisible()
     }
 
     private fun makeErrorLayoutVisible() {
+        makeEmptyResultLayoutInvisible()
         binding.errorLayout.errorText.makeVisible()
         binding.errorLayout.retryButton.makeVisible()
+        binding.errorLayout.errorImage.makeVisible()
     }
 
     private fun makeEmptyResultLayoutVisible() {
@@ -285,12 +298,12 @@ class Profile : Fragment() {
         const val ADAPTER_STATE = "adapterState"
         const val VIDEO = "video"
     }
+
     override fun onDestroyView() {
         binding.recycler.adapter = null
         _binding = null
         super.onDestroyView()
     }
-
 
 
     override fun onDestroy() {

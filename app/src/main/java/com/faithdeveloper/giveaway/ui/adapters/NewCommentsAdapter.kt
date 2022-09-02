@@ -7,9 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.utils.Extensions
-import com.faithdeveloper.giveaway.utils.Extensions.getUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
-import com.faithdeveloper.giveaway.data.models.Comment
 import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.CommentsItemBinding
@@ -65,14 +63,14 @@ class NewCommentsAdapter(val comments: MutableList<CommentData>,
                                     if (it.itemId == R.id.edit) {
                                         moreClick.invoke(
                                             "edit",
-                                            comment.idOfPostThatIsCommented,
+                                            comment.parentID,
                                             comment.commentText
                                         )
                                     } else {
                                         positionOfItemToDelete = position
                                         moreClick.invoke(
                                             "delete",
-                                            comment.idOfPostThatIsCommented,
+                                            comment.parentID,
                                             comment.commentText
                                         )
                                     }

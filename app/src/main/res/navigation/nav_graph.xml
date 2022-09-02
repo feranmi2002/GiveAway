@@ -113,12 +113,18 @@
         <action
             android:id="@+id/action_profile_to_settingsFragment"
             app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_profile_to_profileEdit"
+            app:destination="@id/profileEdit" />
+        <action
+            android:id="@+id/action_profile_to_newpost"
+            app:destination="@id/newpost" />
     </fragment>
     <fragment
         android:id="@+id/newpost"
         android:name="com.faithdeveloper.giveaway.ui.fragments.NewPost"
         android:label="New Post"
-        tools:layout="@layout/layout_need_request"/>
+        tools:layout="@layout/layout_post"/>
     <fragment
         android:id="@+id/comments"
         android:name="com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet"
@@ -165,8 +171,6 @@
             android:defaultValue="false" />
         <action
             android:id="@+id/action_userUnverified_to_signIn"
-            app:destination="@id/signIn"
-            app:popUpTo="@id/userUnverified"
-            app:popUpToInclusive="true" />
+            app:destination="@id/signIn" />
     </fragment>
 </navigation>

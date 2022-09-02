@@ -25,10 +25,7 @@ class ProfileVM(val repository: Repository, private val getUserProfile: Boolean)
 
     private fun loadFeed(uid: String) = Pager(
         config = PagingConfig(
-            pageSize = 15,
-            maxSize = 30,
-            enablePlaceholders = false,
-            prefetchDistance = 5
+            pageSize = 15
         ),
         pagingSourceFactory = {
             ProfilePagingSource(repository, true, uid)

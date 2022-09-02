@@ -6,14 +6,14 @@ import android.widget.PopupMenu
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
-import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.CommentsItemBinding
 import com.faithdeveloper.giveaway.ui.adapters.comparators.COMMENTS_ITEM_COMPARATOR
 import com.faithdeveloper.giveaway.utils.Extensions
+import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
+import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
 
 class CommentsPagerAdapter(
     val profileNameClick: (author: UserProfile) -> Unit,
@@ -49,7 +49,6 @@ class CommentsPagerAdapter(
         }
 
         fun bind(item: CommentData, position: Int) {
-
             val comment = item.comment
             val author = item.author
             val userRepliedTo = item.userRepliedTo
@@ -75,14 +74,14 @@ class CommentsPagerAdapter(
                                     if (it.itemId == R.id.edit) {
                                         moreClick.invoke(
                                             "edit",
-                                            comment.idOfPostThatIsCommented,
+                                            comment.parentID,
                                             comment.commentText
                                         )
                                     } else {
                                         positionOfItemToDelete = position
                                         moreClick.invoke(
                                             "delete",
-                                            comment.idOfPostThatIsCommented,
+                                            comment.parentID,
                                             comment.commentText
                                         )
                                     }

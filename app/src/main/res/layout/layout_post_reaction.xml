@@ -9,71 +9,66 @@
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/email"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintBottom_toBottomOf="@+id/phone"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/phone"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/phone"
+        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_baseline_email_24" />
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/phone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintBottom_toBottomOf="@+id/whatsapp"
+        app:layout_constraintBottom_toBottomOf="@+id/email"
         app:layout_constraintEnd_toStartOf="@+id/whatsapp"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/email"
-        app:layout_constraintTop_toTopOf="@+id/whatsapp"
+        app:layout_constraintTop_toTopOf="@+id/email"
         app:srcCompat="@drawable/ic_baseline_phone_24" />
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/whatsapp"
-        android:layout_width="wrap_content"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:layout_height="wrap_content"
-
-        android:layout_marginEnd="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/launch_link"
+        app:layout_constraintBottom_toBottomOf="@+id/phone"
         app:layout_constraintEnd_toStartOf="@+id/launch_link"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/phone"
-        app:layout_constraintTop_toTopOf="@+id/launch_link"
-        app:srcCompat="@drawable/ic_baseline_add_box_24" />
+        app:layout_constraintTop_toTopOf="@+id/phone"
+        app:srcCompat="@drawable/ic_outline_add_box_24" />
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/launch_link"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/comments"
+        app:layout_constraintBottom_toBottomOf="@+id/whatsapp"
+        app:layout_constraintEnd_toStartOf="@+id/comments"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/whatsapp"
+        app:layout_constraintTop_toTopOf="@+id/whatsapp"
+        app:srcCompat="@drawable/ic_baseline_launch_blue_24"
+        tools:visibility="visible" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/comments"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="?attr/selectableItemBackground"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/launch_link"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        app:layout_constraintStart_toEndOf="@+id/whatsapp"
-        app:layout_constraintTop_toTopOf="@+id/comments"
-        app:srcCompat="@drawable/ic_baseline_launch_24" />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/comments"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingEnd="3dp"
-        android:visibility="invisible"
-        android:textColor="#00838F"
-        android:textSize="14sp"
-        android:background="?attr/selectableItemBackground"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-
-        tools:text="345 comments" />
-
-
+        app:layout_constraintStart_toEndOf="@+id/launch_link"
+        app:layout_constraintTop_toTopOf="@+id/launch_link"
+        app:srcCompat="@drawable/ic_outline_insert_comment_24"
+        tools:visibility="visible" />
 </androidx.constraintlayout.widget.ConstraintLayout>

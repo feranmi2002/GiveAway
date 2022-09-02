@@ -11,17 +11,17 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.databinding.FullPostMediaItemLayoutBinding
-import com.faithdeveloper.giveaway.utils.Extensions.disable
-import com.faithdeveloper.giveaway.utils.Extensions.enable
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.interfaces.FullImageAdapterInterface
 
 class FullPostImagesAdapter(
     val mediaUrl: Array<String>,
-    val clickInterface: FullImageAdapterInterface
+    val fullImageAdapterInterface: FullImageAdapterInterface
 ) :
     RecyclerView.Adapter<FullPostImagesAdapter.ImagesViewHolder>() {
+
+    private var viewHolder:ImagesViewHolder? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImagesViewHolder {
         val binding =
@@ -37,15 +37,7 @@ class FullPostImagesAdapter(
         RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
             with(binding) {
-                download.disable()
-                download.setOnClickListener {
-                    clickInterface.saveImage(mediaUrl = mediaUrl[position])
-                }
                 progressCircular.makeVisible()
-                if (mediaUrl.size > 1) {
-                    count.makeVisible()
-                    count.text = "${position + 1} / ${mediaUrl.size}"
-                }
                 Glide.with(itemView)
                     .load(mediaUrl[position])
                     .placeholder(R.drawable.placeholder)
@@ -56,10 +48,9 @@ class FullPostImagesAdapter(
                             target: Target<Drawable>?,
                             isFirstResource: Boolean
                         ): Boolean {
-                            download.disable()
+                            fullImageAdapterInterface.imageIsReady(false)
                             return false
                         }
-
                         override fun onResourceReady(
                             resource: Drawable?,
                             model: Any?,
@@ -68,7 +59,7 @@ class FullPostImagesAdapter(
                             isFirstResource: Boolean
                         ): Boolean {
                             progressCircular.makeInVisible()
-                            download.enable()
+                            fullImageAdapterInterface.imageIsReady(true)
                             return false
                         }
                     }).into(media)
@@ -79,7 +70,10 @@ class FullPostImagesAdapter(
 
     override fun onBindViewHolder(holder: ImagesViewHolder, position: Int) {
         holder.bind(position)
+        viewHolder = holder
     }
 
     override fun getItemCount() = mediaUrl.size
+
+    fun getViewHolder()  = viewHolder
 }

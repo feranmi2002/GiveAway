@@ -34,7 +34,6 @@
         android:id="@+id/profession"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
         android:layout_marginBottom="3dp"
         android:ellipsize="end"
         android:fontFamily="sans-serif"
@@ -43,6 +42,7 @@
         android:textSize="13sp"
         app:layout_constraintEnd_toStartOf="@id/time_view"
         app:layout_constraintStart_toEndOf="@id/profiePic"
+        app:layout_constraintStart_toStartOf="@id/profile_name"
         app:layout_constraintTop_toBottomOf="@id/profile_name"
         tools:text="Student" />
 
@@ -62,12 +62,12 @@
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/description"
         android:layout_width="0dp"
-        android:ellipsize="end"
-        android:maxLines="4"
         android:layout_height="wrap_content"
         android:autoLink="all"
+        android:ellipsize="end"
         android:linksClickable="true"
         android:longClickable="true"
+        android:maxLines="4"
         android:textColor="@color/postTextColor"
         android:textIsSelectable="true"
         app:layout_constraintEnd_toEndOf="parent"
@@ -78,7 +78,7 @@ of jesus Christ that you serve. God will continkue to bless you if you can do th
 nm,dsdnskldnskldksndlksndksndlsdklsdslkdjskljdlskjdskljdskdjskl" />
 
     <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/media"
+        android:id="@+id/read_more"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
@@ -89,6 +89,14 @@ nm,dsdnskldnskldksndlksndksndlsdklsdslkdjskljdlskjdskljdskdjskl" />
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/description"
         tools:visibility="visible" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/media"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/profile_name"
+        app:layout_constraintTop_toBottomOf="@id/read_more" />
 
     <include
         android:id="@+id/reaction"

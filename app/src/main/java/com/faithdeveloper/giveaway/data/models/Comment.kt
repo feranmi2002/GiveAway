@@ -10,7 +10,7 @@ data class Comment(
     var commentID:String,
     @ServerTimestamp
     val time: Date?,
-    var idOfPostThatIsCommented:String,
+    var parentID:String,
     var idOfTheUserThisCommentIsAReplyTo:String,
     var updated:Boolean
 ){
