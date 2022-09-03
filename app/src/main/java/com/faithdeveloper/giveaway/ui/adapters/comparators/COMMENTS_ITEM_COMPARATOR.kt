@@ -7,7 +7,7 @@ object COMMENTS_ITEM_COMPARATOR : DiffUtil.ItemCallback<CommentData>() {
     override fun areItemsTheSame(
         oldItem: CommentData,
         newItem: CommentData
-    ) = false
+    ) = oldItem.comment?.id == newItem.comment?.id
 
     override fun areContentsTheSame(
         oldItem: CommentData,

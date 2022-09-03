@@ -1,6 +1,6 @@
 package com.faithdeveloper.giveaway.data.models
 
-data class CommentProfiles(
+data class ReplyProfiles(
     var author: UserProfile?,
     var userRepliedTo: UserProfile?
 ){

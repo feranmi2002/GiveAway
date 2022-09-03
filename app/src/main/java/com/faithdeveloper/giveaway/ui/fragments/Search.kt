@@ -29,7 +29,6 @@ import com.faithdeveloper.giveaway.ui.adapters.FeedPagerAdapter
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutSearchBinding
-import com.faithdeveloper.giveaway.ui.fragments.NewPost.Companion.VIDEO
 import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.getDataSavingMode
@@ -170,7 +169,7 @@ class Search : Fragment(), FragmentCommentsInterface {
                     return@FeedPagerAdapter
                 }
                 if (reaction == "comments") {
-                    showComments(data, posterID, fragmentCommentsInterface = this)
+                    showComments(data, fragmentCommentsInterface = this)
                     return@FeedPagerAdapter
                 }
                 if (reaction == "launchLink") {

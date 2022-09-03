@@ -174,7 +174,7 @@ class Profile : Fragment() {
         adapter = ProfilePagerAdapter(
             { reaction, data, posterID ->
                 if (reaction == "comments") {
-                    showComments(data, posterID, null)
+                    showComments(data, null)
                     return@ProfilePagerAdapter
                 }
                 if (reaction == "launchLink") {

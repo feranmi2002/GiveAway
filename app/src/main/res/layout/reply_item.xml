@@ -40,6 +40,22 @@
         tools:text="2h" />
 
     <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/placeholder"
+        android:paddingEnd="3dp"
+        android:textColor="@color/purple_500_lighter"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:textSize="11sp"
+        app:layout_constraintStart_toEndOf="@id/profilePic"
+        app:layout_constraintTop_toBottomOf="@id/name"
+        tools:ignore="RtlSymmetry"
+        tools:text="/@Faith Oluwaoyehun." />
+
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/comments_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -47,7 +63,7 @@
         android:textColor="@color/postTextColor"
         app:layout_constraintEnd_toStartOf="@id/more"
         app:layout_constraintStart_toEndOf="@id/profilePic"
-        app:layout_constraintTop_toBottomOf="@id/name"
+        app:layout_constraintTop_toBottomOf="@id/tag"
         tools:ignore="RtlSymmetry"
         tools:text="Here is my comment..." />
 
@@ -59,7 +75,7 @@
         android:background="?attr/selectableItemBackground"
         android:paddingStart="8dp"
         android:textSize="13sp"
-        tools:text="55 replied"
+        android:text="Reply"
         android:textColor="@color/design_default_color_secondary"
         app:layout_constraintStart_toEndOf="@id/profilePic"
         app:layout_constraintTop_toBottomOf="@id/comments_text"

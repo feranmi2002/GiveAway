@@ -470,7 +470,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     return@FeedPagerAdapter
                 }
                 if (action == "comments") {
-                    showComments(data, posterID, fragmentCommentsInterface = this)
+                    showComments(data, fragmentCommentsInterface = this)
                     return@FeedPagerAdapter
                 }
                 if (action == "launchLink") {
@@ -504,7 +504,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     return@NewFeedAdapter
                 }
                 if (action == "comments") {
-                    showComments(data, posterID, fragmentCommentsInterface = this)
+                    showComments(data, fragmentCommentsInterface = this)
                     return@NewFeedAdapter
                 }
                 if (action == "launchLink") {

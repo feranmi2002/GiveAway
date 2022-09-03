@@ -7,14 +7,14 @@ import java.util.*
 data class Comment(
     var authorId:String,
     var commentText:String,
-    var commentID:String,
+    var id:String,
     @ServerTimestamp
     val time: Date?,
     var parentID:String,
-    var idOfTheUserThisCommentIsAReplyTo:String,
+    var replies:Int,
     var updated:Boolean
 ){
-    constructor(): this("", "", "", Date(), "", "", false)
+    constructor(): this("", "", "", Date(), "", 0, false)
 }
 /*
 @Entity(tableName = "CommentsTable", indices = [Index(value = ["localDbId"], unique = true)])

@@ -448,14 +448,27 @@ class Repository(
     }
 
     private fun combineCommentsAndProfiles(
-        authorData: List<CommentProfiles?>,
+        authorData: List<UserProfile?>,
         comments: List<Comment?>
     ): List<CommentData> {
         val result = authorData.mapIndexed { index, it ->
             CommentData(
                 comments[index],
-                authorData[index]?.author,
-                authorData[index]?.userRepliedTo
+                authorData[index]
+            )
+        }
+        return result
+    }
+
+    private fun combineRepliesAndProfiles(
+        profileData: List<ReplyProfiles?>,
+        replies: List<Reply?>
+    ): List<ReplyData> {
+        val result = profileData.mapIndexed { index, it ->
+            ReplyData(
+                replies[index],
+                profileData[index]?.author,
+                profileData[index]?.userRepliedTo
             )
         }
         return result
@@ -491,11 +504,11 @@ class Repository(
         }
     }
 
-    private suspend fun getProfileOfCommentAuthors(documents: List<DocumentSnapshot>): List<CommentProfiles> {
+    private suspend fun getProfileOfCommentAuthors(documents: List<DocumentSnapshot>): List<UserProfile?> {
 //        this job list is for jobs for getting the profile of the author of a comment
         val authorOfCommentJobList = mutableListOf<Deferred<UserProfile?>>()
-//        this job list is for jobs getting the profile of users comment is a reply to
-        val profileOfUserCommentIsAReplyToJobList = mutableListOf<Deferred<UserProfile?>>()
+////        this job list is for jobs getting the profile of users comment is a reply to
+//        val profileOfUserCommentIsAReplyToJobList = mutableListOf<Deferred<UserProfile?>>()
 
         return coroutineScope {
             documents.forEach {
@@ -514,8 +527,66 @@ class Repository(
                         profile.toObject<UserProfile>()
                     }
                 }
+//                val profileOfUserRepliedToJob = async {
+//                    return@async when (comment?.idOfTheUserThisCommentIsAReplyTo) {
+//                        "" -> {
+////                            this comment isn't replying anybody
+//                            null
+//                        }
+//                        userUid()!! -> {
+////                            this comment is replying this user, so fetch profile of user from cached database
+//                            getUserProfile()
+//                        }
+//                        else -> {
+////                            this comment is not replying this user, so fetch profile of user from remote database
+//                            val profile = database().collection(USERS)
+//                                .document(comment?.idOfTheUserThisCommentIsAReplyTo!!).get().await()
+//                            profile.toObject<UserProfile>()
+//                        }
+//                    }
+//                }
+//                add respective jobs
+                authorOfCommentJobList.add(commentAuthorJob)
+//                profileOfUserCommentIsAReplyToJobList.add(profileOfUserRepliedToJob)
+            }
+
+//            get results of respective jobs
+
+//            val listOfUsersRepliedTo = profileOfUserCommentIsAReplyToJobList.awaitAll()
+
+//            combine results of above jobs and return
+            //            val results = listOfCommentAuthors.mapIndexed { index, userProfile ->
+//                CommentProfiles(userProfile, listOfUsersRepliedTo[index])
+//            }
+            return@coroutineScope authorOfCommentJobList.awaitAll()
+        }
+    }
+
+    private suspend fun getProfileOfAuthorsAndProfileOfUsersRepliedTo(documents: List<DocumentSnapshot>): List<ReplyProfiles?> {
+//        this job list is for jobs for getting the profile of the author of a comment
+        val authorOfCommentJobList = mutableListOf<Deferred<UserProfile?>>()
+////        this job list is for jobs getting the profile of users comment is a reply to
+        val profileOfUserCommentIsAReplyToJobList = mutableListOf<Deferred<UserProfile?>>()
+
+        return coroutineScope {
+            documents.forEach {
+//                convert from firebase ,model to @class Comment
+                val reply = it.toObject<Reply>()
+//                create job for authors
+                val replyAuthorJob = async {
+                    return@async if (reply?.authorId == userUid()!!) {
+//                        author is this user, so fetch profile of  author from cached database
+                        getUserProfile()
+                    } else {
+//                        author is not this user, so fetch profile of  author from remote database
+                        val profile =
+                            database().collection(USERS).document(reply?.authorId!!).get()
+                                .await()
+                        profile.toObject<UserProfile>()
+                    }
+                }
                 val profileOfUserRepliedToJob = async {
-                    return@async when (comment?.idOfTheUserThisCommentIsAReplyTo) {
+                    return@async when (reply?.idOfTheUserThisCommentIsAReplyTo) {
                         "" -> {
 //                            this comment isn't replying anybody
                             null
@@ -527,13 +598,13 @@ class Repository(
                         else -> {
 //                            this comment is not replying this user, so fetch profile of user from remote database
                             val profile = database().collection(USERS)
-                                .document(comment?.idOfTheUserThisCommentIsAReplyTo!!).get().await()
+                                .document(reply?.idOfTheUserThisCommentIsAReplyTo!!).get().await()
                             profile.toObject<UserProfile>()
                         }
                     }
                 }
 //                add respective jobs
-                authorOfCommentJobList.add(commentAuthorJob)
+                authorOfCommentJobList.add(replyAuthorJob)
                 profileOfUserCommentIsAReplyToJobList.add(profileOfUserRepliedToJob)
             }
 
@@ -543,7 +614,7 @@ class Repository(
 
 //            combine results of above jobs and return
             val result = listOfCommentAuthors.mapIndexed { index, userProfile ->
-                CommentProfiles(userProfile, listOfUsersRepliedTo[index])
+                ReplyProfiles(userProfile, listOfUsersRepliedTo[index])
             }
             return@coroutineScope result
         }
@@ -554,27 +625,26 @@ class Repository(
     }
 
     fun getUserProfilePicUrl(): String? = context.getUserProfilePicUrl()
+
     suspend fun getComments(key: PagerKey, postID: String): Event {
         //        set up query
 //        'firebaseComments' is the returned comments in firebase model. It will be converted to the model @class Comment
         val firebaseComments: QuerySnapshot = if (key.lastSnapshot == null) {
 //            no previous data loaded
-            database().collection(POST_DATA)
+            database().collection(POSTS)
                 .document(postID)
                 .collection(COMMENTS)
                 .limit(key.loadSize)
                 .orderBy("time", Query.Direction.DESCENDING)
-                .whereEqualTo("idOfPostThatIsCommented", postID)
                 .get().await()
 
         } else {
 //            previous data has been loaded, continues from where it stopped last which is based on the last snapshot from the key
-            database().collection(POST_DATA)
+            database().collection(POSTS)
                 .document(postID)
                 .collection(COMMENTS)
                 .limit(key.loadSize)
                 .orderBy("time", Query.Direction.DESCENDING)
-                .whereEqualTo("idOfPostThatIsCommented", postID)
                 .startAfter(key.lastSnapshot)
                 .get().await()
         }
@@ -590,18 +660,71 @@ class Repository(
                     async { convertSnapshotToClass<Comment>(firebaseComments.documents) }
 
                 //            results of above two jobs
-                val authorAndUserRepliedToProfiles = getAuthorDataAndConvertItJob.await()
+                val authorProfiles = getAuthorDataAndConvertItJob.await()
                 val comments = convertCommentsJob.await()
 
                 //            combine above two results
                 val commentDataList =
-                    combineCommentsAndProfiles(authorAndUserRepliedToProfiles, comments)
+                    combineCommentsAndProfiles(authorProfiles, comments)
                 result =
                     Event.Success(PagerResponse(commentDataList, firebaseComments.documents.last()))
             }
         } else {
             // no data or all data have been loaded from the database
             result = Event.Success(PagerResponse(emptyList<CommentData>(), null))
+        }
+        return result
+    }
+
+    suspend fun getReplies(key: PagerKey, parentId: String, commentId: String): Event {
+        //        set up query
+//        'firebaseComments' is the returned comments in firebase model. It will be converted to the model @class Comment
+        val firebaseComments: QuerySnapshot = if (key.lastSnapshot == null) {
+//            no previous data loaded
+            database().collection(POSTS)
+                .document(parentId)
+                .collection(COMMENTS)
+                .document(commentId)
+                .collection(REPLIES)
+                .limit(key.loadSize)
+                .orderBy("time", Query.Direction.DESCENDING)
+                .get().await()
+
+        } else {
+//            previous data has been loaded, continues from where it stopped last which is based on the last snapshot from the key
+            database().collection(POSTS)
+                .document(parentId)
+                .collection(COMMENTS)
+                .document(commentId)
+                .collection(REPLIES)
+                .limit(key.loadSize)
+                .orderBy("time", Query.Direction.DESCENDING)
+                .get().await()
+        }
+
+        val result: Event
+        if (firebaseComments.size() > 0) {
+//            found data
+            coroutineScope {
+                //            get the profile of those who made the comments, profile of who the comment is a reply to  and converts the posts from the firebase snapshots to @class CommentProfile
+                val getAuthorDataAndConvertItJob =
+                    async { getProfileOfAuthorsAndProfileOfUsersRepliedTo(firebaseComments.documents) }
+                val convertRepliesJob =
+                    async { convertSnapshotToClass<Reply>(firebaseComments.documents) }
+
+                //            results of above two jobs
+                val authorAndUserRepliedToProfiles = getAuthorDataAndConvertItJob.await()
+                val replies = convertRepliesJob.await()
+
+                //            combine above two results
+                val replyDataList =
+                    combineRepliesAndProfiles(authorAndUserRepliedToProfiles, replies)
+                result =
+                    Event.Success(PagerResponse(replyDataList, firebaseComments.documents.last()))
+            }
+        } else {
+            // no data or all data have been loaded from the database
+            result = Event.Success(PagerResponse(emptyList<ReplyData>(), null))
         }
         return result
     }
@@ -796,30 +919,6 @@ class Repository(
         }
     }
 
-    suspend fun updateComment(newComment: String, idOfPostThatIsCommentedOn: String): Event {
-        return try {
-            val map = mutableMapOf<String, Any?>(
-                "commentText" to newComment,
-                "updated" to true,
-                "time" to null
-            )
-            database().collection(POST_DATA).document(idOfPostThatIsCommentedOn).update(map)
-                .await()
-            Event.Success(newComment, "comment_edited")
-        } catch (e: Exception) {
-            Event.Failure(null, "comment_unedited")
-        }
-    }
-
-    suspend fun deleteComment(postID: String): Event {
-        return try {
-            database().collection(POST_DATA).document(postID).delete().await()
-            Event.Success("DELETED", "comment_deleted")
-        } catch (e: Exception) {
-            Event.Failure(null, "comment_undeleted")
-        }
-    }
-
     private fun notifyUserOfNewComments(comments: List<CommentData>) {
         NotificationUtil.sendNotifications(context, comments)
     }
@@ -856,10 +955,106 @@ class Repository(
     }
 
     fun getAuthorProfileForProfileView() = authorProfileForProfileView
+
+    suspend fun updateReply(
+        newReply: String,
+        parentId: String,
+        commentId: String,
+        replyId: String
+    ): Event {
+        return try {
+            val map = mutableMapOf<String, Any?>(
+                "commentText" to newReply,
+                "updated" to true,
+                "time" to null
+            )
+            database().collection(POSTS).document(parentId).collection(
+                COMMENTS
+            ).document(commentId).collection(REPLIES).document(replyId).update(map)
+                .await()
+            Event.Success(newReply, "comment_edited")
+        } catch (e: Exception) {
+            Event.Failure(null, "comment_unedited")
+        }
+    }
+
+    suspend fun updateComment(newComment: String, parentId: String, commentId: String): Event {
+        return try {
+            val map = mutableMapOf<String, Any?>(
+                "commentText" to newComment,
+                "updated" to true,
+                "time" to null
+            )
+            database().collection(POSTS).document(parentId).collection(
+                COMMENTS
+            ).document(commentId).update(map)
+                .await()
+            Event.Success(newComment, "comment_edited")
+        } catch (e: Exception) {
+            Event.Failure(null, "comment_unedited")
+        }
+    }
+
+    suspend fun deleteComment(parentID: String, commentID: String): Event {
+        return try {
+            database().collection(POSTS).document(parentID).collection(COMMENTS).document(commentID)
+                .delete().await()
+            Event.Success("DELETED", "comment_deleted")
+        } catch (e: Exception) {
+            Event.Failure(null, "comment_undeleted")
+        }
+    }
+
+    suspend fun deleteReply(parentID: String, commentID: String, replyId: String): Event {
+        return try {
+            database().collection(POSTS).document(parentID).collection(COMMENTS).document(commentID)
+                .collection(
+                    REPLIES
+                ).document(replyId).delete().await()
+            Event.Success("DELETED", "comment_deleted")
+        } catch (e: Exception) {
+            Event.Failure(null, "comment_undeleted")
+        }
+    }
+
+
+    suspend fun addAReply(
+        replyText: String,
+        parentId: String,
+        commentId: String,
+        profileOfUserThisCommentIsAReplyTo: UserProfile?
+    ): Event {
+        return try {
+            val timePosted = System.currentTimeMillis()
+            val reply = Reply(
+                userUid()!!,
+                replyText,
+                "${userUid()!!}${timePosted}",
+                null,
+                profileOfUserThisCommentIsAReplyTo?.id ?: "",
+                false
+            )
+            database().collection(POSTS).document(parentId).collection(COMMENTS).document(commentId)
+                .collection(
+                    REPLIES
+                ).document(reply.id).set(reply).await()
+            Event.Success(
+                ReplyData(
+                    reply,
+                    getUserProfile(),
+                    profileOfUserThisCommentIsAReplyTo
+                ), "comment_added"
+            )
+        } catch (e: Exception) {
+            Event.Failure(null, "comment_unadded")
+        }
+
+
+    }
+
     suspend fun addNewComment(
         commentText: String,
-        idOfPostThatIsCommentedOn: String,
-        profileOfUserThisCommentIsAReplyTo: UserProfile?
+        parentId: String,
     ): Event {
         return try {
             val timePosted = System.currentTimeMillis()
@@ -868,18 +1063,16 @@ class Repository(
                 commentText,
                 "${userUid()!!}${timePosted}",
                 null,
-                idOfPostThatIsCommentedOn,
-                profileOfUserThisCommentIsAReplyTo?.id ?: "",
+                parentId,
+                0,
                 false
             )
-            database().collection(POST_DATA).document(idOfPostThatIsCommentedOn)
-                .collection(COMMENTS)
-                .add(comment).await()
+            database().collection(POSTS).document(parentId).collection(COMMENTS)
+                .document(comment.id).set(comment)
             Event.Success(
                 CommentData(
                     comment,
-                    getUserProfile(),
-                    profileOfUserThisCommentIsAReplyTo
+                    getUserProfile()
                 ), "comment_added"
             )
         } catch (e: Exception) {
@@ -909,5 +1102,7 @@ class Repository(
         const val APP_STARTED = "app_started"
         const val APP_PAUSED = "app_paused"
         const val COMMENTS = "comments"
+        const val REPLIES = "replies"
+
     }
 }

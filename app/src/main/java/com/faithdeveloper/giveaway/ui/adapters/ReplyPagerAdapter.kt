@@ -8,21 +8,21 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.faithdeveloper.giveaway.R
-import com.faithdeveloper.giveaway.data.models.CommentData
+import com.faithdeveloper.giveaway.data.models.ReplyData
 import com.faithdeveloper.giveaway.data.models.UserProfile
-import com.faithdeveloper.giveaway.databinding.CommentsItemBinding
-import com.faithdeveloper.giveaway.ui.adapters.comparators.COMMENTS_ITEM_COMPARATOR
+import com.faithdeveloper.giveaway.databinding.ReplyItemBinding
+import com.faithdeveloper.giveaway.ui.adapters.comparators.REPLY_ITEM_COMPARATOR
 import com.faithdeveloper.giveaway.utils.Extensions
 import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
 
-class CommentsPagerAdapter(
+class ReplyPagerAdapter(
     val profileNameClick: (author: UserProfile) -> Unit,
-    private val reply: (commentId:String, text:String, count:Int) -> Unit,
+    private val reply: (userRepliedTo: UserProfile?) -> Unit,
     val userUid: String,
-    val moreClick: (action: String,commentId:String, postText: String) -> Unit
+    val moreClick: (action: String, id: String, postText: String) -> Unit
 ) :
-    PagingDataAdapter<CommentData, CommentsPagerAdapter.CommentsViewHolder>
-        (COMMENTS_ITEM_COMPARATOR) {
+    PagingDataAdapter<ReplyData, ReplyPagerAdapter.ReplyViewHolder>
+        (REPLY_ITEM_COMPARATOR) {
 
     //    this is used to note the position of the item user wants to delete
     var positionOfItemToDelete = -1
@@ -30,7 +30,7 @@ class CommentsPagerAdapter(
     //    this interface is used for updating the comment
     private var commentsEditInterface: CommentsEditInterface? = null
 
-    override fun onBindViewHolder(holder: CommentsViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ReplyViewHolder, position: Int) {
         val currentItem = getItem(position)
         if (currentItem != null) {
             commentsEditInterface = holder.commentsInterface
@@ -38,9 +38,9 @@ class CommentsPagerAdapter(
         }
     }
 
-    inner class CommentsViewHolder(val binding: CommentsItemBinding) :
+    inner class ReplyViewHolder(val binding: ReplyItemBinding) :
         RecyclerView.ViewHolder(binding.root), CommentsEditInterface {
-        private var mItem: CommentData? = null
+        private var mItem: ReplyData? = null
         val more = binding.more
         val reply = binding.reply
         val name = binding.name
@@ -48,21 +48,24 @@ class CommentsPagerAdapter(
         init {
             more.setOnClickListener {
                 val popup = PopupMenu(itemView.context, binding.commentsText)
-                if (mItem?.author!!.id == userUid ) popup.menuInflater.inflate(R.menu.comment_menu_edit_delete, popup.menu)
+                if (mItem?.author!!.id == userUid) popup.menuInflater.inflate(
+                    R.menu.comment_menu_edit_delete,
+                    popup.menu
+                )
                 else popup.menuInflater.inflate(R.menu.comment_menu_edit, popup.menu)
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
                         moreClick.invoke(
                             "edit",
-                            mItem?.comment!!.id,
-                            mItem?.comment!!.commentText
+                            mItem?.reply!!.id,
+                            mItem?.reply!!.commentText
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
                         moreClick.invoke(
                             "delete",
-                            mItem?.comment!!.id,
-                            mItem?.comment!!.commentText
+                            mItem?.reply!!.id,
+                            mItem?.reply!!.commentText
                         )
                     }
                     return@setOnMenuItemClickListener true
@@ -71,8 +74,7 @@ class CommentsPagerAdapter(
             }
 
             reply.setOnClickListener {
-                this@CommentsPagerAdapter.reply.invoke(
-                    mItem?.comment!!.id, mItem?.comment!!.commentText, mItem?.comment!!.replies)
+                this@ReplyPagerAdapter.reply.invoke(mItem?.userReplied)
             }
 
             name.setOnClickListener {
@@ -87,19 +89,21 @@ class CommentsPagerAdapter(
             }
         }
 
-        fun bind(item: CommentData) {
+        fun bind(item: ReplyData) {
             mItem = item
-            val comment = item.comment
+            val mReply = item.reply
             val author = item.author
+            val userRepliedTo = item.userReplied
 
             with(binding) {
-                comment?.let { comment ->
+                mReply?.let { reply ->
                     author?.let { author ->
+                        tag.isVisible = reply.idOfTheUserThisCommentIsAReplyTo.isNotBlank()
+                        tag.text = userRepliedTo?.name
                         name.text = author.name
                         binding.more.isVisible = author.id == userUid
                     }
-                    with(comment) {
-                        reply.text = "$replies replies"
+                    with(reply) {
                         commentsText.text = commentText
                         binding.time.text = Extensions.convertTime(time)
                     }
@@ -111,9 +115,10 @@ class CommentsPagerAdapter(
             }
         }
     }
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CommentsViewHolder {
-        return CommentsViewHolder(
-            CommentsItemBinding.inflate(
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReplyViewHolder {
+        return ReplyViewHolder(
+            ReplyItemBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
                 false
@@ -121,11 +126,11 @@ class CommentsPagerAdapter(
         )
     }
 
-    fun updateComment(newComment: String) {
+    fun updateReply(newComment: String) {
         commentsEditInterface?.updateComment(newComment)
     }
 
-    fun removeComment() {
+    fun removeReply() {
         notifyItemRemoved(positionOfItemToDelete - 1)
     }
 

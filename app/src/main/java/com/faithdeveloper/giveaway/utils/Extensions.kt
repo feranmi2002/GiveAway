@@ -271,11 +271,10 @@ object Extensions {
 
     fun Fragment.showComments(
         postID: String,
-        posterID: String,
         fragmentCommentsInterface: FragmentCommentsInterface?
     ) {
         val commentsBottomSheet =
-            CommentsBottomSheet.instance(postID, posterID, fragmentCommentsInterface)
+            CommentsBottomSheet.instance(postID, fragmentCommentsInterface)
         commentsBottomSheet.show(requireActivity().supportFragmentManager, CommentsBottomSheet.TAG)
     }
 

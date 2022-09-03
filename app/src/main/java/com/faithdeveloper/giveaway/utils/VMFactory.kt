@@ -19,6 +19,8 @@ class VMFactory(private val repository: Repository, val postID:String?=null, val
             return NewPostVM(repository) as T
         if (modelClass.isAssignableFrom(CommentsVM::class.java))
             return CommentsVM(repository, postID!!) as T
+        if (modelClass.isAssignableFrom(RepliesVM::class.java))
+            return RepliesVM(repository) as T
         if (modelClass.isAssignableFrom(ProfileVM::class.java))
             return ProfileVM(repository, getUserProfile) as T
         if (modelClass.isAssignableFrom(SettingsVM::class.java))
