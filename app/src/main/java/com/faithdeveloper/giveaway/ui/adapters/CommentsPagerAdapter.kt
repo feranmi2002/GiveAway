@@ -19,7 +19,7 @@ class CommentsPagerAdapter(
     val profileNameClick: (author: UserProfile) -> Unit,
     private val reply: (commentId:String, text:String, count:Int) -> Unit,
     val userUid: String,
-    val moreClick: (action: String,commentId:String, postText: String) -> Unit
+    val moreClick: (action: String,commentId:String, postText: String,replies:Int) -> Unit
 ) :
     PagingDataAdapter<CommentData, CommentsPagerAdapter.CommentsViewHolder>
         (COMMENTS_ITEM_COMPARATOR) {
@@ -55,14 +55,16 @@ class CommentsPagerAdapter(
                         moreClick.invoke(
                             "edit",
                             mItem?.comment!!.id,
-                            mItem?.comment!!.commentText
+                            mItem?.comment!!.commentText,
+                            mItem?.comment!!.replies
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
                         moreClick.invoke(
                             "delete",
                             mItem?.comment!!.id,
-                            mItem?.comment!!.commentText
+                            mItem?.comment!!.commentText,
+                            mItem?.comment!!.replies
                         )
                     }
                     return@setOnMenuItemClickListener true

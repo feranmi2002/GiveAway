@@ -271,10 +271,11 @@ object Extensions {
 
     fun Fragment.showComments(
         postID: String,
+        commentsCount:Int,
         fragmentCommentsInterface: FragmentCommentsInterface?
     ) {
         val commentsBottomSheet =
-            CommentsBottomSheet.instance(postID, fragmentCommentsInterface)
+            CommentsBottomSheet.instance(postID, commentsCount, fragmentCommentsInterface)
         commentsBottomSheet.show(requireActivity().supportFragmentManager, CommentsBottomSheet.TAG)
     }
 
@@ -331,6 +332,7 @@ object Extensions {
     }
 
     fun mediaSize(uri: Uri) = File(uri.path!!).length()
+
 
     const val USERS_DATABASE = "users"
 

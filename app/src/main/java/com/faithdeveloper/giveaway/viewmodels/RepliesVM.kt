@@ -8,7 +8,6 @@ import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.PagerKey
 import com.faithdeveloper.giveaway.data.models.UserProfile
-import com.faithdeveloper.giveaway.pagingsources.CommentsPagingSource
 import com.faithdeveloper.giveaway.pagingsources.RepliesPagingSource
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.LiveEvent
@@ -35,7 +34,7 @@ class RepliesVM(private val repository: Repository) : ViewModel() {
         config = PagingConfig(
             pageSize = 15
         ), pagingSourceFactory = {
-            RepliesPagingSource(repository, true, parentId, commentID)
+            RepliesPagingSource(repository, parentId, commentID)
         }, initialKey = PagerKey(null, DEFAULT_FILTER, 10)
     ).liveData.cachedIn(viewModelScope)
 

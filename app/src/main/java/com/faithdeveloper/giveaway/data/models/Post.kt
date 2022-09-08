@@ -13,7 +13,8 @@ data class Post(
     val mediaUrls: List<String>,
     val hasComments: Boolean,
     val hasVideo: Boolean,
-    val link: String
+    val link: String,
+    val commentCount:Int
 ) {
     constructor() : this(
         "",
@@ -24,6 +25,7 @@ data class Post(
         listOf<String>(),
         false,
         false,
-        ""
+        "",
+        0
     )
 }

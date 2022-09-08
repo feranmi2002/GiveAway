@@ -9,11 +9,11 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
-import com.faithdeveloper.giveaway.ui.fragments.Search.Companion.PEOPLE
+
 import com.faithdeveloper.giveaway.pagingsources.SearchPagingSourceTags
 
 class SearchVM(val repository: Repository) : ViewModel() {
-    private var _filter: String = PEOPLE
+    private var _filter: String = "PEOPLE"
     val filter get() = _filter
     private val searchString = MutableLiveData<String>()
     val result = searchString.switchMap {

@@ -9,28 +9,19 @@ import com.faithdeveloper.giveaway.data.models.Post
 import com.google.firebase.firestore.DocumentSnapshot
 import java.util.*
 
-class ProfilePagingSource(val repository: Repository, private var firstTimeLoad: Boolean, val userId: String) :
+class ProfilePagingSource(val repository: Repository, private var firstTimeLoad: Boolean, private val userId: String) :
     PagingSource<PagerKey, Post>() {
 
     override val jumpingSupported = false
     override val keyReuseSupported = false
-
-    private val documentKeyReferences = mutableListOf<DocumentSnapshot?>(null)
 
     override fun getRefreshKey(state: PagingState<PagerKey, Post>) = null
 
     override suspend fun load(params: LoadParams<PagerKey>): LoadResult<PagerKey, Post> {
         return try {
             val response = repository.getProfileFeed(params.key!!, userId).data as PagerResponse<Post>
-            val prevKey =   PagerKey(
-                lastSnapshot = documentKeyReferences.last(),
-                filter = params.key!!.filter,
-                loadSize = params.key!!.loadSize
-            )
 
             val nextKey = if (response.data.isNotEmpty()) {
-//                store the last snapshot which serves as the key for the database
-                documentKeyReferences.add(response.lastSnapshot)
                 // data was loaded
                 if (response.data.size < 10) {
                     // last set of data loaded. No new ones available
@@ -42,12 +33,10 @@ class ProfilePagingSource(val repository: Repository, private var firstTimeLoad:
                 // no new data found
                 null
             }
-
-
             LoadResult.Page(
                 data = response.data,
                 nextKey = nextKey,
-                prevKey = prevKey
+                prevKey = null
             )
         } catch (e: Exception) {
             LoadResult.Error(e)

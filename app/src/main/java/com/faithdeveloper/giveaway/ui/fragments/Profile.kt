@@ -19,6 +19,7 @@ import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutProfileBinding
+import com.faithdeveloper.giveaway.pagingsources.ProfilePagingSource
 import com.faithdeveloper.giveaway.ui.adapters.FeedLoadStateAdapter
 import com.faithdeveloper.giveaway.ui.adapters.ProfilePagerAdapter
 import com.faithdeveloper.giveaway.utils.ActivityObserver
@@ -75,7 +76,6 @@ class Profile : Fragment() {
         }
 
         setUpAdapter()
-
         userProfile = requireArguments().getBoolean("userProfile")
 
         activity?.lifecycle?.addObserver(activityObserver)
@@ -86,19 +86,20 @@ class Profile : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = LayoutProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        handleViewPresentation()
-        handleObserver()
         setUpLoadState()
+        handleObserver()
+        handleViewPresentation()
         onClickSettings()
         onClickEdit()
         onClickNewPost()
         onClickBack()
+        onClickProfileImage()
         binding.recycler.addItemDecoration(
             androidx.recyclerview.widget.DividerItemDecoration(
                 requireContext(),
@@ -112,7 +113,6 @@ class Profile : Fragment() {
         )
         binding.recycler.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-        binding.recycler.setHasFixedSize(true)
         super.onViewCreated(view, savedInstanceState)
     }
 
@@ -128,6 +128,12 @@ class Profile : Fragment() {
         }
     }
 
+    private fun onClickProfileImage(){
+        binding.profilePic.setOnClickListener {
+            showImages(listOf(profile.profilePicUrl), false, 0)
+        }
+    }
+
     private fun handleViewPresentation() {
         if (userProfile) {
 //            user wants to check his/her profile
@@ -137,8 +143,6 @@ class Profile : Fragment() {
 //            user is checking the profile of another user (author of a post)
             loadView(viewModel.getAuthorProfile())
         }
-
-
     }
 
     private fun loadView(profile: UserProfile) {
@@ -172,9 +176,9 @@ class Profile : Fragment() {
 
     private fun setUpAdapter() {
         adapter = ProfilePagerAdapter(
-            { reaction, data, posterID ->
+            { reaction, data, commentCount ->
                 if (reaction == "comments") {
-                    showComments(data, null)
+                    showComments(data, commentCount, null)
                     return@ProfilePagerAdapter
                 }
                 if (reaction == "launchLink") {
@@ -213,7 +217,7 @@ class Profile : Fragment() {
         }
     }
 
-    private  fun onClickEdit(){
+    private fun onClickEdit() {
         binding.edit.setOnClickListener {
             findNavController().navigate(ProfileDirections.actionProfileToProfileEdit())
         }
@@ -294,11 +298,6 @@ class Profile : Fragment() {
         }
     }
 
-    companion object {
-        const val ADAPTER_STATE = "adapterState"
-        const val VIDEO = "video"
-    }
-
     override fun onDestroyView() {
         binding.recycler.adapter = null
         _binding = null
@@ -310,5 +309,4 @@ class Profile : Fragment() {
         activity?.lifecycle?.removeObserver(activityObserver)
         super.onDestroy()
     }
-
 }

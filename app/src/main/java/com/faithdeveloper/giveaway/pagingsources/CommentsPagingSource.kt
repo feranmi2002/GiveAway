@@ -9,7 +9,6 @@ import com.faithdeveloper.giveaway.data.Repository
 
 class CommentsPagingSource(
     val repository: Repository,
-    var firstTimeLoad: Boolean,
     private val postID: String
 ) :
     PagingSource<PagerKey, CommentData>() {
@@ -21,6 +20,7 @@ class CommentsPagingSource(
     override suspend fun load(params: LoadParams<PagerKey>): LoadResult<PagerKey, CommentData> {
         return try {
             val response = repository.getComments(params.key!!, postID).data as PagerResponse<CommentData>
+
             val nextKey = if (response.data.isNotEmpty()) {
                 // data was loaded
                 if (response.data.size < 10) {

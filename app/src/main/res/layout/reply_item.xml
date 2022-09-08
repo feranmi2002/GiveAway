@@ -44,7 +44,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:background="@drawable/placeholder"
         android:paddingEnd="3dp"
         android:textColor="@color/purple_500_lighter"
         android:visibility="gone"

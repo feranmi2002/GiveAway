@@ -17,7 +17,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingSourceInterface {
-
     var newFeed = 0
     private set
 

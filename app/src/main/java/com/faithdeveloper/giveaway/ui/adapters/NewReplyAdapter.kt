@@ -3,6 +3,7 @@ package com.faithdeveloper.giveaway.ui.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.PopupMenu
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -94,8 +95,8 @@ class NewReplyAdapter(
             with(binding) {
                 mReply?.let { reply ->
                     author?.let { author ->
-                        tag.isVisible = reply.idOfTheUserThisCommentIsAReplyTo.isNotBlank()
-                        tag.text = userRepliedTo?.name
+                        tag.isGone = userRepliedTo !=null
+                        tag.text = "@${userRepliedTo?.name}"
                         name.text = author.name
                         binding.more.isVisible = author.id == userUid
                     }

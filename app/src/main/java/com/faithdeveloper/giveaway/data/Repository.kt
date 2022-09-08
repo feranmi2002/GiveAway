@@ -26,10 +26,7 @@ import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
@@ -252,11 +249,12 @@ class Repository(
                     mediaUrls = mediaUrlsList,
                     hasComments = hasComments,
                     hasVideo = hasVideo,
-                    link = link ?: ""
+                    link = link ?: "",
+                    commentCount = 0
                 )
             }
             //              push to the database
-            database().collection(POSTS).document(post.postID).set(post).await()
+            database().collection(POSTS).document(post.postID).set(post)
             uploadedPost = post
             Event.Success(null)
         } catch (e: Exception) {
@@ -527,37 +525,8 @@ class Repository(
                         profile.toObject<UserProfile>()
                     }
                 }
-//                val profileOfUserRepliedToJob = async {
-//                    return@async when (comment?.idOfTheUserThisCommentIsAReplyTo) {
-//                        "" -> {
-////                            this comment isn't replying anybody
-//                            null
-//                        }
-//                        userUid()!! -> {
-////                            this comment is replying this user, so fetch profile of user from cached database
-//                            getUserProfile()
-//                        }
-//                        else -> {
-////                            this comment is not replying this user, so fetch profile of user from remote database
-//                            val profile = database().collection(USERS)
-//                                .document(comment?.idOfTheUserThisCommentIsAReplyTo!!).get().await()
-//                            profile.toObject<UserProfile>()
-//                        }
-//                    }
-//                }
-//                add respective jobs
                 authorOfCommentJobList.add(commentAuthorJob)
-//                profileOfUserCommentIsAReplyToJobList.add(profileOfUserRepliedToJob)
             }
-
-//            get results of respective jobs
-
-//            val listOfUsersRepliedTo = profileOfUserCommentIsAReplyToJobList.awaitAll()
-
-//            combine results of above jobs and return
-            //            val results = listOfCommentAuthors.mapIndexed { index, userProfile ->
-//                CommentProfiles(userProfile, listOfUsersRepliedTo[index])
-//            }
             return@coroutineScope authorOfCommentJobList.awaitAll()
         }
     }
@@ -760,7 +729,6 @@ class Repository(
             Log.i("GA", "failed to updateProfile")
             Event.Failure(null)
         }
-
     }
 
     private suspend fun updateAll(name: String?, phone: String?, newPicture: Uri?) {
@@ -851,16 +819,16 @@ class Repository(
         reference.putFile(newPicture!!).await()
         val downloadUrl = reference.downloadUrl.await()
         database().collection(USERS).document(userUid()!!)
-            .update("profilePicUrl", downloadUrl.toString()).await()
+            .update("profilePicUrl", downloadUrl.toString())
         context.storeUserProfilePicUrl(downloadUrl.toString())
     }
 
     private suspend fun updateUserPhone(phone: String?) {
-        database().collection(USERS).document(userUid()!!).update("phoneNumber", phone).await()
+        database().collection(USERS).document(userUid()!!).update("phoneNumber", phone)
     }
 
     private suspend fun updateUserName(name: String?) {
-        database().collection(USERS).document(userUid()!!).update("name", name!!).await()
+        database().collection(USERS).document(userUid()!!).update("name", name!!)
     }
 
     suspend fun formatFeedResponse(response: List<FirebaseModelFeed>): List<FeedData> {
@@ -877,7 +845,6 @@ class Repository(
             result = job.await()
         }
         return result
-
     }
 
     suspend fun searchByTags(
@@ -956,7 +923,7 @@ class Repository(
 
     fun getAuthorProfileForProfileView() = authorProfileForProfileView
 
-    suspend fun updateReply(
+    fun updateReply(
         newReply: String,
         parentId: String,
         commentId: String,
@@ -971,14 +938,13 @@ class Repository(
             database().collection(POSTS).document(parentId).collection(
                 COMMENTS
             ).document(commentId).collection(REPLIES).document(replyId).update(map)
-                .await()
             Event.Success(newReply, "comment_edited")
         } catch (e: Exception) {
             Event.Failure(null, "comment_unedited")
         }
     }
 
-    suspend fun updateComment(newComment: String, parentId: String, commentId: String): Event {
+     fun updateComment(newComment: String, parentId: String, commentId: String): Event {
         return try {
             val map = mutableMapOf<String, Any?>(
                 "commentText" to newComment,
@@ -988,37 +954,48 @@ class Repository(
             database().collection(POSTS).document(parentId).collection(
                 COMMENTS
             ).document(commentId).update(map)
-                .await()
             Event.Success(newComment, "comment_edited")
         } catch (e: Exception) {
             Event.Failure(null, "comment_unedited")
         }
     }
-
-    suspend fun deleteComment(parentID: String, commentID: String): Event {
+    fun deleteComment(parentID: String, commentID: String, repliesCount:Int): Event {
         return try {
-            database().collection(POSTS).document(parentID).collection(COMMENTS).document(commentID)
-                .delete().await()
+            val commentRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
+                .document(commentID)
+            val parentRef = database().collection(POSTS).document(parentID)
+            database().runBatch { batch ->
+                val count = repliesCount.plus(1)
+                batch.update(parentRef, "commentCount",FieldValue.increment(-count.toLong()))
+                batch.delete(commentRef)
+            }
             Event.Success("DELETED", "comment_deleted")
         } catch (e: Exception) {
             Event.Failure(null, "comment_undeleted")
         }
     }
 
-    suspend fun deleteReply(parentID: String, commentID: String, replyId: String): Event {
+     fun deleteReply(parentID: String, commentID: String, replyId: String): Event {
         return try {
-            database().collection(POSTS).document(parentID).collection(COMMENTS).document(commentID)
+            val commentRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
+                .document(commentID)
+            val parentRef = database().collection(POSTS).document(parentID)
+            val replyRef = database().collection(POSTS).document(parentID).collection(COMMENTS).document(commentID)
                 .collection(
                     REPLIES
-                ).document(replyId).delete().await()
+                ).document(replyId)
+            database().runBatch { batch ->
+                batch.update(parentRef, "commentCount", FieldValue.increment(-1))
+                batch.update(commentRef, "replies", FieldValue.increment(-1))
+                batch.delete(replyRef)
+            }
             Event.Success("DELETED", "comment_deleted")
         } catch (e: Exception) {
             Event.Failure(null, "comment_undeleted")
         }
     }
 
-
-    suspend fun addAReply(
+     fun addAReply(
         replyText: String,
         parentId: String,
         commentId: String,
@@ -1034,10 +1011,18 @@ class Repository(
                 profileOfUserThisCommentIsAReplyTo?.id ?: "",
                 false
             )
-            database().collection(POSTS).document(parentId).collection(COMMENTS).document(commentId)
+            val commentRef = database().collection(POSTS).document(parentId).collection(COMMENTS)
+                .document(commentId)
+            val parentRef = database().collection(POSTS).document(parentId)
+            val replyRef = database().collection(POSTS).document(parentId).collection(COMMENTS).document(commentId)
                 .collection(
                     REPLIES
-                ).document(reply.id).set(reply).await()
+                ).document(reply.id)
+            database().runBatch { batch ->
+                batch.update(commentRef, "replies", FieldValue.increment(1))
+                batch.update(parentRef, "commentCount", FieldValue.increment(1))
+                batch.set(replyRef, reply)
+            }
             Event.Success(
                 ReplyData(
                     reply,
@@ -1052,7 +1037,7 @@ class Repository(
 
     }
 
-    suspend fun addNewComment(
+     fun addNewComment(
         commentText: String,
         parentId: String,
     ): Event {
@@ -1067,8 +1052,13 @@ class Repository(
                 0,
                 false
             )
-            database().collection(POSTS).document(parentId).collection(COMMENTS)
-                .document(comment.id).set(comment)
+            val commentRef = database().collection(POSTS).document(parentId).collection(COMMENTS)
+                .document(comment.id)
+            val parentRef = database().collection(POSTS).document(parentId)
+            database().runBatch { batch ->
+                batch.set(commentRef, comment)
+                batch.update(parentRef, "commentCount", FieldValue.increment(1))
+            }
             Event.Success(
                 CommentData(
                     comment,
@@ -1094,8 +1084,8 @@ class Repository(
         const val POSTS = "posts"
         const val USERS = "users"
         const val USERNAME_INDEX = 0
-        const val EMAIL_INDEX = 1
-        const val PHONE_NUMBER_INDEX = 2
+        const val EMAIL_INDEX = 2
+        const val PHONE_NUMBER_INDEX = 1
         const val PROFILE_PHOTOS = "Profile_pictures"
         const val POST_PHOTOS = "Post_photos"
         const val POST_VIDEOS = "Post_videos"
@@ -1103,6 +1093,5 @@ class Repository(
         const val APP_PAUSED = "app_paused"
         const val COMMENTS = "comments"
         const val REPLIES = "replies"
-
     }
 }

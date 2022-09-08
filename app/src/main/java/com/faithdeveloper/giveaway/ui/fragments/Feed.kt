@@ -456,7 +456,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
     private fun setUpAdapter() {
         adapter = FeedPagerAdapter(
-            { action, data, posterID ->
+            { action, data,  commentCount ->
                 if (action == "email") {
                     if (sendEmail(data) is Event.Failure) noAppToHandleRequest()
                     return@FeedPagerAdapter
@@ -470,7 +470,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     return@FeedPagerAdapter
                 }
                 if (action == "comments") {
-                    showComments(data, fragmentCommentsInterface = this)
+                    showComments(data, commentCount, fragmentCommentsInterface = this)
                     return@FeedPagerAdapter
                 }
                 if (action == "launchLink") {
@@ -490,7 +490,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
         adapter.stateRestorationPolicy =
             RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
         mAdapter = NewFeedAdapter(
-            { action, data, posterID ->
+            { action, data, commentCount ->
                 if (action == "email") {
                     if (sendEmail(data) is Event.Failure) noAppToHandleRequest()
                     return@NewFeedAdapter
@@ -504,7 +504,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     return@NewFeedAdapter
                 }
                 if (action == "comments") {
-                    showComments(data, fragmentCommentsInterface = this)
+                    showComments(data, commentCount, fragmentCommentsInterface = this)
                     return@NewFeedAdapter
                 }
                 if (action == "launchLink") {

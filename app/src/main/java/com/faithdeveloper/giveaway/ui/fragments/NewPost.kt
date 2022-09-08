@@ -11,6 +11,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -71,6 +72,8 @@ class NewPost : Fragment() {
     private lateinit var mediaRecycler: NewPostMediaAdapter
     private lateinit var mediaAction: String
 
+    private var shouldInterceptOnBackPressed = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         /* activityObserver observes the lifecycle of the activity and performs corresponding actions */
@@ -101,7 +104,7 @@ class NewPost : Fragment() {
                     }
                 }
 
-                imageMax = viewModel.getNoOfMedia() == MAX_NUMBER_OF_IMAGES
+
 //                set up callback  for choosing image from gallery
                 getImageFromGallery =
                     registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -114,24 +117,18 @@ class NewPost : Fragment() {
                                 val count = data.clipData!!.itemCount
                                 for (index in 0 until count) {
                                     if (viewModel.getNoOfMedia() <= MAX_NUMBER_OF_IMAGES) {
-
 //                                        ensure each file chosen is an image else give error
                                         if (requireContext().checkTypeOfMedia(
                                                 (data.clipData!!.getItemAt(
                                                     index
                                                 ).uri)
-                                            ) == "video"
+                                            ) != "image"
                                         ) {
                                             wrongFileChosen("image")
                                             break
                                         } else {
 //                                            ensure each image chosen is not above the max file size
-                                            if (mediaSize(
-                                                    data.clipData!!.getItemAt(
-                                                        index
-                                                    ).uri
-                                                ) > MAX_IMAGE_SIZE
-                                            ) {
+                                            if (mediaSize(data.clipData!!.getItemAt(index).uri) > MAX_IMAGE_SIZE) {
                                                 fileSizeToBig(IMAGE)
                                                 break
                                             } else {
@@ -140,7 +137,13 @@ class NewPost : Fragment() {
                                                 videoChosen = false
                                             }
                                         }
-                                    } else break
+                                    } else {
+                                        imageMax = true
+                                        requireContext().showSnackbarShort(
+                                            binding.root,
+                                            "Max of 4 images cam be uploaded"
+                                        )
+                                    }
                                 }
 
                                 mediaRecycler.notifyDataSetChanged()
@@ -150,10 +153,7 @@ class NewPost : Fragment() {
                                 //picked single image
                                 val imageUri = data.data
                                 imageUri?.let {
-                                    if (requireContext().checkTypeOfMedia(
-                                            (imageUri)
-                                        ) == "video"
-                                    ) {
+                                    if (requireContext().checkTypeOfMedia((imageUri)) == "video") {
                                         wrongFileChosen("image")
                                     } else {
                                         if (mediaSize(imageUri) > MAX_IMAGE_SIZE
@@ -162,6 +162,8 @@ class NewPost : Fragment() {
                                         } else {
                                             viewModel.addMedia(it)
                                             mediaRecycler.notifyDataSetChanged()
+                                            if (viewModel.getNoOfMedia() > MAX_NUMBER_OF_IMAGES) imageMax =
+                                                true
                                             imageChosen = true
                                             videoChosen = false
                                             updateMediaIcons()
@@ -184,6 +186,7 @@ class NewPost : Fragment() {
                             viewModel.addMedia(convertFilePathToUri(it))
 
                             mediaRecycler.notifyDataSetChanged()
+                            if (viewModel.getNoOfMedia() > MAX_NUMBER_OF_IMAGES) imageMax = true
                             imageChosen = true
                             videoChosen = false
                             updateMediaIcons()
@@ -205,9 +208,8 @@ class NewPost : Fragment() {
                             mediaRecycler.changeMediaType(VIDEO)
                             val videoUri = result.data?.data
                             videoUri?.let {
-
 //                                check video size
-                                if (mediaSize(videoUri) > MAX_VIDEO_SIZE) {
+                                if (mediaSize(it) > MAX_VIDEO_SIZE) {
                                     fileSizeToBig(VIDEO)
                                 } else {
                                     viewModel.addMedia(videoUri)
@@ -292,6 +294,20 @@ class NewPost : Fragment() {
             }
         }
         activity?.lifecycle?.addObserver(activityObserver)
+        requireActivity().onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (shouldInterceptOnBackPressed) {
+                        abortPostCreationDialog()
+                    } else {
+                        isEnabled = false
+                        requireActivity().onBackPressed()
+                        shouldInterceptOnBackPressed = true
+                        isEnabled = true
+                    }
+                }
+            })
         super.onCreate(savedInstanceState)
     }
 
@@ -400,7 +416,9 @@ class NewPost : Fragment() {
     }
 
     private fun snapVideo() {
-        getVideoFromCamera.launch(Intent(MediaStore.ACTION_VIDEO_CAPTURE))
+        getVideoFromCamera.launch(Intent(MediaStore.ACTION_VIDEO_CAPTURE).apply {
+            putExtra(MediaStore.EXTRA_DURATION_LIMIT, 16000)
+        })
     }
 
     //     informs user that permission ws not granted
@@ -592,22 +610,7 @@ class NewPost : Fragment() {
             }
             cancel.setOnClickListener {
 //                abort post creation
-                dialog?.dismiss()
-                dialogBuilder = requireContext().showDialog(
-                    cancelable = true,
-                    title = getString(R.string.discard_post),
-                    message = getString(R.string.discard_post_msg),
-                    positiveButtonText = "OK",
-                    positiveAction = {
-                        findNavController().popBackStack()
-                    },
-                    negativeButtonText = getString(R.string.cancel),
-                    negativeAction = {
-                        // do nothing
-                    }
-                )
-                dialog = dialogBuilder?.create()
-                dialog?.show()
+                abortPostCreationDialog()
             }
             done.setOnClickListener {
 //                push new post to repository
@@ -657,6 +660,25 @@ class NewPost : Fragment() {
                 dialog?.show()
             }
         }
+    }
+
+    private fun abortPostCreationDialog() {
+        dialog?.dismiss()
+        dialogBuilder = requireContext().showDialog(
+            cancelable = true,
+            title = getString(R.string.discard_post),
+            message = getString(R.string.discard_post_msg),
+            positiveButtonText = "OK",
+            positiveAction = {
+                findNavController().popBackStack()
+            },
+            negativeButtonText = getString(R.string.cancel),
+            negativeAction = {
+                shouldInterceptOnBackPressed = false
+            }
+        )
+        dialog = dialogBuilder?.create()
+        dialog?.show()
     }
 
     private fun updateTags(position: Int, state: Boolean) {
@@ -760,8 +782,8 @@ class NewPost : Fragment() {
         const val IMAGE_CHOSEN = "image_chosen"
         const val MAX_IMAGE_SIZE = 2097152
         const val MAX_VIDEO_SIZE = 10485760
-        const val MAX_NUMBER_OF_IMAGES = 4
+        const val MAX_NUMBER_OF_IMAGES = 3
         const val MAX_NUMBER_OF_TAGS = 3
+        const val VIDEO_FILE_SIZE_IN_MB = 8
     }
-
 }

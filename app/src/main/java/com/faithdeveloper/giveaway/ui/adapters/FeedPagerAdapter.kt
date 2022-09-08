@@ -17,9 +17,10 @@ import com.faithdeveloper.giveaway.databinding.FeedItemMediaLayoutBinding
 import com.faithdeveloper.giveaway.ui.adapters.comparators.FEED_ITEM_COMPARATOR
 import com.faithdeveloper.giveaway.utils.BaseViewHolder
 import com.faithdeveloper.giveaway.utils.Extensions
+import com.google.android.material.badge.BadgeDrawable
 
 class FeedPagerAdapter(
-    val reactions: (reactionType: String, data: String, posterID: String) -> Unit,
+    val reactions: (reactionType: String, data: String,  commentCount:Int) -> Unit,
     private val profileNameClick: (userUid: UserProfile) -> Unit,
     private val imagesClick: (images: Array<String>, hasVideo: Boolean, position: Int) -> Unit,
     private val menuAction: (action: String) -> Unit,
@@ -46,30 +47,27 @@ class FeedPagerAdapter(
 
         init {
             email.setOnClickListener {
-                reactions.invoke("email", mItem?.authorData!!.email, mItem?.authorData!!.id)
+                reactions.invoke("email", mItem?.authorData!!.email,  mItem?.postData!!.commentCount)
             }
             phone.setOnClickListener {
-                reactions.invoke("phone", mItem?.authorData!!.phoneNumber, mItem?.authorData!!.id)
+                reactions.invoke("phone", mItem?.authorData!!.phoneNumber,mItem?.postData!!.commentCount)
             }
             whatsapp.setOnClickListener {
                 reactions.invoke(
                     "whatsapp",
                     mItem?.authorData!!.phoneNumber,
-                    mItem?.authorData!!.id
+                    mItem?.postData!!.commentCount
                 )
             }
             profileName.setOnClickListener {
                 profileNameClick.invoke(mItem?.authorData!!)
             }
             comments.setOnClickListener {
-                if (mItem?.postData!!.hasComments) {
-                    reactions.invoke("comments", mItem?.postData!!.postID, mItem?.authorData!!.id)
-                }
+                    reactions.invoke("comments", mItem?.postData!!.postID,  mItem?.postData!!.commentCount)
+
             }
             launchLink.setOnClickListener {
-                if (mItem?.postData!!.link != "") {
-                    reactions.invoke("launchLink", mItem?.postData!!.link, mItem?.authorData!!.id)
-                }
+                    reactions.invoke("launchLink", mItem?.postData!!.link,mItem?.postData!!.commentCount)
             }
 
             media.layoutManager = LinearLayoutManager(
@@ -98,9 +96,17 @@ class FeedPagerAdapter(
                         description.isGone = text.isEmpty()
                         description.text = text
                         // setup reaction views
-                        reaction.comments.isVisible = hasComments
-                        reaction.launchLink.isVisible = (link != "")
-
+                        reaction.comments.isGone = !hasComments
+                        reaction.comments.isGone.run {
+                            if (this){
+                                val badgeDrawable = BadgeDrawable.create(itemView.context)
+                                badgeDrawable.badgeGravity = BadgeDrawable.TOP_END
+                                badgeDrawable.backgroundColor = itemView.resources.getColor(R.color.teal_200)
+                                badgeDrawable.badgeTextColor = itemView.resources.getColor(R.color.white)
+                                badgeDrawable.number = post.commentCount
+                            }
+                        }
+                        reaction.launchLink.isGone = link == ""
                         // show time
                         timeView.text = Extensions.convertTime(time)
                         val adapter = PostPicturesAdapter(
@@ -134,33 +140,32 @@ class FeedPagerAdapter(
 
         init {
             email.setOnClickListener {
-                reactions.invoke("email", mItem?.authorData!!.email, mItem?.authorData!!.id)
+                reactions.invoke("email", mItem?.authorData!!.email,  mItem?.postData!!.commentCount)
             }
             phone.setOnClickListener {
-                reactions.invoke("phone", mItem?.authorData!!.phoneNumber, mItem?.authorData!!.id)
+                reactions.invoke("phone", mItem?.authorData!!.phoneNumber,    mItem?.postData!!.commentCount)
             }
             whatsapp.setOnClickListener {
                 reactions.invoke(
                     "whatsapp",
                     mItem?.authorData!!.phoneNumber,
-                    mItem?.authorData!!.id
+
+                    mItem?.postData!!.commentCount
                 )
             }
             profileName.setOnClickListener {
                 profileNameClick.invoke(mItem?.authorData!!)
             }
             comments.setOnClickListener {
-                if (mItem?.postData!!.hasComments) {
-                    reactions.invoke("comments", mItem?.postData!!.postID, mItem?.authorData!!.id)
-                }
+                    reactions.invoke("comments", mItem?.postData!!.postID,   mItem?.postData!!.commentCount)
+
             }
             launchLink.setOnClickListener {
-                if (mItem?.postData!!.link != "") {
-                    reactions.invoke("launchLink", mItem?.postData!!.link, mItem?.authorData!!.id)
-                }
+                    reactions.invoke("launchLink", mItem?.postData!!.link,     mItem?.postData!!.commentCount)
+
             }
             description.doOnLayout {
-                media.isVisible = description.layout.text.toString()
+                media.isGone = description.layout.text.toString()
                     .equals(mItem?.postData!!.text, true)
             }
         }
@@ -178,8 +183,8 @@ class FeedPagerAdapter(
                         description.isGone = text.isEmpty()
                         description.text = text
                         // setup reaction views
-                        reaction.comments.isVisible = hasComments
-                        reaction.launchLink.isVisible = (link != "")
+                        reaction.comments.isGone = !hasComments
+                        reaction.launchLink.isGone = link == ""
 
                         // show time
                         timeView.text = Extensions.convertTime(time)
@@ -235,5 +240,4 @@ class FeedPagerAdapter(
         }
         return super.getItemViewType(position)
     }
-
 }

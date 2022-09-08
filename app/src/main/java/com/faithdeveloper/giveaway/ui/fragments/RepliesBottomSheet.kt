@@ -100,7 +100,8 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         //        setup dialog view
         (dialog as? BottomSheetDialog)?.behavior?.isFitToContents = false
         (dialog as? BottomSheetDialog)?.behavior?.state = BottomSheetBehavior.STATE_HALF_EXPANDED
-        (dialog as? BottomSheetDialog)?.behavior?.isHideable = false
+        (dialog as? BottomSheetDialog)?.behavior?.isHideable = true
+        (dialog as? BottomSheetDialog)?.setCanceledOnTouchOutside(false)
 
         binding.comment.text = comment
         binding.count.text = count.toString()
@@ -114,7 +115,6 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         binding.commentRecycler.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
         binding.commentRecycler.adapter = concatAdapter
-
         handleObserver()
         setUpLoadState()
         closeDialog()
@@ -125,6 +125,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
     override fun onStart() {
         Glide.with(requireContext())
             .load(requireContext().getUserProfilePicUrl())
+            .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
             .into(binding.profile)
         super.onStart()
     }
@@ -195,6 +196,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
 
     private fun setUpNewReply() {
         val binding = spinUpTextLayoutDialog()
+        writeCommentDialog.show()
         binding.send.setOnClickListener {
             hideKeyboard()
             POST.userFeedback()
@@ -206,6 +208,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
     private fun setUpEditOfComment(id: String, comment: String) {
         val binding = spinUpTextLayoutDialog()
         binding.textInputLayout.editText?.setText(comment)
+        writeCommentDialog.show()
         binding.send.setOnClickListener {
             hideKeyboard()
             UPDATE.userFeedback()
@@ -218,6 +221,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
 
     private fun setUpReply(userProfile: UserProfile?) {
         val binding = spinUpTextLayoutDialog()
+        writeCommentDialog.show()
         binding.send.setOnClickListener {
             hideKeyboard()
             POST.userFeedback()
@@ -232,7 +236,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         writeCommentDialog = BottomSheetDialog(requireContext())
         val binding = WriteCommentLayoutBinding.inflate(LayoutInflater.from(requireContext()))
         binding.dismiss.setOnClickListener {
-            dismiss()
+            writeCommentDialog.dismiss()
         }
         binding.send.isEnabled = !binding.textInputLayout.editText?.text?.isBlank()!! == true
         binding.textInputLayout.editText?.doAfterTextChanged {
@@ -242,7 +246,6 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         writeCommentDialog.dismissWithAnimation = true
         writeCommentDialog.setCancelable(false)
         writeCommentDialog.setCanceledOnTouchOutside(false)
-        writeCommentDialog.show()
         return binding
     }
 
@@ -268,6 +271,8 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                             writeCommentDialog.dismiss()
                             arrayOfNewReplies.add(it.data as ReplyData)
                             newReplyAdapter.notifyItemInserted(arrayOfNewReplies.size + 1)
+                            makeEmptyResultLayoutInvisible()
+                            makeErrorLayoutInvisible()
                         }
                         "comment_deleted" -> {
                             _dialog?.dismiss()
@@ -428,5 +433,4 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
             }
         }
     }
-
 }

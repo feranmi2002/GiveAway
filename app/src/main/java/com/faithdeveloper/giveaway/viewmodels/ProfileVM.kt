@@ -11,17 +11,11 @@ import com.faithdeveloper.giveaway.data.models.PagerKey
 import com.faithdeveloper.giveaway.pagingsources.ProfilePagingSource
 
 class ProfileVM(val repository: Repository, private val getUserProfile: Boolean) : ViewModel() {
-    var adapterIsSetUp: Boolean = false
     private var _feedResult = loadFeed(
         uid = if (getUserProfile) getUserProfile().id
         else getAuthorProfile().id
     )
     val feedResult get() = _feedResult
-
-
-    fun setTimeLineOption(timeLineOption: String) {
-        repository.setTimeLineOption(timeLineOption)
-    }
 
     private fun loadFeed(uid: String) = Pager(
         config = PagingConfig(

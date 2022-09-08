@@ -25,7 +25,7 @@ class CommentsVM(private val repository: Repository, val parentID: String) : Vie
         config = PagingConfig(
             pageSize = 15
         ), pagingSourceFactory = {
-            CommentsPagingSource(repository, true, parentID)
+            CommentsPagingSource(repository, parentID)
         }, initialKey = PagerKey(null, DEFAULT_FILTER, 10)
     ).liveData.cachedIn(viewModelScope)
 
@@ -33,9 +33,9 @@ class CommentsVM(private val repository: Repository, val parentID: String) : Vie
     fun userUid() = repository.userUid()!!
 
 
-    fun deleteComment(commentID: String) {
+    fun deleteComment(commentID: String, replies:Int) {
         viewModelScope.launch {
-            _commentActionResult.postValue(repository.deleteComment(parentID, commentID))
+            _commentActionResult.postValue(repository.deleteComment(parentID, commentID,replies))
         }
     }
 
