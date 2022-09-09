@@ -15,7 +15,11 @@
         <!-- Customize your theme here. -->
         <item name="android:textColorLink">@color/purple_500</item>
 
+       <item name="fontFamily">@font/imprima</item>
+        <item name="android:fontFamily">@font/imprima</item>
     </style>
+
+
 
     <style name="CircularImage" parent="">
         <item name="cornerSize">50%</item>

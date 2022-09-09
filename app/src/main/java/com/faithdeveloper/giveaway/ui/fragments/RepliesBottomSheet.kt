@@ -219,14 +219,14 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         }
     }
 
-    private fun setUpReply(userProfile: UserProfile?) {
+    private fun setUpReply(profileOfUserReplied: UserProfile?) {
         val binding = spinUpTextLayoutDialog()
         writeCommentDialog.show()
         binding.send.setOnClickListener {
             hideKeyboard()
             POST.userFeedback()
             viewModel.uploadReply(
-                userProfile,
+                profileOfUserReplied,
                 binding.textInputLayout.editText?.text.toString().trim()
             )
         }

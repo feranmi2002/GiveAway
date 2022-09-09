@@ -3,6 +3,7 @@ package com.faithdeveloper.giveaway.ui.adapters
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.PopupMenu
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -74,7 +75,7 @@ class ReplyPagerAdapter(
             }
 
             reply.setOnClickListener {
-                this@ReplyPagerAdapter.reply.invoke(mItem?.userReplied)
+                this@ReplyPagerAdapter.reply.invoke(mItem?.author)
             }
 
             name.setOnClickListener {
@@ -98,8 +99,8 @@ class ReplyPagerAdapter(
             with(binding) {
                 mReply?.let { reply ->
                     author?.let { author ->
-                        tag.isVisible = reply.idOfTheUserThisCommentIsAReplyTo.isNotBlank()
-                        tag.text = userRepliedTo?.name
+                        tag.isGone = userRepliedTo ==null
+                        tag.text = "@${userRepliedTo?.name}"
                         name.text = author.name
                         binding.more.isVisible = author.id == userUid
                     }

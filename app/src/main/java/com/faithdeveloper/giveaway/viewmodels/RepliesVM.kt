@@ -41,9 +41,9 @@ class RepliesVM(private val repository: Repository) : ViewModel() {
 
     fun userUid() = repository.userUid()!!
 
-    fun uploadReply(userProfile: UserProfile?, text: String) {
+    fun uploadReply(profileOfUserReplied: UserProfile?, text: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            _actionResult.postValue(repository.addAReply(text, parentId.value!!, commentID, userProfile))
+            _actionResult.postValue(repository.addAReply(text, parentId.value!!, commentID, profileOfUserReplied))
         }
     }
 

@@ -21,11 +21,10 @@ import com.faithdeveloper.giveaway.utils.Extensions.storeTimelineOption
 import com.faithdeveloper.giveaway.utils.Extensions.storeUserDetails
 import com.faithdeveloper.giveaway.utils.Extensions.storeUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.NotificationUtil
+import com.faithdeveloper.giveaway.utils.UnverifiedUserException
 import com.faithdeveloper.giveaway.viewmodels.FeedVM.Companion.DEFAULT_FILTER
 import com.google.firebase.FirebaseNetworkException
-import com.google.firebase.auth.ActionCodeSettings
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.*
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
@@ -90,9 +89,12 @@ class Repository(
             auth.currentUser!!.sendEmailVerification(actionSettingsCodeInfo.build()).await()
             Log.i("GA", "Email is verified")
             Event.Success(null, "Email verified")
-        } catch (e: Exception) {
+        }catch (e: FirebaseNetworkException) {
+            Log.e("GA", "No network")
+            Event.Failure(e,)
+        } catch (e: FirebaseAuthEmailException) {
             Log.e("GA", "Failed to verify email")
-            Event.Failure(null, "Failed to verify email")
+            Event.Failure(e)
         }
     }
 
@@ -110,9 +112,12 @@ class Repository(
             auth.sendPasswordResetEmail(email, actionCodeSettings.build()).await()
             Log.i("GA", "Password email sent")
             Event.Success(null, "Password email sent")
-        } catch (e: Exception) {
-            Log.e("GA", "Password reset failed")
-            Event.Failure(null, "Password reset failed")
+        } catch (e: FirebaseNetworkException) {
+            Log.e("GA", "No network")
+            Event.Failure(e, msg = "Password reset")
+        } catch (e: FirebaseAuthEmailException) {
+            Log.e("GA", "Failed to send password")
+            Event.Failure(e)
         }
     }
 
@@ -145,15 +150,21 @@ class Repository(
                         )
                     }
                 } else {
-                    throw Exception("Email unverified")
+                    throw UnverifiedUserException()
                 }
             }
             context.setSignInStatus(true)
             Log.i("GA", "Created profile successfully")
             Event.Success(null, "Sign in successful")
-        } catch (e: Exception) {
-            Log.e("GA", e.message ?: "Sign in failed")
-            Event.Failure(null, e.message ?: "Sign in failed")
+        } catch (e: UnverifiedUserException) {
+            Log.e("GA", e.message ?: "Unverified user")
+            Event.Failure(e)
+        } catch (e: FirebaseNetworkException) {
+            Log.e("GA", e.message ?: "No network")
+            Event.Failure(e, "Sign in")
+        } catch (e: FirebaseAuthException) {
+            Log.e("GA", e.message ?: "Wrong credentials")
+            Event.Failure(e)
         }
     }
 
@@ -944,7 +955,7 @@ class Repository(
         }
     }
 
-     fun updateComment(newComment: String, parentId: String, commentId: String): Event {
+    fun updateComment(newComment: String, parentId: String, commentId: String): Event {
         return try {
             val map = mutableMapOf<String, Any?>(
                 "commentText" to newComment,
@@ -959,14 +970,15 @@ class Repository(
             Event.Failure(null, "comment_unedited")
         }
     }
-    fun deleteComment(parentID: String, commentID: String, repliesCount:Int): Event {
+
+    fun deleteComment(parentID: String, commentID: String, repliesCount: Int): Event {
         return try {
             val commentRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
                 .document(commentID)
             val parentRef = database().collection(POSTS).document(parentID)
             database().runBatch { batch ->
                 val count = repliesCount.plus(1)
-                batch.update(parentRef, "commentCount",FieldValue.increment(-count.toLong()))
+                batch.update(parentRef, "commentCount", FieldValue.increment(-count.toLong()))
                 batch.delete(commentRef)
             }
             Event.Success("DELETED", "comment_deleted")
@@ -975,12 +987,13 @@ class Repository(
         }
     }
 
-     fun deleteReply(parentID: String, commentID: String, replyId: String): Event {
+    fun deleteReply(parentID: String, commentID: String, replyId: String): Event {
         return try {
             val commentRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
                 .document(commentID)
             val parentRef = database().collection(POSTS).document(parentID)
-            val replyRef = database().collection(POSTS).document(parentID).collection(COMMENTS).document(commentID)
+            val replyRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
+                .document(commentID)
                 .collection(
                     REPLIES
                 ).document(replyId)
@@ -995,7 +1008,7 @@ class Repository(
         }
     }
 
-     fun addAReply(
+    fun addAReply(
         replyText: String,
         parentId: String,
         commentId: String,
@@ -1014,7 +1027,8 @@ class Repository(
             val commentRef = database().collection(POSTS).document(parentId).collection(COMMENTS)
                 .document(commentId)
             val parentRef = database().collection(POSTS).document(parentId)
-            val replyRef = database().collection(POSTS).document(parentId).collection(COMMENTS).document(commentId)
+            val replyRef = database().collection(POSTS).document(parentId).collection(COMMENTS)
+                .document(commentId)
                 .collection(
                     REPLIES
                 ).document(reply.id)
@@ -1037,7 +1051,7 @@ class Repository(
 
     }
 
-     fun addNewComment(
+    fun addNewComment(
         commentText: String,
         parentId: String,
     ): Event {

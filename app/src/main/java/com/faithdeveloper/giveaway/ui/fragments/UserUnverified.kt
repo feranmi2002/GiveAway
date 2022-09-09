@@ -2,8 +2,6 @@ package com.faithdeveloper.giveaway.ui.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +11,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.faithdeveloper.giveaway.MainActivity
-import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.databinding.LayoutUnverifiedEmailBinding
 import com.faithdeveloper.giveaway.utils.ActivityObserver
@@ -26,6 +23,7 @@ import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.UserUnverifiedVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.FirebaseNetworkException
 
 class UserUnverified : Fragment() {
 
@@ -113,7 +111,13 @@ class UserUnverified : Fragment() {
                 binding.verify.disable()
                 binding.time.makeVisible()
                 viewModel.startCounter()
-            } else showVerificationFailureDialog()
+            } else {
+                when (it.data) {
+                    is FirebaseNetworkException -> "We couldn't verify your email. Check your internet connection and try again".showVerificationFailureDialog()
+                    else -> "This email isn't matched with any account. Ensure you enter the email with which you created your Connect account".showVerificationFailureDialog()
+                }
+
+            }
         }
         viewModel.timer.observe(viewLifecycleOwner) {
             binding.time.text = DateUtils.formatElapsedTime(it / 1000)
@@ -146,23 +150,20 @@ class UserUnverified : Fragment() {
         viewModel.verifyEmail()
     }
 
-    private fun showVerificationFailureDialog() {
+    private fun String.showVerificationFailureDialog() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = false,
-            message = "We couldn't verify your account. ",
-            positiveButtonText = "TRY AGAIN",
-            negativeButtonText = "CANCEL",
+            message = this,
+            positiveButtonText = "OK",
             positiveAction = {
-                viewModel.verifyEmail()
-            },
-            negativeAction = {
                 // do nothing
             }
         )
         dialog = dialogBuilder?.create()
         dialog?.show()
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

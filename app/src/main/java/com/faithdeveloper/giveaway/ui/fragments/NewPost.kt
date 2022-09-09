@@ -72,7 +72,7 @@ class NewPost : Fragment() {
     private lateinit var mediaRecycler: NewPostMediaAdapter
     private lateinit var mediaAction: String
 
-    private var shouldInterceptOnBackPressed = false
+    private var shouldInterceptOnBackPressed = true
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

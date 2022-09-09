@@ -32,6 +32,7 @@
             android:layout_marginStart="8dp"
             android:gravity="center"
             android:text="300"
+            android:textSize="20sp"
             android:textColor="@color/purple_500_lighter"
             app:layout_constraintBottom_toBottomOf="@+id/title"
             app:layout_constraintEnd_toStartOf="@+id/dismiss"
@@ -72,6 +73,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="3dp"
+                app:fontFamily="@font/nunito_medium"
+                android:textSize="15sp"
                 android:textColor="#C3000000"
                 tools:text="This is a comment" />
 

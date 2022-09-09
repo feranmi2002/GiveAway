@@ -71,7 +71,7 @@ class NewReplyAdapter(
             }
 
             reply.setOnClickListener {
-                this@NewReplyAdapter.reply.invoke(mItem?.userReplied)
+                this@NewReplyAdapter.reply.invoke(mItem?.author)
             }
 
             name.setOnClickListener {
@@ -95,7 +95,7 @@ class NewReplyAdapter(
             with(binding) {
                 mReply?.let { reply ->
                     author?.let { author ->
-                        tag.isGone = userRepliedTo !=null
+                        tag.isGone = userRepliedTo ==null
                         tag.text = "@${userRepliedTo?.name}"
                         name.text = author.name
                         binding.more.isVisible = author.id == userUid

@@ -60,11 +60,12 @@
         android:layout_height="wrap_content"
         android:paddingStart="8dp"
         android:textColor="@color/postTextColor"
+        app:fontFamily="@font/nunito_medium"
         app:layout_constraintEnd_toStartOf="@id/more"
         app:layout_constraintStart_toEndOf="@id/profilePic"
         app:layout_constraintTop_toBottomOf="@id/tag"
         tools:ignore="RtlSymmetry"
-        tools:text="Here is my comment..." />
+        tools:text="Here is my comment fhsjfhslfhsjklfhlkfhjkjshgskldhjklshfsljkhfsjklfhsdjklfhslkjfshfksjhdfsklfhlsk..." />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/reply"

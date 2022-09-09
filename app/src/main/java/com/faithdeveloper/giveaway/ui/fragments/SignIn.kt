@@ -15,7 +15,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.faithdeveloper.giveaway.*
+import com.faithdeveloper.giveaway.MainActivity
+import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.databinding.LayoutSignInBinding
 import com.faithdeveloper.giveaway.utils.ActivityObserver
@@ -24,9 +25,13 @@ import com.faithdeveloper.giveaway.utils.Extensions.disable
 import com.faithdeveloper.giveaway.utils.Extensions.enable
 import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
+import com.faithdeveloper.giveaway.utils.UnverifiedUserException
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.SignInVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthEmailException
+import com.google.firebase.auth.FirebaseAuthException
 
 
 class SignIn : Fragment() {
@@ -75,7 +80,7 @@ class SignIn : Fragment() {
         // initialize live data observer
         handleObserver()
 
-       // navigate to sign up fragment
+        // navigate to sign up fragment
         onClickCreateAccount()
 
 //        sends link to user's mail to reset password
@@ -101,13 +106,15 @@ class SignIn : Fragment() {
                 }
                 // failed requests
                 is Event.Failure -> {
-                    when {
-                        it.msg.contains("sign in failed", true) -> handleSignInFailure()
-                        it.msg.contains(
-                            "password reset failed",
-                            true
-                        ) -> handlePasswordResetFailure()
-                        it.msg.contains("Email unverified", true) -> handleUnverifiedEmail()
+                    when (it.data) {
+                        is FirebaseNetworkException -> if (it.msg.equals("sign in", true)) {
+                            "We couldn't sign you in. Check your internet connection and try again".signInFailedDialog()
+                        } else {
+                            "We couldn't reset your password. Check your internet connection and try again".signInFailedDialog()
+                        }
+                        is FirebaseAuthException -> handleSignInFailure()
+                        is UnverifiedUserException -> handleUnverifiedEmail()
+                        is FirebaseAuthEmailException -> handlePasswordResetFailure()
                     }
                 }
                 is Event.InProgress -> {
@@ -117,7 +124,7 @@ class SignIn : Fragment() {
         })
 
         viewModel.timer.observe(viewLifecycleOwner, Observer {
-            binding.forgotPassword.text  = DateUtils.formatElapsedTime(it / 1000)
+            binding.forgotPassword.text = DateUtils.formatElapsedTime(it / 1000)
             if (it < 1000) {
                 binding.loginBtn.enable()
                 binding.signUp.enable()
@@ -125,6 +132,20 @@ class SignIn : Fragment() {
                 binding.forgotPassword.isClickable = true
             }
         })
+    }
+
+    private fun String.signInFailedDialog() {
+        dialog?.dismiss()
+        dialogBuilder = requireContext().showDialog(
+            cancelable = true,
+            message = this,
+            negativeButtonText = "OK",
+            negativeAction = {
+                // do nothing
+            }
+        )
+        dialog = dialogBuilder?.create()
+        dialog?.show()
     }
 
     private fun handleUnverifiedEmail() {
@@ -135,14 +156,10 @@ class SignIn : Fragment() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = false,
-            message = "We couldn't complete your request.Try again?",
+            message = "This email isn't matched with any account. Ensure you enter the email with which you created your Connect account  or create a new account ",
             positiveButtonText = "OK",
             positiveAction = {
-                viewModel.forgotPassword(binding.emailLayout.editText?.text.toString().trim())
-            },
-            negativeButtonText = "CANCEL",
-            negativeAction = {
-                //do nothing
+//              do nothing
             }
         )
         dialog = dialogBuilder?.create()
@@ -153,14 +170,10 @@ class SignIn : Fragment() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = false,
-            message = "We couldn't sign you in.Try again?",
+            message = "We couldn't sign you in. Ensure you have entered your correct email and password?",
             positiveButtonText = "OK",
             positiveAction = {
-                signIn()
-            },
-            negativeButtonText = "CANCEL",
-            negativeAction = {
-                //do nothing
+                // do nothing
             }
         )
         dialog = dialogBuilder?.create()

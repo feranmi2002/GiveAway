@@ -44,6 +44,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:paddingStart="8dp"
+        app:fontFamily="@font/nunito_medium"
         android:textColor="@color/postTextColor"
         app:layout_constraintEnd_toStartOf="@id/more"
         app:layout_constraintStart_toEndOf="@id/profilePic"
