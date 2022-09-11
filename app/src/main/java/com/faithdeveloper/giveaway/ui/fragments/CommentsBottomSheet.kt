@@ -37,6 +37,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -351,11 +352,8 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
 
     private fun setUpEditOfComment(commentId: String, comment: String) {
         val binding = writeCommentDialog()
-//        binding.textInputLayout.editText?.setText(comment)
+        binding.textInputLayout.editText?.setText(comment)
         writeCommentDialog.show()
-//        writeCommentDialog.setOnShowListener {
-//            binding.textInputLayout.editText?.setText(comment)
-//        }
         binding.send.setOnClickListener {
             hideKeyboard(binding.root)
             UPDATE.userFeedback()
@@ -394,10 +392,12 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         makeErrorLayoutInvisible()
         binding.errorLayout.progressCircular.makeInVisible()
         binding.emptyResultLayout.emptyText.makeVisible()
+        binding.emptyResultLayout.emptyImg.makeVisible()
     }
 
     private fun makeEmptyResultLayoutInvisible() {
         binding.emptyResultLayout.emptyText.makeInVisible()
+        binding.emptyResultLayout.emptyImg.makeInVisible()
     }
 
     private fun closeDialog() {

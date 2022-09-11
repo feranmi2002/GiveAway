@@ -59,7 +59,7 @@ class NewPost : Fragment() {
     private var imageChosen by Delegates.notNull<Boolean>()
 
     //    'imageMax' is used to know that max number of images for a post have been selected
-    private var imageMax by Delegates.notNull<Boolean>()
+    private var imageMax  = false
 
     private lateinit var viewModel: NewPostVM
     private lateinit var activityObserver: ActivityObserver
@@ -674,7 +674,7 @@ class NewPost : Fragment() {
             },
             negativeButtonText = getString(R.string.cancel),
             negativeAction = {
-                shouldInterceptOnBackPressed = false
+                shouldInterceptOnBackPressed = true
             }
         )
         dialog = dialogBuilder?.create()

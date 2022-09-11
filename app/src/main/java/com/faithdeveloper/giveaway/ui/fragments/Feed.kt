@@ -478,8 +478,8 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     return@FeedPagerAdapter
                 }
             },
-            { profileName ->
-                navigateToProfilePage(profileName)
+            { profile ->
+                navigateToProfilePage(profile)
             },
             { images, hasVideo, position ->
                 showImages(images.toList(), hasVideo, position)
@@ -587,10 +587,10 @@ class Feed : Fragment(), FragmentCommentsInterface {
         }
     }
 
-    private fun navigateToProfilePage(poster: UserProfile) {
-        viewModel.setProfileForProfileView(poster)
+    private fun navigateToProfilePage(author: UserProfile) {
+        viewModel.setProfileForProfileView(author)
         findNavController().navigate(
-            FeedDirections.actionHomeToProfile2(userProfile = false)
+            FeedDirections.actionHomeToProfile2(userProfile = author.id == viewModel.userUid())
         )
     }
 
@@ -621,9 +621,11 @@ class Feed : Fragment(), FragmentCommentsInterface {
         binding.refresh.isRefreshing = false
         binding.errorLayout.progressCircular.makeInVisible()
         binding.emptyResultLayout.emptyText.makeVisible()
+        binding.emptyResultLayout.emptyImg.makeVisible()
     }
 
     private fun makeEmptyResultLayoutInvisible() {
         binding.emptyResultLayout.emptyText.makeInVisible()
+        binding.emptyResultLayout.emptyImg.makeInVisible()
     }
 }

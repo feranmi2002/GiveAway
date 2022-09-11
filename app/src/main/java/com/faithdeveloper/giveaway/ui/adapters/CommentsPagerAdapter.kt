@@ -12,6 +12,8 @@ import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.CommentsItemBinding
 import com.faithdeveloper.giveaway.ui.adapters.comparators.COMMENTS_ITEM_COMPARATOR
+import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.DELETE
+import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.UPDATE
 import com.faithdeveloper.giveaway.utils.Extensions
 import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
 
@@ -53,7 +55,7 @@ class CommentsPagerAdapter(
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
                         moreClick.invoke(
-                            "edit",
+                            UPDATE,
                             mItem?.comment!!.id,
                             mItem?.comment!!.commentText,
                             mItem?.comment!!.replies
@@ -61,7 +63,7 @@ class CommentsPagerAdapter(
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
                         moreClick.invoke(
-                            "delete",
+                            DELETE,
                             mItem?.comment!!.id,
                             mItem?.comment!!.commentText,
                             mItem?.comment!!.replies
@@ -101,7 +103,9 @@ class CommentsPagerAdapter(
                         binding.more.isVisible = author.id == userUid
                     }
                     with(comment) {
-                        reply.text = "$replies replies"
+                        replies.run {
+                            if (this > 0)  reply.text = "$replies replies"
+                        }
                         commentsText.text = commentText
                         binding.time.text = Extensions.convertTime(time)
                     }

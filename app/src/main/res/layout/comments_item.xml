@@ -60,6 +60,7 @@
         android:background="?attr/selectableItemBackground"
         android:paddingStart="8dp"
         android:textSize="13sp"
+        android:text="Reply"
         tools:text="55 replied"
         android:textColor="@color/design_default_color_secondary"
         app:layout_constraintStart_toEndOf="@id/profilePic"

@@ -9,12 +9,12 @@ import androidx.core.content.edit
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.databinding.LinkLayoutBinding
 import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet
 import com.faithdeveloper.giveaway.ui.fragments.FeedDirections
 import com.faithdeveloper.giveaway.ui.fragments.FullPostMediaBottomSheet
+import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
@@ -177,7 +177,7 @@ object Extensions {
         setSignInStatus(false)
     }
 
-    fun Context.getUserProfilePicUrl() =getSharedPreferences(
+    fun Context.getUserProfilePicUrl() = getSharedPreferences(
         getString(R.string.app_name), Context.MODE_PRIVATE
     ).getString("ProfilePicUrl", null)
 
@@ -221,7 +221,7 @@ object Extensions {
     }
 
     fun convertTime(date: Date?): String {
-        val time = (date?: Date()).time
+        val time = (date ?: Date()).time
         var timeDiff: String = ""
         val diff = System.currentTimeMillis().minus(time)
         if (diff <= 1000) {
@@ -249,6 +249,16 @@ object Extensions {
         return timeDiff
     }
 
+    fun formatCount(count: Int): String {
+        var formattedCount = ""
+        if (count == 0) {
+            formattedCount = "0"
+        } else if (count > 1000) {
+            formattedCount = "${count.div(1000)}k"
+        }else formattedCount = count.toString()
+        return formattedCount
+    }
+
     fun Fragment.sendWhatsapp(whatsappNumber: String): Event {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse(
@@ -271,7 +281,7 @@ object Extensions {
 
     fun Fragment.showComments(
         postID: String,
-        commentsCount:Int,
+        commentsCount: Int,
         fragmentCommentsInterface: FragmentCommentsInterface?
     ) {
         val commentsBottomSheet =
@@ -279,7 +289,7 @@ object Extensions {
         commentsBottomSheet.show(requireActivity().supportFragmentManager, CommentsBottomSheet.TAG)
     }
 
-    fun Fragment.showMedia(media: Array<String>, mediaType: String, position:Int) {
+    fun Fragment.showMedia(media: Array<String>, mediaType: String, position: Int) {
         val mediaBtmSheet = FullPostMediaBottomSheet.instance(media, mediaType, position)
         mediaBtmSheet.show(requireActivity().supportFragmentManager, FullPostMediaBottomSheet.TAG)
     }
@@ -327,8 +337,12 @@ object Extensions {
     }
 
     fun Context.hideKeyboard(rootView: View) {
-        val inputMethodManager = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        inputMethodManager.hideSoftInputFromWindow(rootView.windowToken, InputMethodManager.RESULT_UNCHANGED_SHOWN)
+        val inputMethodManager =
+            this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(
+            rootView.windowToken,
+            InputMethodManager.RESULT_UNCHANGED_SHOWN
+        )
     }
 
     fun mediaSize(uri: Uri) = File(uri.path!!).length()

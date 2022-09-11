@@ -44,6 +44,7 @@ class FeedPagerAdapter(
         val media = binding.media
         val readMore = binding.readMore
         val description = binding.description
+        val profilePicture = binding.profiePic
 
         init {
             email.setOnClickListener {
@@ -62,6 +63,9 @@ class FeedPagerAdapter(
             profileName.setOnClickListener {
                 profileNameClick.invoke(mItem?.authorData!!)
             }
+            profilePicture.setOnClickListener {
+                profileNameClick.invoke(mItem?.authorData!!)
+            }
             comments.setOnClickListener {
                     reactions.invoke("comments", mItem?.postData!!.postID,  mItem?.postData!!.commentCount)
 
@@ -78,11 +82,10 @@ class FeedPagerAdapter(
             media.setRecycledViewPool(sharedPool)
 
             description.doOnLayout {
-                readMore.isVisible = description.layout.text.toString()
+                readMore.isGone = !description.layout.text.toString()
                     .equals(mItem?.postData!!.text, true)
             }
         }
-
         override fun bind(item: FeedData) {
             mItem = item
             val post = item.postData!!
@@ -97,16 +100,9 @@ class FeedPagerAdapter(
                         description.text = text
                         // setup reaction views
                         reaction.comments.isGone = !hasComments
-                        reaction.comments.isGone.run {
-                            if (this){
-                                val badgeDrawable = BadgeDrawable.create(itemView.context)
-                                badgeDrawable.badgeGravity = BadgeDrawable.TOP_END
-                                badgeDrawable.backgroundColor = itemView.resources.getColor(R.color.teal_200)
-                                badgeDrawable.badgeTextColor = itemView.resources.getColor(R.color.white)
-                                badgeDrawable.number = post.commentCount
-                            }
-                        }
                         reaction.launchLink.isGone = link == ""
+                        reaction.commentCount.isGone = commentCount == 0
+                        reaction.commentCount.text = commentCount.toString()
                         // show time
                         timeView.text = Extensions.convertTime(time)
                         val adapter = PostPicturesAdapter(
@@ -137,6 +133,7 @@ class FeedPagerAdapter(
         val launchLink = binding.reaction.launchLink
         val media = binding.media
         val description = binding.description
+        val profilePicture = binding.profiePic
 
         init {
             email.setOnClickListener {
@@ -156,6 +153,9 @@ class FeedPagerAdapter(
             profileName.setOnClickListener {
                 profileNameClick.invoke(mItem?.authorData!!)
             }
+            profilePicture.setOnClickListener {
+                profileNameClick.invoke(mItem?.authorData!!)
+            }
             comments.setOnClickListener {
                     reactions.invoke("comments", mItem?.postData!!.postID,   mItem?.postData!!.commentCount)
 
@@ -165,7 +165,7 @@ class FeedPagerAdapter(
 
             }
             description.doOnLayout {
-                media.isGone = description.layout.text.toString()
+                media.isGone = !description.layout.text.toString()
                     .equals(mItem?.postData!!.text, true)
             }
         }
@@ -185,7 +185,8 @@ class FeedPagerAdapter(
                         // setup reaction views
                         reaction.comments.isGone = !hasComments
                         reaction.launchLink.isGone = link == ""
-
+                        reaction.commentCount.isGone = commentCount == 0
+                        reaction.commentCount.text = commentCount.toString()
                         // show time
                         timeView.text = Extensions.convertTime(time)
                     }

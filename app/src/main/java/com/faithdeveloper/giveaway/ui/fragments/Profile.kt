@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isGone
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -19,12 +20,12 @@ import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutProfileBinding
-import com.faithdeveloper.giveaway.pagingsources.ProfilePagingSource
 import com.faithdeveloper.giveaway.ui.adapters.FeedLoadStateAdapter
 import com.faithdeveloper.giveaway.ui.adapters.ProfilePagerAdapter
 import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.launchLink
+import com.faithdeveloper.giveaway.utils.Extensions.makeGone
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.Extensions.sendEmail
@@ -128,17 +129,18 @@ class Profile : Fragment() {
         }
     }
 
-    private fun onClickProfileImage(){
+    private fun onClickProfileImage() {
         binding.profilePic.setOnClickListener {
             showImages(listOf(profile.profilePicUrl), false, 0)
         }
     }
 
     private fun handleViewPresentation() {
+        binding.edit.isGone = !userProfile
+        binding.settings.isGone = !userProfile
         if (userProfile) {
 //            user wants to check his/her profile
             loadView(viewModel.getUserProfile())
-            binding.edit.makeVisible()
         } else {
 //            user is checking the profile of another user (author of a post)
             loadView(viewModel.getAuthorProfile())
@@ -240,10 +242,12 @@ class Profile : Fragment() {
         makeErrorLayoutInvisible()
         binding.errorLayout.progressCircular.makeInVisible()
         binding.emptyResultLayout.emptyText.makeVisible()
+        binding.emptyResultLayout.emptyImg.makeVisible()
     }
 
     private fun makeEmptyResultLayoutInvisible() {
         binding.emptyResultLayout.emptyText.makeInVisible()
+        binding.emptyResultLayout.emptyImg.makeInVisible()
     }
 
     private fun setUpLoadState() {

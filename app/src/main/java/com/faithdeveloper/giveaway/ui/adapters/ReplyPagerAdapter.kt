@@ -13,6 +13,8 @@ import com.faithdeveloper.giveaway.data.models.ReplyData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.ReplyItemBinding
 import com.faithdeveloper.giveaway.ui.adapters.comparators.REPLY_ITEM_COMPARATOR
+import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.DELETE
+import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.UPDATE
 import com.faithdeveloper.giveaway.utils.Extensions
 import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
 
@@ -57,14 +59,14 @@ class ReplyPagerAdapter(
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
                         moreClick.invoke(
-                            "edit",
+                            UPDATE,
                             mItem?.reply!!.id,
                             mItem?.reply!!.commentText
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
                         moreClick.invoke(
-                            "delete",
+                            DELETE,
                             mItem?.reply!!.id,
                             mItem?.reply!!.commentText
                         )
@@ -134,6 +136,4 @@ class ReplyPagerAdapter(
     fun removeReply() {
         notifyItemRemoved(positionOfItemToDelete - 1)
     }
-
-
 }

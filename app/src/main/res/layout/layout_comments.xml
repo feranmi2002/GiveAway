@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/comments_btmSheet"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     tools:context=".ui.fragments.CommentsBottomSheet">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -103,8 +103,8 @@
             android:id="@+id/commentRecycler"
             android:layout_width="match_parent"
             android:layout_gravity="top"
-            android:nestedScrollingEnabled="false"
-            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            android:layout_height="match_parent"
             tools:itemCount="300"
             tools:listitem="@layout/comments_item" />
         </LinearLayout>

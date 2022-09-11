@@ -111,7 +111,8 @@ class NewFeedAdapter(
                         // setup reaction views
                         reaction.comments.isGone = !hasComments
                         reaction.launchLink.isVisible = link == ""
-
+                        reaction.commentCount.isGone = commentCount == 0
+                        reaction.commentCount.text = Extensions.formatCount(commentCount)
                         // show time
                         timeView.text = Extensions.convertTime(time)
                         val adapter = PostPicturesAdapter(
@@ -183,7 +184,7 @@ class NewFeedAdapter(
                     )
             }
             description.doOnLayout {
-                media.isVisible = description.layout.text.toString()
+                media.isVisible = !description.layout.text.toString()
                     .equals(mItem?.postData!!.text, true)
             }
         }
@@ -203,7 +204,9 @@ class NewFeedAdapter(
                         // setup reaction views
                         reaction.comments.isVisible = !hasComments
                         reaction.launchLink.isVisible = link == ""
-
+                        reaction.commentCount.isGone = commentCount == 0
+                        reaction.commentCount.text = commentCount.toString()
+                        reaction.commentCount.text = Extensions.formatCount(commentCount)
                         // show time
                         timeView.text = Extensions.convertTime(time)
                     }

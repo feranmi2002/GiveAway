@@ -129,6 +129,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
             .into(binding.profile)
         super.onStart()
     }
+
     private fun addNewReply() {
         binding.replyIdentifier.setOnClickListener {
             setUpNewReply()
@@ -282,7 +283,9 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                         "comment_edited" -> {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
-                            if (WHICH_ADAPTER_IS_TAKING_ACTION == NEW_ADAPTER) newReplyAdapter.updateReply(it.data as String)
+                            if (WHICH_ADAPTER_IS_TAKING_ACTION == NEW_ADAPTER) newReplyAdapter.updateReply(
+                                it.data as String
+                            )
                             else adapter.updateReply(it.data as String)
                         }
                     }
@@ -379,10 +382,12 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         makeErrorLayoutInvisible()
         binding.errorLayout.progressCircular.makeInVisible()
         binding.emptyResultLayout.emptyText.makeVisible()
+        binding.emptyResultLayout.emptyImg.makeVisible()
     }
 
     private fun makeEmptyResultLayoutInvisible() {
         binding.emptyResultLayout.emptyText.makeInVisible()
+        binding.emptyResultLayout.emptyImg.makeInVisible()
     }
 
     private fun closeDialog() {

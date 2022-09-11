@@ -30,10 +30,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import java.util.*
 
@@ -89,9 +86,9 @@ class Repository(
             auth.currentUser!!.sendEmailVerification(actionSettingsCodeInfo.build()).await()
             Log.i("GA", "Email is verified")
             Event.Success(null, "Email verified")
-        }catch (e: FirebaseNetworkException) {
+        } catch (e: FirebaseNetworkException) {
             Log.e("GA", "No network")
-            Event.Failure(e,)
+            Event.Failure(e)
         } catch (e: FirebaseAuthEmailException) {
             Log.e("GA", "Failed to verify email")
             Event.Failure(e)
@@ -1047,8 +1044,6 @@ class Repository(
         } catch (e: Exception) {
             Event.Failure(null, "comment_unadded")
         }
-
-
     }
 
     fun addNewComment(
@@ -1056,23 +1051,24 @@ class Repository(
         parentId: String,
     ): Event {
         return try {
-            val timePosted = System.currentTimeMillis()
-            val comment = Comment(
-                userUid()!!,
-                commentText,
-                "${userUid()!!}${timePosted}",
-                null,
-                parentId,
-                0,
-                false
-            )
-            val commentRef = database().collection(POSTS).document(parentId).collection(COMMENTS)
-                .document(comment.id)
-            val parentRef = database().collection(POSTS).document(parentId)
-            database().runBatch { batch ->
-                batch.set(commentRef, comment)
-                batch.update(parentRef, "commentCount", FieldValue.increment(1))
-            }
+                val timePosted = System.currentTimeMillis()
+                val comment = Comment(
+                    userUid()!!,
+                    commentText,
+                    "${userUid()!!}${timePosted}",
+                    null,
+                    parentId,
+                    0,
+                    false
+                )
+                val commentRef =
+                    database().collection(POSTS).document(parentId).collection(COMMENTS)
+                        .document(comment.id)
+                val parentRef = database().collection(POSTS).document(parentId)
+                database().runBatch { batch ->
+                    batch.set(commentRef, comment)
+                    batch.update(parentRef, "commentCount", FieldValue.increment(1))
+                }
             Event.Success(
                 CommentData(
                     comment,
@@ -1107,5 +1103,6 @@ class Repository(
         const val APP_PAUSED = "app_paused"
         const val COMMENTS = "comments"
         const val REPLIES = "replies"
+
     }
 }

@@ -68,7 +68,7 @@ class ProfilePagerAdapter(
             media.setRecycledViewPool(sharedPool)
 
             description.doOnLayout {
-                readMore.isVisible = description.layout.text.toString()
+                readMore.isVisible = !description.layout.text.toString()
                     .equals(mItem?.text, true)
             }
         }
@@ -85,16 +85,10 @@ class ProfilePagerAdapter(
                         description.text = text
                         // setup reaction views
                         reaction.comments.isGone = !hasComments
-                        reaction.comments.isGone.run {
-                            if (this){
-                                val badgeDrawable = BadgeDrawable.create(itemView.context)
-                                badgeDrawable.badgeGravity = BadgeDrawable.TOP_END
-                                badgeDrawable.backgroundColor = itemView.resources.getColor(R.color.teal_200)
-                                badgeDrawable.badgeTextColor = itemView.resources.getColor(R.color.white)
-                                badgeDrawable.number = item.commentCount
-                            }
-                        }
                         reaction.launchLink.isGone = link == ""
+                        reaction.commentCount.isGone = commentCount == 0
+                        reaction.commentCount.text = commentCount.toString()
+                        reaction.commentCount.text = Extensions.formatCount(commentCount)
                         // show time
                         timeView.text = Extensions.convertTime(time)
                         val adapter = PostPicturesAdapter(
@@ -147,7 +141,7 @@ class ProfilePagerAdapter(
                     reactions.invoke("launchLink", mItem?.link!!,mItem?.commentCount!!)
             }
             description.doOnLayout {
-                readMore.isVisible = description.layout.text.toString()
+                readMore.isVisible = !description.layout.text.toString()
                     .equals(mItem?.text, true)
             }
         }
@@ -163,9 +157,11 @@ class ProfilePagerAdapter(
                         description.isGone = text.isEmpty()
                         description.text = text
                         // setup reaction views
-                        reaction.comments.isGone = hasComments
+                        reaction.comments.isGone = !hasComments
                         reaction.launchLink.isGone = link == ""
-
+                        reaction.commentCount.isGone = commentCount == 0
+                        reaction.commentCount.text = commentCount.toString()
+                        reaction.commentCount.text = Extensions.formatCount(commentCount)
                         // show time
                         timeView.text = Extensions.convertTime(time)
                     }

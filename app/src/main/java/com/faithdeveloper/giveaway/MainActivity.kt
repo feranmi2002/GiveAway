@@ -21,11 +21,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 //        db = Room.databaseBuilder(applicationContext, Database::class.java,  "${getString(R.string.app_name)} database").allowMainThreadQueries().build()
-        lifecycleScope.launchWhenCreated {
             FirebaseStorage.getInstance().maxUploadRetryTimeMillis =60000
             auth = FirebaseAuth.getInstance()
             repository = Repository(auth, this@MainActivity.applicationContext)
-        }
     }
     fun getRepository() = repository
 }
