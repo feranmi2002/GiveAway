@@ -134,6 +134,6 @@ class ReplyPagerAdapter(
     }
 
     fun removeReply() {
-        notifyItemRemoved(positionOfItemToDelete - 1)
+        notifyItemRemoved(positionOfItemToDelete)
     }
 }

@@ -134,6 +134,6 @@ class NewCommentsAdapter(
     }
 
     fun removeComment() {
-        notifyItemRemoved(positionOfItemToDelete - 1)
+        notifyItemRemoved(positionOfItemToDelete)
     }
 }

@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -16,11 +17,13 @@ import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.databinding.AdaptiveMediaLayoutBinding
 import com.faithdeveloper.giveaway.ui.fragments.NewPost.Companion.IMAGE
+import com.faithdeveloper.giveaway.ui.fragments.NewPost.Companion.VIDEO
 
 class NewPostMediaAdapter(
     val mediaUrl: MutableList<Uri>,
     var mediaType: String,
-    val clickListener: (position: Int, uri: Uri) -> Unit
+    val removeMediaClickListener: (position: Int, uri: Uri) -> Unit,
+    val showMediaClickListener:(position:Int, mediaUris:MutableList<Uri>, type:String) -> Unit
 ) :
     RecyclerView.Adapter<NewPostMediaAdapter.NeedMediaViewHolder>() {
 
@@ -63,14 +66,16 @@ class NewPostMediaAdapter(
                         R.drawable.placeholder
                     )
                     .into(media)
+                count.isVisible = mediaUrl.size > 1
                 binding.count.text = "${position + 1}/${mediaUrl.size}"
-                if (mediaUrl.size <= 1) count.makeInVisible()
-                else count.makeVisible()
-                if (mediaType == IMAGE) play.makeInVisible()
-                else play.makeVisible()
+                play.isVisible = mediaType == VIDEO
 
                 remove.setOnClickListener {
-                    clickListener.invoke(position, mediaUrl[position])
+                    removeMediaClickListener.invoke(position, mediaUrl[position])
+                }
+
+                media.setOnClickListener{
+                    showMediaClickListener(position, mediaUrl, mediaType)
                 }
             }
         }

@@ -132,7 +132,7 @@ class CommentsPagerAdapter(
     }
 
     fun removeComment() {
-        notifyItemRemoved(positionOfItemToDelete - 1)
+        notifyItemRemoved(positionOfItemToDelete)
     }
 
 

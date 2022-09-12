@@ -130,7 +130,7 @@ class NewReplyAdapter(
     }
 
     fun removeReply() {
-        notifyItemRemoved(positionOfItemToDelete - 1)
+        notifyItemRemoved(positionOfItemToDelete)
     }
 
     override fun getItemCount() = replies.size
