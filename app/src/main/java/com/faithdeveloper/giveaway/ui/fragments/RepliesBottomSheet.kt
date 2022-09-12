@@ -139,7 +139,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
     private fun setUpAdapter() {
         adapter = ReplyPagerAdapter(
             profileNameClick = { author: UserProfile ->
-                fragmentCommentsInterface?.onClick(author)
+                fragmentCommentsInterface?.onClickUser(author)
             },
             reply = {
                 setUpReply(it)
@@ -159,7 +159,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         newReplyAdapter = NewReplyAdapter(
             arrayOfNewReplies,
             profileNameClick = { author: UserProfile ->
-                fragmentCommentsInterface?.onClick(author)
+                fragmentCommentsInterface?.onClickUser(author)
             },
             reply = {
                 setUpReply(it)

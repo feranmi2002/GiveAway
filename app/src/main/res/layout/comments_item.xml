@@ -74,7 +74,7 @@
         android:layout_marginStart="2dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/comments_text"
+        app:layout_constraintTop_toBottomOf="@id/time"
         app:srcCompat="@drawable/ic_baseline_more_vert_24" />
 
 

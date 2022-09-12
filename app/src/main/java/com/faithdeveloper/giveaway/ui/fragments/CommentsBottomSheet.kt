@@ -37,7 +37,6 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -183,7 +182,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     private fun setUpAdapter() {
         adapter = CommentsPagerAdapter(
             profileNameClick = { author: UserProfile ->
-                fragmentCommentsInterface?.onClick(author)
+                fragmentCommentsInterface?.onClickUser(author)
             },
             reply = { commentId: String, text, count: Int ->
                 openReplyDialog(commentId, text, count)
@@ -208,7 +207,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         newCommentsAdapter =
             NewCommentsAdapter(arrayOfNewComments,
                 profileNameClick = { author: UserProfile ->
-                    fragmentCommentsInterface?.onClick(author)
+                    fragmentCommentsInterface?.onClickUser(author)
                 },
                 reply = { commentId: String, text, count: Int ->
                     openReplyDialog(commentId, text, count)

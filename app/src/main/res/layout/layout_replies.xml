@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/comments_btmSheet"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     tools:context=".ui.fragments.CommentsBottomSheet">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -32,8 +32,8 @@
             android:layout_marginStart="8dp"
             android:gravity="center"
             android:text="300"
-            android:textSize="20sp"
             android:textColor="@color/purple_500_lighter"
+            android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="@+id/title"
             app:layout_constraintEnd_toStartOf="@+id/dismiss"
             app:layout_constraintHorizontal_bias="0"
@@ -57,41 +57,48 @@
             app:layout_constraintTop_toBottomOf="@id/title"
             app:srcCompat="@drawable/square_divider" />
 
-        <com.ms.square.android.expandabletextview.ExpandableTextView
-            android:id="@+id/comment"
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/comment_scroll_view"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@id/title"
-            app:layout_constraintTop_toBottomOf="@id/divider3"
-            app:maxCollapsedLines="4"
-            app:readLessText="Read less"
-            app:readMoreText="Read more">
+            app:layout_constraintTop_toBottomOf="@id/divider3">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/expandable_text"
+            <com.ms.square.android.expandabletextview.ExpandableTextView
+                android:id="@+id/comment"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="3dp"
-                app:fontFamily="@font/nunito_medium"
-                android:textSize="15sp"
-                android:textColor="#C3000000"
-                tools:text="This is a comment" />
-
-            <ImageButton
-                android:id="@+id/expand_collapse"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right|bottom"
-                android:background="@android:color/transparent" />
-        </com.ms.square.android.expandabletextview.ExpandableTextView>
+                app:maxCollapsedLines="4"
+                app:readLessText="Read less"
+                app:readMoreText="Read more">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/expandable_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="3dp"
+                    android:fontFamily="@font/nunito_medium"
+                    android:textColor="#C3000000"
+                    android:textSize="15sp"
+                    app:fontFamily="@font/nunito_medium"
+                    tools:text="This is a comment" />
+
+                <ImageButton
+                    android:id="@+id/expand_collapse"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|bottom"
+                    android:background="@android:color/transparent" />
+            </com.ms.square.android.expandabletextview.ExpandableTextView>
+        </androidx.core.widget.NestedScrollView>
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/divider1"
             android:layout_width="match_parent"
             android:layout_height="4dp"
             android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/comment"
+            app:layout_constraintTop_toBottomOf="@id/comment_scroll_view"
             app:srcCompat="@drawable/square_divider" />
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -127,18 +134,24 @@
             app:layout_constraintTop_toBottomOf="@id/profile"
             app:srcCompat="@drawable/square_divider" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/commentRecycler"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginTop="3dp"
-            android:overScrollMode="never"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@id/title"
-            app:layout_constraintTop_toBottomOf="@id/divider2"
-            tools:itemCount="300"
-            tools:listitem="@layout/reply_item" />
+            app:layout_constraintTop_toBottomOf="@id/divider2">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/commentRecycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="top"
+                android:layout_marginBottom="15dp"
+                android:overScrollMode="never"
+                tools:itemCount="300"
+                tools:listitem="@layout/reply_item" />
+        </LinearLayout>
 
         <include
             android:id="@+id/error_layout"
