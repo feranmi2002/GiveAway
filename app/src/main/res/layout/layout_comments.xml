@@ -103,7 +103,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="top"
-                android:layout_marginBottom="15dp"
                 android:overScrollMode="never"
                 tools:itemCount="300"
                 tools:listitem="@layout/comments_item" />
@@ -125,10 +124,10 @@
             android:layout_marginTop="4dp"
             app:layout_constraintTop_toBottomOf="@id/divider2" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintTop_toBottomOf="@id/divider2" />
+<!--        <View-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@id/divider2" />-->
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

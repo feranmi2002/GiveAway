@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.Editable
@@ -40,6 +41,7 @@ import com.faithdeveloper.giveaway.utils.Extensions.enable
 import com.faithdeveloper.giveaway.utils.Extensions.hideKeyboard
 import com.faithdeveloper.giveaway.utils.Extensions.mediaSize
 import com.faithdeveloper.giveaway.utils.Extensions.showDialog
+import com.faithdeveloper.giveaway.utils.Extensions.showMedia
 import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.NewPostVM
@@ -264,12 +266,15 @@ class NewPost : Fragment() {
 
 //                init media recycler
                 mediaRecycler =
-                    NewPostMediaAdapter(viewModel.mediaUri, IMAGE) { position, uri ->
+                    NewPostMediaAdapter(viewModel.mediaUri, IMAGE, { position, uri ->
                         viewModel.removeMedia(uri)
                         removeMedia()
                         updateMediaIcons()
                         updateDoneButton()
+                    }, {position, mediaUris, type ->
+                        showFullMedia(mediaUris, type, position)
                     }
+                    )
 
 //                set up permissions contract
                 requestMultiplePermissions = registerForActivityResult(
@@ -309,6 +314,13 @@ class NewPost : Fragment() {
                 }
             })
         super.onCreate(savedInstanceState)
+    }
+
+    private fun showFullMedia(mediaUris: MutableList<Uri>, type: String, position: Int) {
+        val arrayOfUriStrings = mediaUris.map {
+            it.toString()
+        }.toTypedArray()
+        showMedia(arrayOfUriStrings, type, position)
     }
 
     override fun onCreateView(

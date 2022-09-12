@@ -36,6 +36,7 @@ class NewCommentsAdapter(
         val more = binding.more
         val reply = binding.reply
         val name = binding.name
+        val profilePic = binding.profilePic
 
         init {
             more.setOnClickListener {
@@ -74,6 +75,9 @@ class NewCommentsAdapter(
             }
 
             name.setOnClickListener {
+                profileNameClick.invoke(mItem?.author!!)
+            }
+            profilePic.setOnClickListener{
                 profileNameClick.invoke(mItem?.author!!)
             }
         }

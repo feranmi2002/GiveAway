@@ -91,8 +91,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //        setup dialog view
-        (dialog as? BottomSheetDialog)?.behavior?.isFitToContents = false
-        (dialog as? BottomSheetDialog)?.behavior?.state = BottomSheetBehavior.STATE_HALF_EXPANDED
         (dialog as? BottomSheetDialog)?.behavior?.isHideable = true
         (dialog as? BottomSheetDialog)?.behavior?.isDraggable = true
         (dialog as? BottomSheetDialog)?.setCanceledOnTouchOutside(false)
@@ -191,6 +189,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         adapter = CommentsPagerAdapter(
             profileNameClick = { author: UserProfile ->
                 fragmentCommentsInterface?.onClickUser(author)
+                dismissAllowingStateLoss()
             },
             reply = { commentId: String, text, count: Int ->
                 openReplyDialog(commentId, text, count)
@@ -216,6 +215,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             NewCommentsAdapter(arrayOfNewComments,
                 profileNameClick = { author: UserProfile ->
                     fragmentCommentsInterface?.onClickUser(author)
+                    dismissAllowingStateLoss()
                 },
                 reply = { commentId: String, text, count: Int ->
                     openReplyDialog(commentId, text, count)

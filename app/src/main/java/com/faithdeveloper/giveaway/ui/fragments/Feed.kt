@@ -10,7 +10,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -29,7 +28,6 @@ import com.faithdeveloper.giveaway.MainActivity
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.Repository.Companion.APP_PAUSED
 import com.faithdeveloper.giveaway.data.Repository.Companion.APP_STARTED
-import com.faithdeveloper.giveaway.data.models.FeedData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.LayoutFeedBinding
 import com.faithdeveloper.giveaway.ui.adapters.FeedLoadStateAdapter
@@ -56,6 +54,7 @@ import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.viewmodels.FeedVM
+import com.faithdeveloper.giveaway.viewmodels.FeedVM.Companion.DEFAULT_FILTER
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
@@ -76,8 +75,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private var newSignIn by Delegates.notNull<Boolean>()
     private var dialogBuilder: MaterialAlertDialogBuilder? = null
     private var alertDialog: AlertDialog? = null
-    private var newFeed = mutableListOf<FeedData>()
-
+//    private var newFeed = mutableListOf<FeedData>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         /*
@@ -208,21 +206,29 @@ class Feed : Fragment(), FragmentCommentsInterface {
         super.onViewCreated(view, savedInstanceState)
     }
 
-
     override fun onStart() {
         //        check if a new post has just been uploaded by the user, then display it if true
         viewModel.checkIfNewPostAvailable().run {
             //   binding.latestFeed.isVisible = this
+//            viewModel.setUserHasBeenNotifiedOfPostSuccess(false)
+//            if (!viewModel.userHasBeenNotifiedOfPostUploadSuccess) {
+//                viewModel.setUserHasBeenNotifiedOfPostSuccess(true)
+//            }
             if (this) {
                 requireContext().showSnackbarShort(binding.root, "Your Post has been sent.")
-                newFeed.add(viewModel.getUploadedPost())
-                viewModel.storeSizeOfNewFeed(newFeed.size)
-                mAdapter.notifyItemInserted(0)
+                if (viewModel.getUploadedPost().postData?.tags!!.contains(viewModel.filter()) || (viewModel.getUploadedPost().postData?.tags!!.isEmpty() && viewModel.filter() == DEFAULT_FILTER)) {
+//                    newFeed.add(viewModel.getUploadedPost())
+                    mAdapter.notifyItemInserted(0)
+                }
+                viewModel.cacheNewUploadedPost(
+                    viewModel.getUploadedPost().postData!!.tags,
+                    viewModel.getUploadedPost()
+                )
+                viewModel.makeUploadedPostNull()
             }
         }
         super.onStart()
     }
-
 
     private fun loadProfilePicture() {
         Glide.with(this)
@@ -240,6 +246,8 @@ class Feed : Fragment(), FragmentCommentsInterface {
             isSingleSelection = true
             isSingleLine = true
             setOnCheckedStateChangeListener { group, checkedIds ->
+                makeErrorLayoutInvisible()
+                makeEmptyResultLayoutInvisible()
 //              reload feed on tag selected changed
 
 //                first clear existing data
@@ -248,10 +256,18 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 binding.recycler.removeAllViewsInLayout()
 
                 val chip: Chip? = group.findViewById<Chip>(checkedIds[0])
-                newFeed = mutableListOf()
-                mAdapter.notifyItemRangeRemoved(0, viewModel.newFeed)
+                if (viewModel.getCachedLoadedData(chip!!.text.toString())!!.isNotEmpty()) {
+                    mAdapter.data = viewModel.getCachedUploadedNewPosts(chip.text.toString())!!
+                    mAdapter.notifyDataSetChanged()
+                } else {
+                    viewModel.clearCachedNewUploadedPosts(chip.text.toString())
+                }
 //                this triggers a reload of data from remote database with the filter
                 viewModel.setLoadFilter((chip?.text.toString()) ?: viewModel.filter())
+//                newFeed = viewModel.getCachedUploadedNewPosts(
+//                    (chip?.text.toString()) ?: viewModel.filter()
+//                )!!
+
             }
 //            init chips
             for (text in chipsData) {
@@ -312,6 +328,11 @@ class Feed : Fragment(), FragmentCommentsInterface {
             binding.latestFeed.makeGone()
             viewModel.clearViewModelPreloadedData()
             viewModel.stopPreloadingLatestFeed()
+            viewModel.cacheLoadedData(
+                viewModel.filter(),
+                mAdapter.data.toList() + adapter.snapshot().items
+            )
+            viewModel.clearCachedNewUploadedPosts(viewModel.filter())
             adapter.refresh()
         }
     }
@@ -320,10 +341,8 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private fun handleObservers() {
 //    observe the feed result
         viewModel.feedResult.observe(viewLifecycleOwner) {
-            if (binding.errorLayout.progressCircular.isVisible && newFeed.size > 0) {
-                newFeed = mutableListOf()
-                mAdapter.notifyItemRangeRemoved(0, viewModel.newFeed)
-            }
+            mAdapter.data = viewModel.getCachedUploadedNewPosts(viewModel.filter())!!
+            mAdapter.notifyDataSetChanged()
             adapter.submitData(viewLifecycleOwner.lifecycle, it)
         }
 
@@ -456,7 +475,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
     private fun setUpAdapter() {
         adapter = FeedPagerAdapter(
-            { action, data,  commentCount ->
+            { action, data, commentCount ->
                 if (action == "email") {
                     if (sendEmail(data) is Event.Failure) noAppToHandleRequest()
                     return@FeedPagerAdapter
@@ -518,7 +537,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 showImages(images.toList(), hasVideo, position)
             },
             { menuAction -> }, viewModel.userUid(),
-            newFeed,
+            viewModel.getCachedUploadedNewPosts(viewModel.filter())!!,
             requireContext().getDataSavingMode()
         )
     }
@@ -560,7 +579,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                             binding.refresh.isRefreshing = false
                             binding.errorLayout.progressCircular.makeInVisible()
                             makeErrorLayoutInvisible()
-
+                            viewModel.cacheLoadedData(viewModel.filter(), adapter.snapshot().items)
                         }
                     }
                     when (loadStates.append) {
@@ -612,7 +631,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
         const val VIDEO = "video"
     }
 
-    override fun onClick(poster: UserProfile) {
+    override fun onClickUser(poster: UserProfile) {
         navigateToProfilePage(poster)
     }
 

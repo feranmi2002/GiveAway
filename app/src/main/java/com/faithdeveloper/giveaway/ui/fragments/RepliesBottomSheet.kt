@@ -98,9 +98,8 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //        setup dialog view
-        (dialog as? BottomSheetDialog)?.behavior?.isFitToContents = false
-        (dialog as? BottomSheetDialog)?.behavior?.state = BottomSheetBehavior.STATE_HALF_EXPANDED
         (dialog as? BottomSheetDialog)?.behavior?.isHideable = true
+        (dialog as? BottomSheetDialog)?.behavior?.isDraggable = true
         (dialog as? BottomSheetDialog)?.setCanceledOnTouchOutside(false)
 
         binding.comment.text = comment

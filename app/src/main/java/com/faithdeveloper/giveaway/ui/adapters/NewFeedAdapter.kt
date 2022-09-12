@@ -22,7 +22,7 @@ class NewFeedAdapter(
     private val imagesClick: (images: Array<String>, hasVideo: Boolean, position: Int) -> Unit,
     private val menuAction: (action: String) -> Unit,
     val userUid: String,
-    val data: MutableList<FeedData>,
+    var data: MutableList<FeedData>,
     val dataSavingMode: Boolean
 ) : RecyclerView.Adapter<BaseViewHolder>() {
     inner class FeedViewHolderMedia(val binding: FeedItemMediaLayoutBinding) :
@@ -110,7 +110,7 @@ class NewFeedAdapter(
                         description.text = text
                         // setup reaction views
                         reaction.comments.isGone = !hasComments
-                        reaction.launchLink.isVisible = link == ""
+                        reaction.launchLink.isGone = link == ""
                         reaction.commentCount.isGone = commentCount == 0
                         reaction.commentCount.text = Extensions.formatCount(commentCount)
                         // show time
@@ -203,7 +203,7 @@ class NewFeedAdapter(
                         description.text = text
                         // setup reaction views
                         reaction.comments.isVisible = !hasComments
-                        reaction.launchLink.isVisible = link == ""
+                        reaction.launchLink.isGone = link == ""
                         reaction.commentCount.isGone = commentCount == 0
                         reaction.commentCount.text = commentCount.toString()
                         reaction.commentCount.text = Extensions.formatCount(commentCount)

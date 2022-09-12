@@ -102,7 +102,7 @@ class FeedPagerAdapter(
                         reaction.comments.isGone = !hasComments
                         reaction.launchLink.isGone = link == ""
                         reaction.commentCount.isGone = commentCount == 0
-                        reaction.commentCount.text = commentCount.toString()
+                        reaction.commentCount.text = Extensions.formatCount(commentCount)
                         // show time
                         timeView.text = Extensions.convertTime(time)
                         val adapter = PostPicturesAdapter(
@@ -186,7 +186,7 @@ class FeedPagerAdapter(
                         reaction.comments.isGone = !hasComments
                         reaction.launchLink.isGone = link == ""
                         reaction.commentCount.isGone = commentCount == 0
-                        reaction.commentCount.text = commentCount.toString()
+                        reaction.commentCount.text =Extensions.formatCount(commentCount)
                         // show time
                         timeView.text = Extensions.convertTime(time)
                     }

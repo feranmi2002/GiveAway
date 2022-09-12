@@ -30,6 +30,8 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageTask
+import com.google.firebase.storage.UploadTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import java.util.*
@@ -155,10 +157,10 @@ class Repository(
             Event.Success(null, "Sign in successful")
         } catch (e: UnverifiedUserException) {
             Log.e("GA", e.message ?: "Unverified user")
-            Event.Failure(e)
+            Event.Failure(e, "Unverified user")
         } catch (e: FirebaseNetworkException) {
             Log.e("GA", e.message ?: "No network")
-            Event.Failure(e, "Sign in")
+            Event.Failure(e, "Sign in failed")
         } catch (e: FirebaseAuthException) {
             Log.e("GA", e.message ?: "Wrong credentials")
             Event.Failure(e)
@@ -204,21 +206,20 @@ class Repository(
         hasComments: Boolean,
         link: String?
     ): Event {
+        val mediaUploadTasks = mutableListOf<StorageTask<UploadTask.TaskSnapshot>>()
+        var mediaUrlsList = mutableListOf<String>()
+        var hasVideo = false
         return try {
-            var post: Post
-            coroutineScope {
+            if (mediaUriList.isNotEmpty()) {
+                mediaUrlsList = withTimeout(TIMEOUT) {
+
 //                init all possible jobs
-                var videoUploadJob: Deferred<String> = async {
-                    return@async ""
-                }
-                val imageUploadJobList: MutableList<Deferred<String>> = mutableListOf()
-//                collects the urls of uploaded media
-                val mediaUrlsList: MutableList<String> = mutableListOf()
-//                this variable is used when pushing the new post to the database
-                var hasVideo = false
+                    var videoUploadJob: Deferred<String> = async {
+                        return@async ""
+                    }
+                    val imageUploadJobList: MutableList<Deferred<String>> = mutableListOf()
 
 //                check type of media
-                if (mediaUriList.isNotEmpty()) {
 //                    media is part of post
 //                      media is either video or image, so a check is done
                     val mediaType = context.checkTypeOfMedia(mediaUriList[0])
@@ -228,7 +229,8 @@ class Repository(
                             val job = async {
                                 val reference = storage().getReference(POST_PHOTOS)
                                     .child("${userUid()}${System.currentTimeMillis()}")
-                                reference.putFile(it).await()
+                                val task = reference.putFile(it).await().task
+                                mediaUploadTasks.add(task)
                                 val downloadUrl = reference.downloadUrl.await()
                                 return@async downloadUrl.toString()
                             }
@@ -236,36 +238,43 @@ class Repository(
                         }
                     } else {
                         videoUploadJob = async {
-                            return@async uploadPostVideo(mediaUriList[0]).toString()
+                            val reference = storage().getReference(POST_VIDEOS)
+                                .child("${userUid()}${System.currentTimeMillis()}")
+                            val task = reference.putFile(mediaUriList[0]).await().task
+                            mediaUploadTasks.add(task)
+                            return@async reference.downloadUrl.await().toString()
                         }
-
+                    }
+//                get media urls
+                    if (imageUploadJobList.isNotEmpty()) {
+                        mediaUrlsList.addAll(imageUploadJobList.awaitAll())
+                    } else {
+                        mediaUrlsList.add(videoUploadJob.await())
                         hasVideo = true
                     }
+                    return@withTimeout mediaUrlsList
                 }
-//                get media urls
-                if (mediaUriList.isNotEmpty()) {
-                    if (imageUploadJobList.isNotEmpty()) mediaUrlsList.addAll(imageUploadJobList.awaitAll())
-                    else mediaUrlsList.add(videoUploadJob.await())
-                }
-                val timePosted = System.currentTimeMillis()
-                post = Post(
-                    authorId = userUid()!!,
-                    postID = "${userUid()}$timePosted",
-                    time = null,
-                    text = postText,
-                    tags = getTags(tags),
-                    mediaUrls = mediaUrlsList,
-                    hasComments = hasComments,
-                    hasVideo = hasVideo,
-                    link = link ?: "",
-                    commentCount = 0
-                )
             }
+            val post = Post(
+                authorId = userUid()!!,
+                postID = "${userUid()}${System.currentTimeMillis()}",
+                time = null,
+                text = postText,
+                tags = getTags(tags),
+                mediaUrls = mediaUrlsList,
+                hasComments = hasComments,
+                hasVideo = hasVideo,
+                link = link ?: "",
+                commentCount = 0
+            )
             //              push to the database
-            database().collection(POSTS).document(post.postID).set(post)
             uploadedPost = post
+            database().collection(POSTS).document(post.postID).set(post)
             Event.Success(null)
         } catch (e: Exception) {
+            mediaUploadTasks.onEach { task ->
+                task.cancel()
+            }
             Log.e("GA", e.message ?: "error")
             Event.Failure("Post Failed", e.message ?: "error")
         }
@@ -281,14 +290,6 @@ class Repository(
         }
         return result
     }
-
-    private suspend fun uploadPostVideo(videoUri: Uri): Uri? {
-        val reference = storage().getReference(POST_VIDEOS)
-            .child("${userUid()}${System.currentTimeMillis()}")
-        reference.putFile(videoUri).await()
-        return reference.downloadUrl.await()
-    }
-
 
     suspend fun getProfileFeed(
         key: PagerKey,
@@ -1051,24 +1052,24 @@ class Repository(
         parentId: String,
     ): Event {
         return try {
-                val timePosted = System.currentTimeMillis()
-                val comment = Comment(
-                    userUid()!!,
-                    commentText,
-                    "${userUid()!!}${timePosted}",
-                    null,
-                    parentId,
-                    0,
-                    false
-                )
-                val commentRef =
-                    database().collection(POSTS).document(parentId).collection(COMMENTS)
-                        .document(comment.id)
-                val parentRef = database().collection(POSTS).document(parentId)
-                database().runBatch { batch ->
-                    batch.set(commentRef, comment)
-                    batch.update(parentRef, "commentCount", FieldValue.increment(1))
-                }
+            val timePosted = System.currentTimeMillis()
+            val comment = Comment(
+                userUid()!!,
+                commentText,
+                "${userUid()!!}${timePosted}",
+                null,
+                parentId,
+                0,
+                false
+            )
+            val commentRef =
+                database().collection(POSTS).document(parentId).collection(COMMENTS)
+                    .document(comment.id)
+            val parentRef = database().collection(POSTS).document(parentId)
+            database().runBatch { batch ->
+                batch.set(commentRef, comment)
+                batch.update(parentRef, "commentCount", FieldValue.increment(1))
+            }
             Event.Success(
                 CommentData(
                     comment,
@@ -1087,6 +1088,9 @@ class Repository(
 
     }
 
+    fun getTimelineOptions(): Array<String> =
+        context.resources.getStringArray(R.array.feedTags)
+
 
     companion object {
         const val POST_DATA = "post_data"
@@ -1103,6 +1107,7 @@ class Repository(
         const val APP_PAUSED = "app_paused"
         const val COMMENTS = "comments"
         const val REPLIES = "replies"
+        const val TIMEOUT = 5000L
 
     }
 }

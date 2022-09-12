@@ -5,7 +5,10 @@ import android.os.CountDownTimer
 import androidx.lifecycle.*
 import androidx.paging.*
 import com.faithdeveloper.giveaway.data.Repository
-import com.faithdeveloper.giveaway.data.models.*
+import com.faithdeveloper.giveaway.data.models.FeedData
+import com.faithdeveloper.giveaway.data.models.PagerKey
+import com.faithdeveloper.giveaway.data.models.PagerResponse
+import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.pagingsources.FeedPagingSource
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.LiveEvent
@@ -17,8 +20,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingSourceInterface {
-    var newFeed = 0
-    private set
+
+    private var mapOfCachedFeed: MutableMap<String, List<FeedData>> = mutableMapOf()
+    private var mapOfNewUploadedPosts: MutableMap<String, MutableList<FeedData>> = mutableMapOf()
 
     private val _profilePicUpload = LiveEvent<Event>()
     val profilePicUpload get() = this._profilePicUpload
@@ -50,15 +54,25 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
 
     private val _feedResult = loadFilter.distinctUntilChanged().switchMap { filter ->
         clearViewModelPreloadedData()
-       stopPreloadingLatestFeed()
-        loadFeed(filter)
+        stopPreloadingLatestFeed()
+        if (mapOfCachedFeed[filter]!!.isNotEmpty()) getCachedFeed(filter)
+        else loadFeed(filter)
     }
 
-    fun stopPreloadingLatestFeed(){
+    private fun getCachedFeed(filter: String): LiveData<PagingData<FeedData>> {
+        return MutableLiveData(PagingData.from(mapOfCachedFeed[filter]!!))
+    }
+
+    init {
+        initMapOfCachedLoadedDataForEachFilter()
+    }
+
+    fun stopPreloadingLatestFeed() {
         countDownTimer?.cancel()
         countDownTimer = null
         latestFeedJob?.cancel()
     }
+
     val feedResult get() = _feedResult
 
     private fun getLatestFeed() {
@@ -79,7 +93,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
                         else _newFeedAvailableFlag.postValue(false)
                     }
                 }
-//                stop prefetching feed dta when there is already above 30 prefetched feed items
+//                stop prefetching feed data when there is already above 30 prefetched feed items
                 if (preloadedLatestFeed.size < 30) countDownTimer?.start()
             }
         }
@@ -93,10 +107,6 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
         }
     }
 
-    fun storeSizeOfNewFeed(size:Int){
-        newFeed = size
-    }
-
     fun filter() = loadFilter.value ?: DEFAULT_FILTER
 
     fun setLoadFilter(filter: String) {
@@ -104,19 +114,22 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     }
 
     fun checkIfNewPostAvailable(): Boolean {
-        val state =  repository.checkIfNewUploadedPostIsAvailable()
-        if (state){
-            preloadedLatestFeed.add(repository.getUploadedPost())
-     //       repository.makeNewUploadedPostNull()
-        }
-        return state
+        //        if (state) {
+//            preloadedLatestFeed.add(repository.getUploadedPost())
+//            //       repository.makeNewUploadedPostNull()
+//        }
+        return repository.checkIfNewUploadedPostIsAvailable()
     }
 
     fun getUploadedPost() = repository.getUploadedPost()
 
+    fun makeUploadedPostNull() {
+        repository.makeNewUploadedPostNull()
+    }
+
     private fun loadFeed(filter: String) =
         Pager(
-            config =PagingConfig(
+            config = PagingConfig(
                 pageSize = 10
             ),
             pagingSourceFactory = {
@@ -166,6 +179,32 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
             //getLatestFeed()
         }
     }
+
+    private fun initMapOfCachedLoadedDataForEachFilter() {
+        repository.getTimelineOptions().onEach {
+            mapOfCachedFeed[it] = mutableListOf()
+            mapOfNewUploadedPosts[it] = mutableListOf()
+        }
+    }
+
+    fun cacheLoadedData(filter: String, snapshot: List<FeedData>) {
+        mapOfCachedFeed[filter] = snapshot
+    }
+
+    fun cacheNewUploadedPost(filter: List<String>, uploadedPost: FeedData) {
+        mapOfNewUploadedPosts[DEFAULT_FILTER]!!.add(uploadedPost)
+        filter.onEach {
+            mapOfNewUploadedPosts[it]!!.add(uploadedPost)
+        }
+    }
+
+    fun clearCachedNewUploadedPosts(filter: String) {
+        mapOfNewUploadedPosts[filter] = mutableListOf()
+    }
+
+    fun getCachedUploadedNewPosts(filter: String) = mapOfNewUploadedPosts[filter]
+
+    fun getCachedLoadedData(filter: String) = mapOfCachedFeed[filter]
 
     companion object {
         const val DEFAULT_FILTER = "All"
