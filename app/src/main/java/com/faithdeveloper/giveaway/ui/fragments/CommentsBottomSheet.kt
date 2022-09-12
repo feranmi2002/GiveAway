@@ -144,6 +144,10 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                             newCommentsAdapter.notifyItemInserted(arrayOfNewComments.size + 1)
                             makeEmptyResultLayoutInvisible()
                             makeErrorLayoutInvisible()
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Comment Added"
+                            )
                         }
                         "comment_deleted" -> {
                             requireContext().showSnackbarShort(
@@ -159,7 +163,11 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                             if (WHICH_ADAPTER_IS_TAKING_ACTION == NEW_ADAPTER) newCommentsAdapter.updateComment(
                                 it.data as String
                             )
-                            adapter.updateComment(it.data as String)
+                            else adapter.updateComment(it.data as String)
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Comment updated"
+                            )
                         }
                     }
 

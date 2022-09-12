@@ -274,11 +274,19 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                             newReplyAdapter.notifyItemInserted(arrayOfNewReplies.size + 1)
                             makeEmptyResultLayoutInvisible()
                             makeErrorLayoutInvisible()
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Reply Added"
+                            )
                         }
                         "comment_deleted" -> {
                             _dialog?.dismiss()
                             if (WHICH_ADAPTER_IS_TAKING_ACTION == NEW_ADAPTER) newReplyAdapter.removeReply()
                             else adapter.removeReply()
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Your reply has been removed"
+                            )
                         }
                         "comment_edited" -> {
                             _dialog?.dismiss()
@@ -287,6 +295,10 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                                 it.data as String
                             )
                             else adapter.updateReply(it.data as String)
+                            requireContext().showSnackbarShort(
+                                binding.root,
+                                "Reply Updated"
+                            )
                         }
                     }
                 }
@@ -377,7 +389,6 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         binding.errorLayout.retryButton.makeVisible()
         binding.errorLayout.errorImage.makeVisible()
     }
-
     private fun makeEmptyResultLayoutVisible() {
         makeErrorLayoutInvisible()
         binding.errorLayout.progressCircular.makeInVisible()
