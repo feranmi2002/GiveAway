@@ -269,7 +269,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                         "comment_added" -> {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
-                            arrayOfNewReplies.add(it.data as ReplyData)
+                            arrayOfNewReplies.add(0, it.data as ReplyData)
                             newReplyAdapter.notifyItemInserted(arrayOfNewReplies.size + 1)
                             makeEmptyResultLayoutInvisible()
                             makeErrorLayoutInvisible()

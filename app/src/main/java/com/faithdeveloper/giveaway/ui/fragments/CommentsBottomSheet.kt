@@ -138,7 +138,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                         "comment_added" -> {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
-                            arrayOfNewComments.add(it.data as CommentData)
+                            arrayOfNewComments.add(0, it.data as CommentData)
                             newCommentsAdapter.notifyItemInserted(arrayOfNewComments.size + 1)
                             makeEmptyResultLayoutInvisible()
                             makeErrorLayoutInvisible()
