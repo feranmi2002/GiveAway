@@ -202,7 +202,7 @@ class Profile : Fragment() {
         val mediaType: String = if (hasVideo) {
             Feed.VIDEO
         } else {
-            FullPostMediaBottomSheet.IMAGES
+            FullPostMediaBottomSheet.IMAGE
         }
         this.showMedia(array, mediaType, position)
     }

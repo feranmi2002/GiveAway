@@ -80,7 +80,7 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
         mediaType = requireArguments().getString(TYPE)!!
         position = requireArguments().getInt(POSITION)
         FRAGMENT_JUST_CREATED = true
-        if (mediaType == IMAGES) {
+        if (mediaType == IMAGE) {
             adapter = FullPostImagesAdapter(media, this)
         }
 
@@ -113,11 +113,11 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
        (dialog as? BottomSheetDialog)?.behavior?.state = BottomSheetBehavior.STATE_EXPANDED
-        binding.back.setOnClickListener {
+        binding.options.back.setOnClickListener {
             dismiss()
         }
 
-        if (mediaType == IMAGES) {
+        if (mediaType == IMAGE) {
             with(binding) {
                 recycler.makeVisible()
                 recycler.layoutManager =
@@ -292,8 +292,8 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
     }
 
     private fun downloadClick() {
-        if (mediaType == IMAGES) {
-            binding.download.setOnClickListener {
+        if (mediaType == IMAGE) {
+            binding.options.download.setOnClickListener {
                 currentMediaUrl = media[adapter.getViewHolder()!!.absoluteAdapterPosition]
                 askPermissions()
             }
@@ -301,8 +301,8 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
     }
 
     override fun imageIsReady(imageReady: Boolean) {
-        if (imageReady) binding.download.enable()
-        else binding.download.disable()
+        if (imageReady) binding.options.download.enable()
+        else binding.options.download.disable()
     }
 
     private fun initializePlayer() {
@@ -332,7 +332,7 @@ class FullPostMediaBottomSheet : BottomSheetDialogFragment(), FullImageAdapterIn
         const val TAG = "MediaBottomSheet"
         private const val MEDIA = "media"
         private const val TYPE = "type"
-        const val IMAGES = "images"
+        const val IMAGE = "image"
         private const val VIDEO = "video"
         private const val POSITION = "position"
         fun instance(media: Array<String>, type: String, position: Int): FullPostMediaBottomSheet {
