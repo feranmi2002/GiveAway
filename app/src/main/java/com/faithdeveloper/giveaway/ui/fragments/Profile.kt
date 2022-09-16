@@ -25,7 +25,6 @@ import com.faithdeveloper.giveaway.ui.adapters.ProfilePagerAdapter
 import com.faithdeveloper.giveaway.utils.ActivityObserver
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.launchLink
-import com.faithdeveloper.giveaway.utils.Extensions.makeGone
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
 import com.faithdeveloper.giveaway.utils.Extensions.sendEmail

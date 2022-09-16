@@ -16,11 +16,11 @@
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/logo"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="@id/guideline"
+            app:layout_constraintTop_toBottomOf="@id/create_account"
             app:srcCompat="@drawable/ic_baseline_swap_horiz_24" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -30,14 +30,15 @@
             android:gravity="center"
             android:text="@string/create_an_account"
             android:textColor="@color/teal_700"
-            android:textSize="16sp"
-            app:fontFamily="@android:"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            app:fontFamily="@font/nunito_medium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/logo"
+            app:layout_constraintTop_toTopOf="parent"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
-            app:layout_constraintBottom_toTopOf="@id/name_layout"/>
+            app:layout_constraintBottom_toTopOf="@id/guideline"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/name_layout"
@@ -49,7 +50,8 @@
             app:hintAnimationEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/create_account"
+            app:layout_constraintTop_toBottomOf="@id/logo"
+            android:layout_marginTop="8dp"
             android:layout_marginBottom="4dp"
             app:startIconDrawable="@drawable/ic_baseline_person_24">
 
