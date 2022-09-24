@@ -84,6 +84,7 @@ class UserUnverified : Fragment() {
             binding.verify.disable()
             binding.signIn.disable()
             binding.time.makeVisible()
+            binding.moreInfo.makeVisible()
             viewModel.startCounter()
             verificationLinkAlreadySent = false
         }
@@ -109,22 +110,23 @@ class UserUnverified : Fragment() {
                 showVerificationSuccessDialog()
                 binding.signIn.disable()
                 binding.verify.disable()
+                binding.moreInfo.makeVisible()
                 binding.time.makeVisible()
                 viewModel.startCounter()
             } else {
                 when (it.data) {
                     is FirebaseNetworkException -> "We couldn't verify your email. Check your internet connection and try again".showVerificationFailureDialog()
-                    else -> "This email isn't matched with any account. Ensure you enter the email with which you created your Connect account".showVerificationFailureDialog()
+                    else -> "This email isn't matched with any account. Ensure you enter the email with which you created your account".showVerificationFailureDialog()
                 }
-
             }
         }
         viewModel.timer.observe(viewLifecycleOwner) {
-            binding.time.text = DateUtils.formatElapsedTime(it / 1000)
+            binding.time.text = "Re-verify in ${DateUtils.formatElapsedTime(it / 1000)} "
             if (it < 1000) {
                 binding.signIn.enable()
                 binding.verify.enable()
                 binding.time.makeGone()
+                binding.moreInfo.makeGone()
             }
         }
     }

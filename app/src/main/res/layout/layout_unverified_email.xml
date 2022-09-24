@@ -67,12 +67,26 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/more_info"
+        android:text="Didn't get the link?. Check your spam folder"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:textSize="13sp"
+        android:paddingBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@id/email_layout"/>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:id="@+id/time"
         tools:text="1:20"
         android:visibility="gone"
+        tools:visibility="visible"
         android:textSize="13sp"
-        android:textColor="@color/grey"
-        app:layout_constraintTop_toBottomOf="@id/email_layout"/>
+        android:textColor="@color/black"
+        app:layout_constraintTop_toBottomOf="@id/more_info"/>
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/sign_in"
