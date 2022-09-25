@@ -42,7 +42,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/phone"
         app:layout_constraintTop_toTopOf="@+id/phone"
-        app:srcCompat="@drawable/ic_outline_add_box_24" />
+        app:srcCompat="@drawable/ic_whatsapp_logo_4453" />
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/launch_link"

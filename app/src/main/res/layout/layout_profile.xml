@@ -144,7 +144,7 @@
                     app:layout_constraintHorizontal_bias="0.5"
                     app:layout_constraintStart_toEndOf="@+id/email"
                     app:layout_constraintTop_toTopOf="@+id/email"
-                    app:srcCompat="@drawable/ic_outline_add_box_24" />
+                    app:srcCompat="@drawable/ic_whatsapp_logo_4453_teal" />
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/bio"
