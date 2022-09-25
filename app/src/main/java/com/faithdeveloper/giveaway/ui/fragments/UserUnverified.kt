@@ -2,6 +2,7 @@ package com.faithdeveloper.giveaway.ui.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.text.Html
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
@@ -23,6 +24,7 @@ import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.UserUnverifiedVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textview.MaterialTextView
 import com.google.firebase.FirebaseNetworkException
 
 class UserUnverified : Fragment() {
@@ -134,15 +136,17 @@ class UserUnverified : Fragment() {
     private fun showVerificationSuccessDialog() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
-            cancelable = false,
-            message = "Link to verify your email has been sent to ${
-                binding.emailLayout.editText?.text.toString().trim()
-            }. Go to your inbox to complete your registration.",
-            positiveButtonText = "OK",
-            positiveAction = {
-                // do nothing
-            }
-        )
+                cancelable = false,
+                message =Html.fromHtml(
+                    "Link to verify your email has been sent to <b>${
+                        binding.emailLayout.editText?.text.toString().trim()
+                    }</b>. Go to your inbox to complete your registration.", Html.FROM_HTML_MODE_COMPACT
+                ),
+                positiveButtonText = "OK",
+                positiveAction = {
+                    // do nothing
+                }
+            )
         dialog = dialogBuilder?.create()
         dialog?.show()
     }

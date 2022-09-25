@@ -17,7 +17,7 @@ abstract class DialogBaseHelper {
     abstract val cancelable: Boolean
     abstract val context: Context
     abstract val title: String?
-    abstract val message: String?
+    abstract val message: CharSequence?
     abstract val positiveButtonText: String?
     abstract val negativeButtonText: String?
     abstract val view: LinkLayoutBinding?

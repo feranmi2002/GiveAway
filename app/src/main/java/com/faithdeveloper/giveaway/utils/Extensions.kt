@@ -28,7 +28,7 @@ object Extensions {
 
     fun Context.showDialog(
         cancelable: Boolean, title: String? = null,
-        message: String? = null, positiveButtonText: String? = null,
+        message: CharSequence? = null, positiveButtonText: String? = null,
         negativeButtonText: String? = null,
         positiveAction: (() -> Unit)? = null,
         negativeAction: (() -> Unit)? = null,
@@ -85,7 +85,7 @@ object Extensions {
                 get() = cancelable
             override val title: String?
                 get() = title
-            override val message: String?
+            override val message: CharSequence?
                 get() = message
         }
 
