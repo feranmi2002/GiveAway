@@ -100,6 +100,7 @@ class Profile : Fragment() {
         onClickNewPost()
         onClickBack()
         onClickProfileImage()
+        onClickRetry()
         binding.recycler.addItemDecoration(
             androidx.recyclerview.widget.DividerItemDecoration(
                 requireContext(),
@@ -114,6 +115,12 @@ class Profile : Fragment() {
         binding.recycler.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
         super.onViewCreated(view, savedInstanceState)
+    }
+
+    private fun onClickRetry() {
+        binding.errorLayout.retryButton.setOnClickListener {
+            adapter.retry()
+        }
     }
 
     private fun onClickBack() {
