@@ -97,8 +97,6 @@ class Repository(
         }
     }
 
-    fun emailIsVerified() = auth.currentUser?.isEmailVerified
-
     suspend fun forgotPassword(email: String): Event {
         return try {
             val actionCodeSettings = ActionCodeSettings.newBuilder()
@@ -111,12 +109,9 @@ class Repository(
             auth.sendPasswordResetEmail(email, actionCodeSettings.build()).await()
             Log.i("GA", "Password email sent")
             Event.Success(null, "Password email sent")
-        } catch (e: FirebaseNetworkException) {
-            Log.e("GA", "No network")
+        } catch (e: Exception) {
+            Log.e("GA", "Failed to reset password")
             Event.Failure(e, msg = "Password reset")
-        } catch (e: FirebaseAuthEmailException) {
-            Log.e("GA", "Failed to send password")
-            Event.Failure(e)
         }
     }
 
@@ -155,15 +150,9 @@ class Repository(
             context.setSignInStatus(true)
             Log.i("GA", "Created profile successfully")
             Event.Success(null, "Sign in successful")
-        } catch (e: UnverifiedUserException) {
-            Log.e("GA", e.message ?: "Unverified user")
-            Event.Failure(e, "Unverified user")
-        } catch (e: FirebaseNetworkException) {
+        } catch (e: Exception) {
             Log.e("GA", e.message ?: "No network")
-            Event.Failure(e, "Sign in failed")
-        } catch (e: FirebaseAuthException) {
-            Log.e("GA", e.message ?: "Wrong credentials")
-            Event.Failure(e)
+            Event.Failure(e, msg ="sign in")
         }
     }
 
@@ -198,6 +187,8 @@ class Repository(
             Event.Failure(null, "Profile pic update failed")
         }
     }
+
+    fun emailIsVerified() = auth.currentUser?.isEmailVerified
 
     suspend fun uploadNewPost(
         postText: String,
@@ -267,9 +258,21 @@ class Repository(
                 link = link ?: "",
                 commentCount = 0
             )
-            //              push to the database
-            uploadedPost = post
             database().collection(POSTS).document(post.postID).set(post)
+            //              push to the database
+            uploadedPost = Post(
+                authorId = userUid()!!,
+                postID = "${userUid()}${System.currentTimeMillis()}",
+                time = null,
+                text = postText,
+                tags = getTags(tags),
+                mediaUrls = convertMediaUriListToListOFString(mediaUriList),
+                hasComments = hasComments,
+                hasVideo = hasVideo,
+                link = link ?: "",
+                commentCount = 0
+            )
+
             Event.Success(null)
         } catch (e: Exception) {
             mediaUploadTasks.onEach { task ->
@@ -278,6 +281,10 @@ class Repository(
             Log.e("GA", e.message ?: "error")
             Event.Failure("Post Failed", e.message ?: "error")
         }
+    }
+
+    private fun convertMediaUriListToListOFString(uriList: MutableList<Uri>) = uriList.map {
+        it.toString()
     }
 
     private fun getTags(tags: HashMap<Int, Boolean>): MutableList<String> {
@@ -1083,9 +1090,7 @@ class Repository(
 
     suspend fun compressImage() {
         coroutineScope {
-
         }
-
     }
 
     fun getTimelineOptions(): Array<String> =

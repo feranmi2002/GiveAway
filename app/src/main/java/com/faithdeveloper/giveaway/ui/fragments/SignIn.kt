@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.text.Editable
+import android.text.Html
 import android.text.TextWatcher
 import android.text.format.DateUtils
 import android.view.LayoutInflater
@@ -29,9 +30,12 @@ import com.faithdeveloper.giveaway.utils.UnverifiedUserException
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.SignInVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.FirebaseException
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthEmailException
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 
 
 class SignIn : Fragment() {
@@ -108,13 +112,15 @@ class SignIn : Fragment() {
                 is Event.Failure -> {
                     when (it.data) {
                         is FirebaseNetworkException -> if (it.msg.equals("sign in", true)) {
-                            "We couldn't sign you in. Check your internet connection and try again".signInFailedDialog()
+                            "We couldn't sign you in. Check your internet connection and try again".requestFailedDialog()
                         } else {
-                            "We couldn't reset your password. Check your internet connection and try again".signInFailedDialog()
+                            "We couldn't reset your password. Check your internet connection and try again".requestFailedDialog()
                         }
-                        is FirebaseAuthException -> handleSignInFailure()
+                        is FirebaseAuthInvalidUserException -> "This email isn't matched with any account. Ensure you enter the email with which you created your Connect account.".requestFailedDialog()
                         is UnverifiedUserException -> handleUnverifiedEmail()
-                        is FirebaseAuthEmailException -> handlePasswordResetFailure()
+                        is FirebaseAuthEmailException -> "Couldn't reset your password. Try again".requestFailedDialog()
+                        is FirebaseAuthInvalidCredentialsException -> "Wrong password. Enter correct password or use Forgot Password button".requestFailedDialog()
+                        else -> "Failed to connect. Try again".requestFailedDialog()
                     }
                 }
                 is Event.InProgress -> {
@@ -134,7 +140,7 @@ class SignIn : Fragment() {
         })
     }
 
-    private fun String.signInFailedDialog() {
+    private fun String.requestFailedDialog() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = true,
@@ -149,44 +155,17 @@ class SignIn : Fragment() {
     }
 
     private fun handleUnverifiedEmail() {
+        dialog?.dismiss()
         findNavController().navigate(SignInDirections.actionSignInToUserUnverified(binding.emailLayout.editText?.text.toString()))
-    }
-
-    private fun handlePasswordResetFailure() {
-        dialog?.dismiss()
-        dialogBuilder = requireContext().showDialog(
-            cancelable = false,
-            message = "This email isn't matched with any account. Ensure you enter the email with which you created your Connect account  or create a new account ",
-            positiveButtonText = "OK",
-            positiveAction = {
-//              do nothing
-            }
-        )
-        dialog = dialogBuilder?.create()
-        dialog?.show()
-    }
-
-    private fun handleSignInFailure() {
-        dialog?.dismiss()
-        dialogBuilder = requireContext().showDialog(
-            cancelable = false,
-            message = "We couldn't sign you in. Ensure you have entered your correct email and password?",
-            positiveButtonText = "OK",
-            positiveAction = {
-                // do nothing
-            }
-        )
-        dialog = dialogBuilder?.create()
-        dialog?.show()
     }
 
     private fun handlePasswordResetSuccess() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = false,
-            message = "Link to reset your password has been sent to ${
+            message = Html.fromHtml("Link to reset your password has been sent to <b>${
                 binding.emailLayout.editText?.text.toString().trim()
-            }. Go to your inbox to reset your password",
+            }</b>. Go to your inbox to reset your password"),
             positiveButtonText = "OK",
             positiveAction = {
                 // do nothing

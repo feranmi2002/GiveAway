@@ -22,25 +22,7 @@ class SignInVM(private val repository: Repository) : ViewModel() {
 
     fun signIn(email: String, password: String) {
         viewModelScope.launch {
-            val result = repository.signIn(email, password)
-            if (result is Event.Success) {
-                _result.postValue(
-                    Event.Success(
-                        null,
-                        "Sign in successful"
-                    )
-                )
-            } else {
-                if (result.data == "User email not verified") _result.postValue(
-                    Event.Failure(
-                        null,
-                        "Email unverified"
-                    )
-                )
-                else {
-                    _result.postValue(Event.Failure(null, "Sign in failed"))
-                }
-            }
+            _result.postValue(repository.signIn(email, password))
         }
     }
 
