@@ -18,14 +18,15 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlin.math.exp
 
 class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingSourceInterface {
 
     private var mapOfCachedFeed: MutableMap<String, List<FeedData>> = mutableMapOf()
     private var mapOfNewUploadedPosts: MutableMap<String, MutableList<FeedData>> = mutableMapOf()
+    private var mapOFLastDocumentSnapshots:MutableMap<String, DocumentSnapshot?> = mutableMapOf()
 
-    private val _profilePicUpload = LiveEvent<Event>()
-    val profilePicUpload get() = this._profilePicUpload
+    private var explicitRefresh = false
 
     //    this LiveData string is used to store the new feed filter and trigger a reload based on the new filter
     private var loadFilter = MutableLiveData<String>("All")
@@ -55,12 +56,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     private val _feedResult = loadFilter.distinctUntilChanged().switchMap { filter ->
         clearViewModelPreloadedData()
         stopPreloadingLatestFeed()
-        if (mapOfCachedFeed[filter]!!.isNotEmpty()) getCachedFeed(filter)
-        else loadFeed(filter)
-    }
-
-    private fun getCachedFeed(filter: String): LiveData<PagingData<FeedData>> {
-        return MutableLiveData(PagingData.from(mapOfCachedFeed[filter]!!))
+        loadFeed(filter)
     }
 
     init {
@@ -99,13 +95,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
         }
     }
 
-    fun uploadProfilePicture(profilePicPath: Uri) {
-        viewModelScope.launch {
-            profilePicPath.let {
-                this@FeedVM._profilePicUpload.postValue(repository.createProfilePicture(it))
-            }
-        }
-    }
+
 
     fun filter() = loadFilter.value ?: DEFAULT_FILTER
 
@@ -155,7 +145,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     }
 
 
-    override fun latestFeedTimestamp(timeStamp: Long) {
+    override fun updateLatestFeedTimeStamp(timeStamp: Long) {
         latestTimeStamp = timeStamp
 
         if (countDownTimer == null) {
@@ -184,6 +174,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
         repository.getTimelineOptions().onEach {
             mapOfCachedFeed[it] = mutableListOf()
             mapOfNewUploadedPosts[it] = mutableListOf()
+            mapOFLastDocumentSnapshots[it] = null
         }
     }
 
@@ -192,9 +183,9 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     }
 
     fun cacheNewUploadedPost(filter: List<String>, uploadedPost: FeedData) {
-        mapOfNewUploadedPosts[DEFAULT_FILTER]!!.add(uploadedPost)
+        mapOfNewUploadedPosts[DEFAULT_FILTER]!!.add(0, uploadedPost)
         filter.onEach {
-            mapOfNewUploadedPosts[it]!!.add(uploadedPost)
+            mapOfNewUploadedPosts[it]!!.add(0,uploadedPost)
         }
     }
 
@@ -204,7 +195,23 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
 
     fun getCachedUploadedNewPosts(filter: String) = mapOfNewUploadedPosts[filter]
 
-    fun getCachedLoadedData(filter: String) = mapOfCachedFeed[filter]
+    override fun requestCachedData(filter: String): List<FeedData>? = mapOfCachedFeed[filter]
+
+    override fun storeLastSnapshot(filter: String, snapshot: DocumentSnapshot?) {
+            mapOFLastDocumentSnapshots[filter] = snapshot
+    }
+
+    override fun getLastSnapshot(filter: String): DocumentSnapshot? = mapOFLastDocumentSnapshots[filter]
+
+    fun setExplicitRefresh(value:Boolean){
+        explicitRefresh = value
+    }
+
+    override fun getExplicitRefresh() = explicitRefresh
+
+    override fun mSetExplicitRefresh(value: Boolean) {
+        explicitRefresh = value
+    }
 
     companion object {
         const val DEFAULT_FILTER = "All"

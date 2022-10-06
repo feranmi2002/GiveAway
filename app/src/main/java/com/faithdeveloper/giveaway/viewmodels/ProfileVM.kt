@@ -1,5 +1,6 @@
 package com.faithdeveloper.giveaway.viewmodels
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -9,8 +10,13 @@ import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.PagerKey
 import com.faithdeveloper.giveaway.pagingsources.ProfilePagingSource
+import com.faithdeveloper.giveaway.utils.Event
+import com.faithdeveloper.giveaway.utils.LiveEvent
+import kotlinx.coroutines.launch
 
 class ProfileVM(val repository: Repository, private val getUserProfile: Boolean) : ViewModel() {
+    private val _profilePicUpload = LiveEvent<Event>()
+    val profilePicUpload get() = this._profilePicUpload
     private var _feedResult = loadFeed(
         uid = if (getUserProfile) getUserProfile().id
         else getAuthorProfile().id
@@ -35,4 +41,11 @@ class ProfileVM(val repository: Repository, private val getUserProfile: Boolean)
     fun getTimelineOption() = repository.getTimelineOption()
     fun getUserProfile() = repository.getUserProfile()
     fun getAuthorProfile() = repository.getAuthorProfileForProfileView()
+    fun uploadProfilePicture(profilePicPath: Uri) {
+        viewModelScope.launch {
+            profilePicPath.let {
+                _profilePicUpload.postValue(repository.createProfilePicture(it))
+            }
+        }
+    }
 }
