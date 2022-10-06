@@ -69,7 +69,7 @@ class SplashScreen : Fragment() {
         } else {
             // user email hasn't been verified
             if (!repository.emailIsVerified()!!) findNavController().navigate(
-              SplashScreenDirections.actionSplashScreenToUserUnverified(null)
+              SplashScreenDirections.actionSplashScreenToSignIn()
             )
             // users is fully registered on the app
             else findNavController().navigate(SplashScreenDirections.actionSplashScreenToHome2())

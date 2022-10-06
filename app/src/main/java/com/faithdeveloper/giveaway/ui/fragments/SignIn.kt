@@ -116,10 +116,17 @@ class SignIn : Fragment() {
                         } else {
                             "We couldn't reset your password. Check your internet connection and try again".requestFailedDialog()
                         }
-                        is FirebaseAuthInvalidUserException -> "This email isn't matched with any account. Ensure you enter the email with which you created your Connect account.".requestFailedDialog()
+                        is FirebaseAuthInvalidUserException ->{
+                            "This email isn't matched with any account. Ensure you enter the email with which you created your Connect account.".requestFailedDialog()
+                            binding.emailLayout.editText?.setText("")
+                            binding.passwordLayout.editText?.setText("")
+                        }
                         is UnverifiedUserException -> handleUnverifiedEmail()
                         is FirebaseAuthEmailException -> "Couldn't reset your password. Try again".requestFailedDialog()
-                        is FirebaseAuthInvalidCredentialsException -> "Wrong password. Enter correct password or use Forgot Password button".requestFailedDialog()
+                        is FirebaseAuthInvalidCredentialsException ->{
+                            "Wrong password. Enter correct password or use Forgot Password button".requestFailedDialog()
+                            binding.passwordLayout.editText?.setText("")
+                        }
                         else -> "Failed to connect. Try again".requestFailedDialog()
                     }
                 }

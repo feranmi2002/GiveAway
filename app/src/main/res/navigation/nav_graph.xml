@@ -12,24 +12,13 @@
         tools:layout="@layout/layout_splashscreen">
         <action
             android:id="@+id/action_splashScreen_to_signUp"
-            app:destination="@id/signUp"
-            app:popUpTo="@id/splashScreen"
-            app:popUpToInclusive="true" />
+            app:destination="@id/signUp" />
         <action
             android:id="@+id/action_splashScreen_to_home2"
-            app:destination="@id/feed"
-            app:popUpTo="@id/splashScreen"
-            app:popUpToInclusive="true" />
+            app:destination="@id/feed" />
         <action
             android:id="@+id/action_splashScreen_to_signIn"
-            app:destination="@id/signIn"
-            app:popUpTo="@id/splashScreen"
-            app:popUpToInclusive="true" />
-        <action
-            android:id="@+id/action_splashScreen_to_userUnverified"
-            app:destination="@id/userUnverified"
-            app:popUpTo="@id/splashScreen"
-            app:popUpToInclusive="true" />
+            app:destination="@id/signIn" />
     </fragment>
     <fragment
         android:id="@+id/signUp"
@@ -38,9 +27,7 @@
         tools:layout="@layout/layout_account_creation">
         <action
             android:id="@+id/action_signUp_to_signIn"
-            app:destination="@id/signIn"
-            app:popUpTo="@id/nav_graph"
-            app:popUpToInclusive="true" />
+            app:destination="@id/signIn" />
         <action
             android:id="@+id/action_signUp_to_userUnverified"
             app:destination="@id/userUnverified"
@@ -145,9 +132,7 @@
         android:label="SettingsFragment">
         <action
             android:id="@+id/action_settingsFragment_to_signUp"
-            app:destination="@id/signUp"
-            app:popUpTo="@id/settingsFragment"
-            app:popUpToInclusive="true" />
+            app:destination="@id/signUp" />
         <action
             android:id="@+id/action_settingsFragment_to_profileEdit"
             app:destination="@id/profileEdit" />

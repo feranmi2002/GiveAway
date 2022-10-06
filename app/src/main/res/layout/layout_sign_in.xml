@@ -48,7 +48,8 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/email_edit"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:inputType="textEmailAddress"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -123,7 +124,7 @@
         android:focusable="true"
         android:text="@string/create_account"
         android:textColor="@color/purple_500_lighter"
-        android:textSize="13sp"
+        android:textSize="15sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/already_have_account"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
