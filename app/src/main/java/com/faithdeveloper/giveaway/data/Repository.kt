@@ -24,7 +24,10 @@ import com.faithdeveloper.giveaway.utils.NotificationUtil
 import com.faithdeveloper.giveaway.utils.UnverifiedUserException
 import com.faithdeveloper.giveaway.viewmodels.FeedVM.Companion.DEFAULT_FILTER
 import com.google.firebase.FirebaseNetworkException
-import com.google.firebase.auth.*
+import com.google.firebase.auth.ActionCodeSettings
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthEmailException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
@@ -65,10 +68,12 @@ class Repository(
 
     suspend fun signUp(phone: String, name: String, email: String, password: String): Event {
         return try {
-            auth.createUserWithEmailAndPassword(email, password).await()
-            Log.i("GA", "Account creation successful")
-            context.storeUserDetails(name, email, phone)
-            Event.Success(data = null, msg = "Account creation successful")
+            withTimeout(CONNECT_TIMEOUT) {
+                auth.createUserWithEmailAndPassword(email, password).await()
+                Log.i("GA", "Account creation successful")
+                context.storeUserDetails(name, email, phone)
+                Event.Success(data = null, msg = "Account creation successful")
+            }
         } catch (e: FirebaseAuthUserCollisionException) {
             Event.Failure(e)
         } catch (e: FirebaseNetworkException) {
@@ -78,16 +83,18 @@ class Repository(
 
     suspend fun verifyEmail(): Event {
         return try {
-            val actionSettingsCodeInfo = ActionCodeSettings.newBuilder()
-            actionSettingsCodeInfo.apply {
-                handleCodeInApp = false
-                url = "https://faithdeveloper.page.link.verification"
-                dynamicLinkDomain = "faithdeveloper.page.link"
-                setAndroidPackageName("com.faithdeveloper.giveaway", true, "1")
+            withTimeout(CONNECT_TIMEOUT) {
+                val actionSettingsCodeInfo = ActionCodeSettings.newBuilder()
+                actionSettingsCodeInfo.apply {
+                    handleCodeInApp = false
+                    url = "https://faithdeveloper.page.link.verification"
+                    dynamicLinkDomain = "faithdeveloper.page.link"
+                    setAndroidPackageName("com.faithdeveloper.giveaway", true, "1")
+                }
+                auth.currentUser!!.sendEmailVerification(actionSettingsCodeInfo.build()).await()
+                Log.i("GA", "Email is verified")
+                Event.Success(null, "Email verified")
             }
-            auth.currentUser!!.sendEmailVerification(actionSettingsCodeInfo.build()).await()
-            Log.i("GA", "Email is verified")
-            Event.Success(null, "Email verified")
         } catch (e: FirebaseNetworkException) {
             Log.e("GA", "No network")
             Event.Failure(e)
@@ -99,16 +106,18 @@ class Repository(
 
     suspend fun forgotPassword(email: String): Event {
         return try {
-            val actionCodeSettings = ActionCodeSettings.newBuilder()
-            actionCodeSettings.apply {
-                handleCodeInApp = false
-                url = "https://faithdeveloper.page.link.pass"
-                dynamicLinkDomain = "faithdeveloper.page.link"
-                setAndroidPackageName("com.faithdeveloper.giveaway", true, "1")
+            withTimeout(CONNECT_TIMEOUT) {
+                val actionCodeSettings = ActionCodeSettings.newBuilder()
+                actionCodeSettings.apply {
+                    handleCodeInApp = false
+                    url = "https://faithdeveloper.page.link.pass"
+                    dynamicLinkDomain = "faithdeveloper.page.link"
+                    setAndroidPackageName("com.faithdeveloper.giveaway", true, "1")
+                }
+                auth.sendPasswordResetEmail(email, actionCodeSettings.build()).await()
+                Log.i("GA", "Password email sent")
+                Event.Success(null, "Password email sent")
             }
-            auth.sendPasswordResetEmail(email, actionCodeSettings.build()).await()
-            Log.i("GA", "Password email sent")
-            Event.Success(null, "Password email sent")
         } catch (e: Exception) {
             Log.e("GA", "Failed to reset password")
             Event.Failure(e, msg = "Password reset")
@@ -117,42 +126,46 @@ class Repository(
 
     suspend fun signIn(email: String, password: String): Event {
         return try {
-            auth.signInWithEmailAndPassword(email, password).await()
-            Log.i("GA", "Sign in successful")
-            val userDetails = userDetails()
-            val reference = database().collection(USERS).document(userUid()!!).get().await()
-            if (reference.exists()) {
-                // user is already a verified user
-                if (userDetails[USERNAME_INDEX] == null) {
+            withTimeout(CONNECT_TIMEOUT) {
+                auth.signInWithEmailAndPassword(email, password).await()
+                Log.i("GA", "Sign in successful")
+                val userDetails = userDetails()
+                val reference = database().collection(USERS).document(userUid()!!).get().await()
+                if (reference.exists()) {
+                    // user is already a verified user
+                    if (userDetails[USERNAME_INDEX] == null) {
 //                    store user details if not found on device
-                    val userProfile = reference.toObject<UserProfile>()
-                    context.storeUserDetails(
-                        userProfile!!.name,
-                        userProfile.email,
-                        userProfile.phoneNumber,
-                    )
-                    if (userProfile.profilePicUrl != "") context.storeUserProfilePicUrl(userProfile.profilePicUrl)
-                }
-            } else {
-                if (emailIsVerified() == true) {
-                    // signing in from normal process of sign up
-                    if (userDetails[USERNAME_INDEX] != null) {
-                        createUserProfile(
-                            userDetails[USERNAME_INDEX]!!,
-                            userDetails[PHONE_NUMBER_INDEX]!!,
-                            userDetails[EMAIL_INDEX]!!
+                        val userProfile = reference.toObject<UserProfile>()
+                        context.storeUserDetails(
+                            userProfile!!.name,
+                            userProfile.email,
+                            userProfile.phoneNumber,
+                        )
+                        if (userProfile.profilePicUrl != "") context.storeUserProfilePicUrl(
+                            userProfile.profilePicUrl
                         )
                     }
                 } else {
-                    throw UnverifiedUserException()
+                    if (emailIsVerified() == true) {
+                        // signing in from normal process of sign up
+                        if (userDetails[USERNAME_INDEX] != null) {
+                            createUserProfile(
+                                userDetails[USERNAME_INDEX]!!,
+                                userDetails[PHONE_NUMBER_INDEX]!!,
+                                userDetails[EMAIL_INDEX]!!
+                            )
+                        }
+                    } else {
+                        throw UnverifiedUserException()
+                    }
                 }
+                context.setSignInStatus(true)
+                Log.i("GA", "Created profile successfully")
+                Event.Success(null, "Sign in successful")
             }
-            context.setSignInStatus(true)
-            Log.i("GA", "Created profile successfully")
-            Event.Success(null, "Sign in successful")
         } catch (e: Exception) {
             Log.e("GA", e.message ?: "No network")
-            Event.Failure(e, msg ="sign in")
+            Event.Failure(e, msg = "sign in")
         }
     }
 
@@ -1113,6 +1126,7 @@ class Repository(
         const val COMMENTS = "comments"
         const val REPLIES = "replies"
         const val TIMEOUT = 5000L
+        const val CONNECT_TIMEOUT = 10000L
 
     }
 }
