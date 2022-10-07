@@ -21,7 +21,8 @@ class CommentsPagerAdapter(
     val profileNameClick: (author: UserProfile) -> Unit,
     private val reply: (commentId:String, text:String, count:Int) -> Unit,
     val userUid: String,
-    val moreClick: (action: String,commentId:String, postText: String,replies:Int) -> Unit
+    val deleteComment: (commentId:String,replies:Int) -> Unit,
+    val editComment: (commentId:String, postText: String) -> String
 ) :
     PagingDataAdapter<CommentData, CommentsPagerAdapter.CommentsViewHolder>
         (COMMENTS_ITEM_COMPARATOR) {
@@ -29,13 +30,9 @@ class CommentsPagerAdapter(
     //    this is used to note the position of the item user wants to delete
     var positionOfItemToDelete = -1
 
-    //    this interface is used for updating the comment
-    private var commentsEditInterface: CommentsEditInterface? = null
-
     override fun onBindViewHolder(holder: CommentsViewHolder, position: Int) {
         val currentItem = getItem(position)
         if (currentItem != null) {
-            commentsEditInterface = holder.commentsInterface
             holder.bind(currentItem)
         }
     }
@@ -46,7 +43,7 @@ class CommentsPagerAdapter(
         val more = binding.more
         val reply = binding.reply
         val name = binding.name
-        val profilePic = binding.profilePic
+        private val profilePic = binding.profilePic
 
         init {
             more.setOnClickListener {
@@ -55,18 +52,14 @@ class CommentsPagerAdapter(
                 else popup.menuInflater.inflate(R.menu.comment_menu_edit, popup.menu)
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
-                        moreClick.invoke(
-                            UPDATE,
+                        binding.commentsText.text =  editComment.invoke(
                             mItem?.comment!!.id,
-                            mItem?.comment!!.commentText,
-                            mItem?.comment!!.replies
+                            mItem?.comment!!.commentText
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
-                        moreClick.invoke(
-                            DELETE,
+                        deleteComment.invoke(
                             mItem?.comment!!.id,
-                            mItem?.comment!!.commentText,
                             mItem?.comment!!.replies
                         )
                     }
@@ -88,7 +81,6 @@ class CommentsPagerAdapter(
             }
         }
 
-        val commentsInterface = this
         override fun updateComment(comment: String) {
             with(binding) {
                 commentsText.text = comment
@@ -129,10 +121,6 @@ class CommentsPagerAdapter(
                 false
             )
         )
-    }
-
-    fun updateComment(newComment: String) {
-        commentsEditInterface?.updateComment(newComment)
     }
 
     fun removeComment() {

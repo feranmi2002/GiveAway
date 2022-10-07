@@ -172,7 +172,7 @@ class SignIn : Fragment() {
             cancelable = false,
             message = Html.fromHtml("Link to reset your password has been sent to <b>${
                 binding.emailLayout.editText?.text.toString().trim()
-            }</b>. Go to your inbox to reset your password"),
+            }</b>. Go to your inbox to reset your password", Html.FROM_HTML_MODE_COMPACT),
             positiveButtonText = "OK",
             positiveAction = {
                 // do nothing

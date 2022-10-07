@@ -2,6 +2,7 @@ package com.faithdeveloper.giveaway.ui.fragments
 
 import android.os.Bundle
 import android.text.Editable
+import android.text.Html
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
@@ -282,11 +283,12 @@ class SignUp : Fragment() {
                         when (event.data) {
                             // failed to sign user up
                             is FirebaseAuthUserCollisionException -> {
-                                "This email is already in  use by another user. Enter another email".showAccountCreationFailureDialog()
+                                "This email is already in use by another user. Enter another email".showAccountCreationFailureDialog()
                             }
                             is FirebaseNetworkException -> {
                                 "Couldn't create account. Check your internet connection and try again".showAccountCreationFailureDialog()
                             }
+                            else ->{"Failed to connect. Try again.".showAccountCreationFailureDialog()}
                         }
                     }
                 }
@@ -300,9 +302,8 @@ class SignUp : Fragment() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = false,
-            message = "Link to verify your email has been sent to ${
-                binding.emailLayout.editText?.text.toString().trim()
-            }. Go to your inbox to complete your registration.",
+            message = Html.fromHtml("Link to verify your email has been sent to <b>${
+                binding.emailLayout.editText?.text.toString().trim()}</b>. Go to your inbox to complete your registration.", Html.FROM_HTML_MODE_COMPACT),
             positiveButtonText = "OK",
             positiveAction = {
                 findNavController().navigate(

@@ -204,5 +204,6 @@
         android:layout_gravity="end|bottom"
         android:layout_margin="24dp"
         android:src="@drawable/ic_baseline_icon_swap_horiz_24"
-        app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior" />
+        app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
+        android:contentDescription="New Post" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

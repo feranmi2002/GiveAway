@@ -241,4 +241,6 @@ class FeedPagerAdapter(
         }
         return super.getItemViewType(position)
     }
+
+
 }

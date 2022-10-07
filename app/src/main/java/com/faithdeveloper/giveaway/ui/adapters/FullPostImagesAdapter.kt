@@ -40,7 +40,6 @@ class FullPostImagesAdapter(
                 progressCircular.makeVisible()
                 Glide.with(itemView)
                     .load(mediaUrl[position])
-                    .placeholder(R.drawable.placeholder)
                     .listener(object : RequestListener<Drawable> {
                         override fun onLoadFailed(
                             e: GlideException?,

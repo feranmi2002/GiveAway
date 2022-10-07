@@ -1,9 +1,11 @@
 package com.faithdeveloper.giveaway.viewmodels
 
-import android.net.Uri
 import android.os.CountDownTimer
 import androidx.lifecycle.*
-import androidx.paging.*
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
+import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.FeedData
 import com.faithdeveloper.giveaway.data.models.PagerKey
@@ -18,13 +20,14 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlin.math.exp
 
 class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingSourceInterface {
 
     private var mapOfCachedFeed: MutableMap<String, List<FeedData>> = mutableMapOf()
     private var mapOfNewUploadedPosts: MutableMap<String, MutableList<FeedData>> = mutableMapOf()
-    private var mapOFLastDocumentSnapshots:MutableMap<String, DocumentSnapshot?> = mutableMapOf()
+    private var mapOFLastDocumentSnapshots: MutableMap<String, DocumentSnapshot?> = mutableMapOf()
+    private var mapOfLatestFeed: MutableMap<String, MutableList<FeedData>> = mutableMapOf()
+    private var mapOfLatestFeedSnapshot: MutableMap<String, DocumentSnapshot?> = mutableMapOf()
 
     private var explicitRefresh = false
 
@@ -38,10 +41,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     /*    this snapshot is sent to the paging adapter when the adapter is refreshed
     * it informs the adapter of the last post retrieved by the latest feed getter. This is used as the basis of the
     * adapter to continue from*/
-    private var preLoadedFeedLastSnapshot: DocumentSnapshot? = null
 
-    /*This is the cached list of latest feed loaded by the latest feed getter*/
-    private var preloadedLatestFeed = mutableListOf<FeedData>()
 
     /*This flag is used to notify the fragment that latest feeds have been loaded and cached*/
     private val _newFeedAvailableFlag = LiveEvent<Boolean>()
@@ -82,19 +82,36 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
                 result?.let { result ->
                     if (result is Event.Success && result.data != null) {
                         val data = result.data as PagerResponse<FeedData>
-                        preloadedLatestFeed.addAll(data.data)
-                        preLoadedFeedLastSnapshot = data.lastSnapshot
+                        addToLatestFeed(filter(), data.data)
+                        addToLatestSnapshot(filter(), data.lastSnapshot)
                         latestTimeStamp = data.data.last().postData?.time!!.time
-                        if (preloadedLatestFeed.size > 0) _newFeedAvailableFlag.postValue(true)
+                        if (mapOfLatestFeed[filter()]?.size!! > 0) _newFeedAvailableFlag.postValue(
+                            true
+                        )
                         else _newFeedAvailableFlag.postValue(false)
                     }
                 }
 //                stop prefetching feed data when there is already above 30 prefetched feed items
-                if (preloadedLatestFeed.size < 30) countDownTimer?.start()
+                if (mapOfLatestFeed[filter()]!!.size < 30) countDownTimer?.start()
             }
         }
     }
 
+    private fun addToLatestFeed(filter: String, data: List<FeedData>) {
+        mapOfLatestFeed[filter]?.addAll(0, data)
+    }
+
+    fun clearLatestFeed(filter: String) {
+        mapOfLatestFeed[filter] = mutableListOf()
+    }
+
+    fun getLatestFeed(filter: String) = mapOfLatestFeed[filter]
+
+    private fun addToLatestSnapshot(filter: String, snapshot: DocumentSnapshot?) {
+        mapOfLatestFeedSnapshot[filter] = snapshot
+    }
+
+    fun getLatestFeedSnapshot(filter: String) = mapOfLatestFeedSnapshot[filter]
 
 
     fun filter() = loadFilter.value ?: DEFAULT_FILTER
@@ -126,9 +143,9 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
                 FeedPagingSource(
                     repository,
                     true,
-                    preLoadedFeedLastSnapshot,
+                    mapOfLatestFeedSnapshot[filter],
                     this,
-                    preloadedLatestFeed
+                    mapOfLatestFeed[filter]!!
                 )
             },
             initialKey = PagerKey(
@@ -155,8 +172,8 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     }
 
     override fun clearViewModelPreloadedData() {
-        preloadedLatestFeed = mutableListOf()
-        preLoadedFeedLastSnapshot = null
+        mapOfLatestFeed[filter()] = mutableListOf()
+        mapOfLatestFeedSnapshot[filter()] = null
         _newFeedAvailableFlag.postValue(false)
     }
 
@@ -172,9 +189,11 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
 
     private fun initMapOfCachedLoadedDataForEachFilter() {
         repository.getTimelineOptions().onEach {
-            mapOfCachedFeed[it] = mutableListOf()
+            mapOfCachedFeed[it] = listOf()
             mapOfNewUploadedPosts[it] = mutableListOf()
             mapOFLastDocumentSnapshots[it] = null
+            mapOfLatestFeed[it] = mutableListOf()
+            mapOfLatestFeedSnapshot[it] = null
         }
     }
 
@@ -182,10 +201,14 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
         mapOfCachedFeed[filter] = snapshot
     }
 
+    fun clearCachedLoadedData(filter: String) {
+        mapOfCachedFeed[filter] = mutableListOf()
+    }
+
     fun cacheNewUploadedPost(filter: List<String>, uploadedPost: FeedData) {
         mapOfNewUploadedPosts[DEFAULT_FILTER]!!.add(0, uploadedPost)
         filter.onEach {
-            mapOfNewUploadedPosts[it]!!.add(0,uploadedPost)
+            mapOfNewUploadedPosts[it]!!.add(0, uploadedPost)
         }
     }
 
@@ -198,20 +221,27 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     override fun requestCachedData(filter: String): List<FeedData>? = mapOfCachedFeed[filter]
 
     override fun storeLastSnapshot(filter: String, snapshot: DocumentSnapshot?) {
-            mapOFLastDocumentSnapshots[filter] = snapshot
+        mapOFLastDocumentSnapshots[filter] = snapshot
     }
 
-    override fun getLastSnapshot(filter: String): DocumentSnapshot? = mapOFLastDocumentSnapshots[filter]
+    override fun getLastSnapshot(filter: String): DocumentSnapshot? =
+        mapOFLastDocumentSnapshots[filter]
 
-    fun setExplicitRefresh(value:Boolean){
+    fun setExplicitRefresh(value: Boolean) {
         explicitRefresh = value
     }
 
-    override fun getExplicitRefresh() = explicitRefresh
+//    override fun getExplicitRefresh() = explicitRefresh
+//
+//    override fun mSetExplicitRefresh(value: Boolean) {
+//        explicitRefresh = value
+//    }
 
-    override fun mSetExplicitRefresh(value: Boolean) {
-        explicitRefresh = value
+    override fun clearCachedData(filter: String) {
+        clearCachedLoadedData(filter)
     }
+
+    override fun getCurrentFilter() = loadFilter.value ?: DEFAULT_FILTER
 
     companion object {
         const val DEFAULT_FILTER = "All"

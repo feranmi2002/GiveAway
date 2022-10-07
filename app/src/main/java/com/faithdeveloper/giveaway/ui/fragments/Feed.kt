@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -42,7 +41,6 @@ import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.viewmodels.FeedVM
 import com.google.android.material.chip.Chip
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -54,8 +52,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private lateinit var activityObserver: ActivityObserver
     private var _binding: LayoutFeedBinding? = null
     private val binding get() = _binding!!
-    private var dialogBuilder: MaterialAlertDialogBuilder? = null
-    private var alertDialog: AlertDialog? = null
     private var pagerAdapterMadeIntentionallyMadeEmpty = false
 //    private var newFeed = mutableListOf<FeedData>()
 
@@ -82,10 +78,11 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
                 setUpAdapter()
 
-//        add lifecycle observer
-                activity?.lifecycle?.addObserver(activityObserver)
+
             }
         }
+        //        add lifecycle observer
+        activity?.lifecycle?.addObserver(activityObserver)
         super.onCreate(savedInstanceState)
     }
 
@@ -164,10 +161,10 @@ class Feed : Fragment(), FragmentCommentsInterface {
 
 //              reload feed on tag selected changed
                 val chip: Chip? = group.findViewById<Chip>(checkedIds[0])
-                val sizeOfDataInmAdapter = mAdapter.data.size
-                mAdapter.data = viewModel.getCachedUploadedNewPosts(chip?.text.toString())!!
-                mAdapter.notifyItemRangeChanged(0, sizeOfDataInmAdapter)
-
+                //               val sizeOfPreviousDataInmAdapter = mAdapter.data.size
+                val newData = viewModel.getCachedUploadedNewPosts(chip?.text.toString())!!
+                mAdapter.data = newData
+                mAdapter.notifyDataSetChanged()
                 pagerAdapterMadeIntentionallyMadeEmpty = true
                 adapter.submitData(viewLifecycleOwner.lifecycle, PagingData.empty())
                 pagerAdapterMadeIntentionallyMadeEmpty = false
@@ -212,16 +209,16 @@ class Feed : Fragment(), FragmentCommentsInterface {
     //    refreshes the feed
     private fun handleRefresh() {
         binding.refresh.setOnRefreshListener {
-            binding.latestFeed.makeGone()
-            viewModel.clearViewModelPreloadedData()
-            viewModel.stopPreloadingLatestFeed()
-            viewModel.cacheLoadedData(
-                viewModel.filter(),
-                mAdapter.data.toList() + adapter.snapshot().items
-            )
-            viewModel.clearCachedNewUploadedPosts(viewModel.filter())
             viewModel.setExplicitRefresh(true)
+            binding.latestFeed.makeGone()
+            viewModel.stopPreloadingLatestFeed()
+            viewModel.clearViewModelPreloadedData()
+            viewModel.clearCachedLoadedData(viewModel.filter())
+            viewModel.clearCachedNewUploadedPosts(viewModel.filter())
+            mAdapter.data = viewModel.getCachedUploadedNewPosts(viewModel.filter())!!
+            mAdapter.notifyDataSetChanged()
             adapter.refresh()
+
         }
     }
 

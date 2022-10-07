@@ -33,7 +33,6 @@ import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.viewmodels.CommentsVM
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -158,10 +157,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                         "comment_edited" -> {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
-                            if (WHICH_ADAPTER_IS_TAKING_ACTION == NEW_ADAPTER) newCommentsAdapter.updateComment(
-                                it.data as String
-                            )
-                            else adapter.updateComment(it.data as String)
                             requireContext().showSnackbarShort(
                                 binding.root,
                                 "Comment updated"
@@ -195,17 +190,13 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 openReplyDialog(commentId, text, count)
             },
             viewModel.userUid(),
-            moreClick = { action: String, commentID: String, commentText: String, replies: Int ->
-                when (action) {
-                    UPDATE -> {
-                        WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
-                        setUpEditOfComment(commentID, commentText)
-                    }
-                    DELETE -> {
-                        WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
-                        deleteComment(commentID, replies)
-                    }
-                }
+            deleteComment = { commentID: String, replies: Int ->
+                WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
+                deleteComment(commentID, replies)
+            },
+            editComment = { commentID: String, commentText: String ->
+                WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
+                setUpEditOfComment(commentID, commentText)
             }
         )
 
@@ -357,18 +348,21 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         viewModel.deleteComment(commentID, replies)
     }
 
-    private fun setUpEditOfComment(commentId: String, comment: String) {
+    private fun setUpEditOfComment(commentId: String, comment: String): String {
+        var newComment = comment
         val binding = writeCommentDialog()
         binding.textInputLayout.editText?.setText(comment)
         writeCommentDialog.show()
         binding.send.setOnClickListener {
             hideKeyboard(binding.root)
             UPDATE.userFeedback()
-            viewModel.editComment(
+            newComment = binding.textInputLayout.editText?.text.toString().trim()
+                viewModel.editComment(
                 commentId,
-                binding.textInputLayout.editText?.text.toString().trim()
+                newComment
             )
         }
+        return newComment
     }
 
     private fun failedOperation(operationType: String) {

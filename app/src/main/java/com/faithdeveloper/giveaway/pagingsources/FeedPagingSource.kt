@@ -11,17 +11,22 @@ import com.google.firebase.firestore.DocumentSnapshot
 
 class FeedPagingSource(
     val repository: Repository,
-    var firstTimeLoad: Boolean,
+    private var firstTimeLoad: Boolean,
     private val preloadedFeedLastSnapshot: DocumentSnapshot?,
     private val viewmodelCallbackInterface: FeedVMAndPagingSourceInterface,
     private val preloadedLatestFeed: MutableList<FeedData>
 ) :
     PagingSource<PagerKey, FeedData>() {
     private var responseFromCachedLatestFeed = false
+    private var cacheLoaded = false
     override val jumpingSupported = false
     override val keyReuseSupported = false
 
-    override fun getRefreshKey(state: PagingState<PagerKey, FeedData>) = null
+    override fun getRefreshKey(state: PagingState<PagerKey, FeedData>) = PagerKey(
+        lastSnapshot = null,
+        filter = viewmodelCallbackInterface.getCurrentFilter(),
+        loadSize = 10,
+    )
 
     override suspend fun load(params: LoadParams<PagerKey>): LoadResult<PagerKey, FeedData> {
         return try {
@@ -32,14 +37,27 @@ class FeedPagingSource(
                 viewmodelCallbackInterface.clearViewModelPreloadedData()
                 responseFromCachedLatestFeed = true
             } else {
-                response = repository.getFeed(params.key!!).data as PagerResponse<FeedData>
+                val cachedFeed = viewmodelCallbackInterface.requestCachedData(params.key!!.filter)
+                if (cachedFeed != null && cachedFeed.isNotEmpty() && !cacheLoaded) {
+                    response = PagerResponse(
+                        cachedFeed,
+                        viewmodelCallbackInterface.getLastSnapshot(params.key!!.filter)
+                    )
+                    cacheLoaded = true
+                    viewmodelCallbackInterface.clearViewModelPreloadedData()
+                } else {
+//                    get from internet
+                    response = repository.getFeed(params.key!!).data as PagerResponse<FeedData>
+                    viewmodelCallbackInterface.storeLastSnapshot(
+                        params.key!!.filter,
+                        response.lastSnapshot
+                    )
+                }
                 responseFromCachedLatestFeed = false
             }
-
             val nextKey = if (response.data.isNotEmpty()) {
                 // data was loaded
-
-                if (firstTimeLoad && !responseFromCachedLatestFeed) viewmodelCallbackInterface.latestFeedTimestamp(
+                if (firstTimeLoad && !responseFromCachedLatestFeed) viewmodelCallbackInterface.updateLatestFeedTimeStamp(
                     response.data.first().postData?.time!!.time
                 )
                 var result: PagerKey? = null
@@ -51,15 +69,15 @@ class FeedPagingSource(
                             loadSize = params.key!!.loadSize
                         )
                     }
-                }else{
-                    if (responseFromCachedLatestFeed) {
-                        result = PagerKey(
+                } else {
+                    result = if (responseFromCachedLatestFeed) {
+                        PagerKey(
                             lastSnapshot = preloadedFeedLastSnapshot,
                             filter = params.key!!.filter,
                             loadSize = params.key!!.loadSize
                         )
-                    }else{
-                        result =  PagerKey(
+                    } else {
+                        PagerKey(
                             lastSnapshot = response.lastSnapshot,
                             filter = params.key!!.filter,
                             loadSize = params.key!!.loadSize
@@ -79,7 +97,6 @@ class FeedPagingSource(
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
-
         }
     }
 }

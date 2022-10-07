@@ -15,7 +15,6 @@ import com.google.firebase.storage.FirebaseStorage
 class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var repository: Repository
-    private lateinit var db: Database
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

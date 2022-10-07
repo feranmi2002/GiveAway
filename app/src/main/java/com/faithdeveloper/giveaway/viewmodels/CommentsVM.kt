@@ -15,7 +15,7 @@ import com.faithdeveloper.giveaway.viewmodels.FeedVM.Companion.DEFAULT_FILTER
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class CommentsVM(private val repository: Repository, val parentID: String) : ViewModel() {
+class CommentsVM(private val repository: Repository, private val parentID: String) : ViewModel() {
     private val _feedResult = loadFeed()
     private val _commentActionResult = LiveEvent<Event>()
     val commentActionResult get() = _commentActionResult

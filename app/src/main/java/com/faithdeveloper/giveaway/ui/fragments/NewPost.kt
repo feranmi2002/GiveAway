@@ -141,10 +141,12 @@ class NewPost : Fragment() {
                                         }
                                     } else {
                                         imageMax = true
+                                        updateMediaIcons()
                                         requireContext().showSnackbarShort(
                                             binding.root,
                                             "Max of 4 images cam be uploaded"
                                         )
+                                        break
                                     }
                                 }
 

@@ -24,8 +24,8 @@ import com.faithdeveloper.giveaway.utils.Extensions.showDialog
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.viewmodels.UserUnverifiedVM
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textview.MaterialTextView
 import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 
 class UserUnverified : Fragment() {
 
@@ -48,7 +48,7 @@ class UserUnverified : Fragment() {
             }
 
             override fun onPauseAction() {
-                (activity as MainActivity).getRepository().setAppState(Repository.APP_PAUSED)
+          //      (activity as MainActivity).getRepository().setAppState(Repository.APP_PAUSED)
             }
 
             override fun onCreateAction() {
@@ -90,8 +90,7 @@ class UserUnverified : Fragment() {
             viewModel.startCounter()
             verificationLinkAlreadySent = false
         }
-        binding.emailLayout.editText!!.setText(emailAddress ?: viewModel.getUserEmail())
-        binding.emailLayout.disable()
+        binding.email.setText(emailAddress ?: viewModel.getUserEmail())
         super.onViewCreated(view, savedInstanceState)
     }
 
@@ -118,7 +117,8 @@ class UserUnverified : Fragment() {
             } else {
                 when (it.data) {
                     is FirebaseNetworkException -> "We couldn't verify your email. Check your internet connection and try again".showVerificationFailureDialog()
-                    else -> "This email isn't matched with any account. Ensure you enter the email with which you created your account".showVerificationFailureDialog()
+                    is FirebaseAuthInvalidUserException -> "This email isn't matched with any account. Ensure you enter the email with which you created your account".showVerificationFailureDialog()
+                    else -> "Failed to connect. Try again.".showVerificationFailureDialog()
                 }
             }
         }
@@ -139,7 +139,7 @@ class UserUnverified : Fragment() {
                 cancelable = false,
                 message =Html.fromHtml(
                     "Link to verify your email has been sent to <b>${
-                        binding.emailLayout.editText?.text.toString().trim()
+                        binding.email.text.toString().trim()
                     }</b>. Go to your inbox to complete your registration.", Html.FROM_HTML_MODE_COMPACT
                 ),
                 positiveButtonText = "OK",

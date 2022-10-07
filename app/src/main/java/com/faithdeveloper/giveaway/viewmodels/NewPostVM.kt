@@ -32,7 +32,7 @@ class NewPostVM(private val repository: Repository) : ViewModel() {
         }.size
 
     fun addMedia(imageUri: Uri) {
-        _mediaUri.add(imageUri)
+        _mediaUri.add(0, imageUri)
     }
 
     fun setComment(boolean: Boolean) {
