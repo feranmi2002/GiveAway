@@ -44,7 +44,7 @@ class ProfileVM(val repository: Repository, private val getUserProfile: Boolean)
     fun uploadProfilePicture(profilePicPath: Uri) {
         viewModelScope.launch {
             profilePicPath.let {
-                _profilePicUpload.postValue(repository.createProfilePicture(it))
+                _profilePicUpload.postValue(repository.updateProfilePicture(it))
             }
         }
     }

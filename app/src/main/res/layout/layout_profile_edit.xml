@@ -4,22 +4,46 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="16dp"
     tools:context=".ui.fragments.ProfileEdit">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_margin="16dp"
         android:paddingBottom="8dp">
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/editProfile"
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/back"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="Your Profile"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5"
-            android:textColor="@color/design_default_color_primary"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintBottom_toBottomOf="@+id/page_title"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/page_title"
+            app:srcCompat="@drawable/ic_baseline_arrow_back_24" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/page_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Profile"
+            android:textAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@+id/save"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/save" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:text="Save"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            app:fontFamily="@font/nunito_medium"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -29,7 +53,7 @@
             android:layout_marginTop="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/editProfile"
+            app:layout_constraintTop_toBottomOf="@id/page_title"
             app:shapeAppearanceOverlay="@style/CircularImage"
             app:srcCompat="@drawable/ic_baseline_account_circle_grey_24" />
 
@@ -67,7 +91,6 @@
                 android:layout_height="match_parent" />
         </com.google.android.material.textfield.TextInputLayout>
 
-
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/phone_layout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -75,6 +98,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:hint="@string/phone_layout"
+            app:errorEnabled="true"
             app:hintAnimationEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -84,30 +108,50 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/phone_edit"
                 android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/job_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:hint="Occupation"
+            app:errorEnabled="true"
+            app:hintAnimationEnabled="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/phone_layout"
+            app:startIconDrawable="@drawable/ic_baseline_work_outline_24">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/job_edit"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/continueBtn"
-            android:layout_width="wrap_content"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/bio_layout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:enabled="false"
-            android:text="@string/continue_button"
+            android:layout_marginTop="10dp"
+            android:hint="Your bio"
+            app:errorEnabled="true"
+            app:hintAnimationEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/phone_layout" />
+            app:layout_constraintTop_toBottomOf="@id/job_layout"
+            app:startIconDrawable="@drawable/ic_baseline_business_24">
 
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/progress_circular"
-            style="@style/Widget.MaterialComponents.CircularProgressIndicator"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:indicatorColor="@color/design_default_color_secondary_variant"
-            app:layout_constraintBottom_toBottomOf="@id/continueBtn"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@id/continueBtn" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/bio_edit"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:inputType="textAutoComplete" />
+        </com.google.android.material.textfield.TextInputLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

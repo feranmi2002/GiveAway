@@ -46,6 +46,7 @@
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/drawable/ic_baseline_video_call_24.xml" value="0.162" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/drawable/ic_baseline_video_call_disabled_24.xml" value="0.162" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/drawable/ic_baseline_videocam_24.xml" value="0.162" />
+        <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/drawable/ic_baseline_work_outline_24.xml" value="0.123" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/drawable/ic_outline_add_box_24.xml" value="0.2495" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/drawable/ic_outline_edit_24.xml" value="0.251" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/drawable/ic_outline_email_24.xml" value="0.1095" />
@@ -87,16 +88,16 @@
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/full_post_media_options.xml" value="0.25" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/image_only_layout.xml" value="0.115625" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_account_creation.xml" value="0.25" />
-        <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_comments.xml" value="0.21753246753246752" />
+        <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_comments.xml" value="0.22" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_exchange_request.xml" value="0.1824074074074074" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_feed.xml" value="0.22" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_give_request.xml" value="0.271875" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_media.xml" value="0.2630208333333333" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_need_request.xml" value="0.25" />
-        <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_post.xml" value="0.1" />
+        <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_post.xml" value="0.22" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_post_reaction.xml" value="0.5" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_profile.xml" value="0.19162087912087913" />
-        <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_profile_edit.xml" value="0.22" />
+        <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_profile_edit.xml" value="0.33" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_replies.xml" value="0.21991701244813278" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_search.xml" value="0.33" />
         <entry key="..\:/Users/oluwa/AndroidStudioProjects/GiveAway/app/src/main/res/layout/layout_sign_in.xml" value="0.22" />

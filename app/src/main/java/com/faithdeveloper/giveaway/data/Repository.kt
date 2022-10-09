@@ -5,12 +5,6 @@ import android.net.Uri
 import android.util.Log
 import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.models.*
-import com.faithdeveloper.giveaway.ui.fragments.ProfileEdit.Companion.NAME_PHONE_TYPE
-import com.faithdeveloper.giveaway.ui.fragments.ProfileEdit.Companion.NAME_PICTURE_TYPE
-import com.faithdeveloper.giveaway.ui.fragments.ProfileEdit.Companion.NAME_TYPE
-import com.faithdeveloper.giveaway.ui.fragments.ProfileEdit.Companion.PHONE_PICTURE_TYPE
-import com.faithdeveloper.giveaway.ui.fragments.ProfileEdit.Companion.PHONE_TYPE
-import com.faithdeveloper.giveaway.ui.fragments.ProfileEdit.Companion.PICTURE_TYPE
 import com.faithdeveloper.giveaway.utils.Event
 import com.faithdeveloper.giveaway.utils.Extensions.checkTypeOfMedia
 import com.faithdeveloper.giveaway.utils.Extensions.getTimelineOption
@@ -33,6 +27,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
 import kotlinx.coroutines.*
@@ -186,16 +181,24 @@ class Repository(
         ).await()
     }
 
-    suspend fun createProfilePicture(profilePicPath: Uri): Event {
+    suspend fun updateProfilePicture(profilePicPath: Uri): Event {
+        var task: StorageTask<UploadTask.TaskSnapshot>? = null
         return try {
-            val reference = storage().getReference(PROFILE_PHOTOS).child(userUid()!!)
-            reference.putFile(profilePicPath).await()
-            val downloadUrl = reference.downloadUrl.await()
+            var reference: StorageReference
+            var downloadUrl: String
+            withTimeout(PROFILE_PICTURE_UPLOAD_TIMEOUT) {
+                reference = storage().getReference(PROFILE_PHOTOS).child(userUid()!!)
+                task = reference.putFile(profilePicPath).await().task
+            }
+            withTimeout(3000) {
+                downloadUrl = reference.downloadUrl.await().toString()
+            }
             database().collection(USERS).document(userUid()!!)
-                .update("profilePicUrl", downloadUrl.toString()).await()
-            context.storeUserProfilePicUrl(downloadUrl.toString())
+                .update("profilePicUrl", downloadUrl)
+            context.storeUserProfilePicUrl(downloadUrl)
             Event.Success(null, "Profile pic update successful")
         } catch (e: Exception) {
+            task?.cancel()
             Log.e("GA", e.message!!)
             Event.Failure(null, "Profile pic update failed")
         }
@@ -738,127 +741,43 @@ class Repository(
     }
 
     suspend fun updateProfile(
-        profileEditType: String,
-        phone: String?,
         name: String?,
+        phone: String?,
         newPicture: Uri?
     ): Event {
+        var task: StorageTask<UploadTask.TaskSnapshot>? = null
         return try {
-            when (profileEditType) {
-                NAME_TYPE -> updateUserName(name)
-                PHONE_TYPE -> updateUserPhone(phone)
-                PICTURE_TYPE -> updatePicture(newPicture)
-                NAME_PHONE_TYPE -> updateNameAndPhone(name, phone)
-                NAME_PICTURE_TYPE -> updateNameAndPicture(name, newPicture)
-                PHONE_PICTURE_TYPE -> updatePhoneAndPicture(phone, newPicture)
-                else -> updateAll(name, phone, newPicture)
+            var downloadUrl: String? = null
+            if (newPicture != null) {
+                val reference = storage().getReference(PROFILE_PHOTOS).child(userUid()!!)
+                withTimeout(PROFILE_PICTURE_UPLOAD_TIMEOUT) {
+                    task = reference.putFile(newPicture).await().task
+                }
+                withTimeout(3000) {
+                    downloadUrl = reference.downloadUrl.await().toString()
+                }
             }
+            val userRef = database().collection(USERS).document(userUid()!!)
+            userRef.set(
+                UserProfile(
+                    userUid()!!,
+                    name!!,
+                    phone!!,
+                    getUserProfile().email,
+                    downloadUrl ?: context.getUserProfilePicUrl() ?: "",
+                    0
+                )
+            )
+            context.storeUserDetails(name, getUserProfile().email, phone)
+            if (!downloadUrl.isNullOrEmpty()) context.storeUserProfilePicUrl(downloadUrl)
             Event.Success(null)
         } catch (e: Exception) {
+            task?.cancel()
             Log.i("GA", "failed to updateProfile")
             Event.Failure(null)
         }
     }
 
-    private suspend fun updateAll(name: String?, phone: String?, newPicture: Uri?) {
-        coroutineScope {
-            val allJobs = mutableListOf<Deferred<Any>>()
-            val job1 = async {
-                database().collection(USERS).document(userUid()!!).update("phoneNumber", phone)
-                    .await()
-            }
-            allJobs.add(job1)
-            val job2 = async {
-                val reference = storage().getReference(PROFILE_PHOTOS).child(userUid()!!)
-                reference.putFile(newPicture!!).await()
-                val downloadUrl = reference.downloadUrl.await()
-                database().collection(USERS).document(userUid()!!)
-                    .update("profilePicUrl", downloadUrl.toString()).await()
-                context.storeUserProfilePicUrl(downloadUrl.toString())
-            }
-            allJobs.add(job2)
-            val job3 = async {
-                database().collection(USERS).document(userUid()!!).update("name", name!!).await()
-            }
-            allJobs.add(job3)
-            allJobs.awaitAll()
-        }
-    }
-
-    private suspend fun updatePhoneAndPicture(phone: String?, newPicture: Uri?) {
-        coroutineScope {
-            val allJobs = mutableListOf<Deferred<Any>>()
-            val job1 = async {
-                database().collection(USERS).document(userUid()!!).update("phoneNumber", phone)
-                    .await()
-            }
-            allJobs.add(job1)
-            val job2 = async {
-                val reference = storage().getReference(PROFILE_PHOTOS).child(userUid()!!)
-                reference.putFile(newPicture!!).await()
-                val downloadUrl = reference.downloadUrl.await()
-                database().collection(USERS).document(userUid()!!)
-                    .update("profilePicUrl", downloadUrl.toString()).await()
-                context.storeUserProfilePicUrl(downloadUrl.toString())
-            }
-            allJobs.add(job2)
-            allJobs.awaitAll()
-        }
-    }
-
-    private suspend fun updateNameAndPicture(name: String?, newPicture: Uri?) {
-        coroutineScope {
-            val allJobs = mutableListOf<Deferred<Any>>()
-            val job1 = async {
-                database().collection(USERS).document(userUid()!!).update("name", name!!).await()
-            }
-            allJobs.add(job1)
-            val job2 =
-                async {
-                    val reference = storage().getReference(PROFILE_PHOTOS).child(userUid()!!)
-                    reference.putFile(newPicture!!).await()
-                    val downloadUrl = reference.downloadUrl.await()
-                    database().collection(USERS).document(userUid()!!)
-                        .update("profilePicUrl", downloadUrl.toString()).await()
-                    context.storeUserProfilePicUrl(downloadUrl.toString())
-                }
-            allJobs.add(job2)
-            allJobs.awaitAll()
-        }
-    }
-
-    private suspend fun updateNameAndPhone(name: String?, phone: String?) {
-        coroutineScope {
-            val allJobs = mutableListOf<Deferred<Void>>()
-            val job1 = async {
-                database().collection(USERS).document(userUid()!!).update("name", name!!).await()
-            }
-            allJobs.add(job1)
-            val job2 = async {
-                database().collection(USERS).document(userUid()!!).update("phoneNumber", phone)
-                    .await()
-            }
-            allJobs.add(job2)
-            allJobs.awaitAll()
-        }
-    }
-
-    private suspend fun updatePicture(newPicture: Uri?) {
-        val reference = storage().getReference(PROFILE_PHOTOS).child(userUid()!!)
-        reference.putFile(newPicture!!).await()
-        val downloadUrl = reference.downloadUrl.await()
-        database().collection(USERS).document(userUid()!!)
-            .update("profilePicUrl", downloadUrl.toString())
-        context.storeUserProfilePicUrl(downloadUrl.toString())
-    }
-
-    private suspend fun updateUserPhone(phone: String?) {
-        database().collection(USERS).document(userUid()!!).update("phoneNumber", phone)
-    }
-
-    private suspend fun updateUserName(name: String?) {
-        database().collection(USERS).document(userUid()!!).update("name", name!!)
-    }
 
     suspend fun formatFeedResponse(response: List<FirebaseModelFeed>): List<FeedData> {
         var result: List<FeedData>
@@ -991,8 +910,9 @@ class Repository(
 
     fun deleteComment(parentID: String, commentID: String, repliesCount: Int): Event {
         return try {
-            val commentRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
-                .document(commentID)
+            val commentRef =
+                database().collection(POSTS).document(parentID).collection(COMMENTS)
+                    .document(commentID)
             val parentRef = database().collection(POSTS).document(parentID)
             database().runBatch { batch ->
                 val count = repliesCount.plus(1)
@@ -1007,8 +927,9 @@ class Repository(
 
     fun deleteReply(parentID: String, commentID: String, replyId: String): Event {
         return try {
-            val commentRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
-                .document(commentID)
+            val commentRef =
+                database().collection(POSTS).document(parentID).collection(COMMENTS)
+                    .document(commentID)
             val parentRef = database().collection(POSTS).document(parentID)
             val replyRef = database().collection(POSTS).document(parentID).collection(COMMENTS)
                 .document(commentID)
@@ -1042,8 +963,9 @@ class Repository(
                 profileOfUserThisCommentIsAReplyTo?.id ?: "",
                 false
             )
-            val commentRef = database().collection(POSTS).document(parentId).collection(COMMENTS)
-                .document(commentId)
+            val commentRef =
+                database().collection(POSTS).document(parentId).collection(COMMENTS)
+                    .document(commentId)
             val parentRef = database().collection(POSTS).document(parentId)
             val replyRef = database().collection(POSTS).document(parentId).collection(COMMENTS)
                 .document(commentId)
@@ -1127,6 +1049,7 @@ class Repository(
         const val REPLIES = "replies"
         const val TIMEOUT = 5000L
         const val CONNECT_TIMEOUT = 10000L
+        const val PROFILE_PICTURE_UPLOAD_TIMEOUT = 5000L
 
     }
 }
