@@ -12,13 +12,25 @@
         tools:layout="@layout/layout_splashscreen">
         <action
             android:id="@+id/action_splashScreen_to_signUp"
-            app:destination="@id/signUp" />
+            app:destination="@id/signUp"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
         <action
             android:id="@+id/action_splashScreen_to_home2"
-            app:destination="@id/feed" />
+            app:destination="@id/feed"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_splashScreen_to_signIn"
-            app:destination="@id/signIn" />
+            app:destination="@id/signIn"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/signUp"
@@ -27,12 +39,18 @@
         tools:layout="@layout/layout_account_creation">
         <action
             android:id="@+id/action_signUp_to_signIn"
-            app:destination="@id/signIn" />
+            app:destination="@id/signIn"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_signUp_to_userUnverified"
             app:destination="@id/userUnverified"
-            app:popUpTo="@id/signUp"
-            app:popUpToInclusive="true" />
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/feed"
@@ -41,19 +59,40 @@
         tools:layout="@layout/layout_feed">
         <action
             android:id="@+id/action_home2_to_search2"
-            app:destination="@id/search" />
+            app:destination="@id/search"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
         <action
             android:id="@+id/action_home_to_profile2"
-            app:destination="@id/profile" />
+            app:destination="@id/profile"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_home_to_need2"
-            app:destination="@id/newpost" />
+            app:destination="@id/newpost"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_home_to_exchange"
-            app:destination="@id/comments" />
+            app:destination="@id/comments"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_home_to_webView2"
-            app:destination="@id/webView2" />
+            app:destination="@id/webView2"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"
+            />
         <argument
             android:name="newPostAvailable"
             app:argType="boolean"
@@ -68,16 +107,24 @@
         <action
             android:id="@+id/action_signIn_to_home2"
             app:destination="@id/feed"
-            app:popUpTo="@id/splashScreen"
-            app:popUpToInclusive="true" />
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_signIn_to_signUp"
-            app:destination="@id/signUp" />
+            app:destination="@id/signUp"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_signIn_to_userUnverified"
             app:destination="@id/userUnverified"
-            app:popUpTo="@id/signIn"
-            app:popUpToInclusive="true" />
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
     </fragment>
     <fragment
         android:id="@+id/search"
@@ -91,7 +138,11 @@
         tools:layout="@layout/layout_profile">
         <action
             android:id="@+id/action_profile_to_webView2"
-            app:destination="@id/webView2" />
+            app:destination="@id/webView2"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <argument
             android:name="userProfile"
             app:argType="boolean"
@@ -99,13 +150,25 @@
 
         <action
             android:id="@+id/action_profile_to_settingsFragment"
-            app:destination="@id/settingsFragment" />
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_profile_to_profileEdit"
-            app:destination="@id/profileEdit" />
+            app:destination="@id/profileEdit"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
         <action
             android:id="@+id/action_profile_to_newpost"
-            app:destination="@id/newpost" />
+            app:destination="@id/newpost"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
     </fragment>
     <fragment
         android:id="@+id/newpost"
@@ -132,10 +195,18 @@
         android:label="SettingsFragment">
         <action
             android:id="@+id/action_settingsFragment_to_signUp"
-            app:destination="@id/signUp" />
+            app:destination="@id/signUp"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
         <action
             android:id="@+id/action_settingsFragment_to_profileEdit"
-            app:destination="@id/profileEdit" />
+            app:destination="@id/profileEdit"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right"/>
     </fragment>
     <fragment
         android:id="@+id/profileEdit"
@@ -156,6 +227,10 @@
             android:defaultValue="false" />
         <action
             android:id="@+id/action_userUnverified_to_signIn"
-            app:destination="@id/signIn" />
+            app:destination="@id/signIn"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@android:anim/slide_in_left"
+            app:popExitAnim="@android:anim/slide_out_right" />
     </fragment>
 </navigation>

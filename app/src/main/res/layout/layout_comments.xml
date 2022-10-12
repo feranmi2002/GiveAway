@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:gravity="center"
-            android:textColor="@color/purple_500_lighter"
+            android:textColor="@color/grey"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="@+id/title"
             app:layout_constraintEnd_toStartOf="@+id/dismiss"
@@ -123,11 +123,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             app:layout_constraintTop_toBottomOf="@id/divider2" />
-
-<!--        <View-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            app:layout_constraintTop_toBottomOf="@id/divider2" />-->
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
