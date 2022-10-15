@@ -347,7 +347,6 @@ object Extensions {
 
     fun mediaSize(uri: Uri) = File(uri.path!!).length()
 
-
     const val USERS_DATABASE = "users"
 
 

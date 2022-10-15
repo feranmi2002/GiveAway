@@ -29,8 +29,6 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     private var mapOfLatestFeed: MutableMap<String, MutableList<FeedData>> = mutableMapOf()
     private var mapOfLatestFeedSnapshot: MutableMap<String, DocumentSnapshot?> = mutableMapOf()
 
-    private var explicitRefresh = false
-
     //    this LiveData string is used to store the new feed filter and trigger a reload based on the new filter
     private var loadFilter = MutableLiveData<String>("All")
 
@@ -121,10 +119,6 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     }
 
     fun checkIfNewPostAvailable(): Boolean {
-        //        if (state) {
-//            preloadedLatestFeed.add(repository.getUploadedPost())
-//            //       repository.makeNewUploadedPostNull()
-//        }
         return repository.checkIfNewUploadedPostIsAvailable()
     }
 
@@ -227,15 +221,7 @@ class FeedVM(private val repository: Repository) : ViewModel(), FeedVMAndPagingS
     override fun getLastSnapshot(filter: String): DocumentSnapshot? =
         mapOFLastDocumentSnapshots[filter]
 
-    fun setExplicitRefresh(value: Boolean) {
-        explicitRefresh = value
-    }
 
-//    override fun getExplicitRefresh() = explicitRefresh
-//
-//    override fun mSetExplicitRefresh(value: Boolean) {
-//        explicitRefresh = value
-//    }
 
     override fun clearCachedData(filter: String) {
         clearCachedLoadedData(filter)

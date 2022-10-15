@@ -28,6 +28,7 @@ import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.PA
 import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.POST
 import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.UPDATE
 import com.faithdeveloper.giveaway.utils.Event
+import com.faithdeveloper.giveaway.utils.Extensions
 import com.faithdeveloper.giveaway.utils.Extensions.getUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
@@ -36,13 +37,11 @@ import com.faithdeveloper.giveaway.utils.Extensions.showSnackbarShort
 import com.faithdeveloper.giveaway.utils.VMFactory
 import com.faithdeveloper.giveaway.utils.interfaces.FragmentCommentsInterface
 import com.faithdeveloper.giveaway.viewmodels.RepliesVM
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlin.properties.Delegates
 
 class RepliesBottomSheet() : BottomSheetDialogFragment() {
     private lateinit var viewModel: RepliesVM
@@ -61,7 +60,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
     private lateinit var parentId: String
     private lateinit var commentId: String
     private lateinit var comment: String
-    private var count by Delegates.notNull<Int>()
+    private var count: String = "0"
 
     private lateinit var writeCommentDialog: BottomSheetDialog
     private var WHICH_ADAPTER_IS_TAKING_ACTION = -1
@@ -71,7 +70,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
             parentId = it.getString(PARENT_ID)!!
             commentId = it.getString(COMMENT_ID)!!
             comment = it.getString(COMMENT)!!
-            count = it.getInt(REPLIES_COUNT, 0)
+            count = Extensions.formatCount(it.getInt(REPLIES_COUNT, 0))
         }
 //        init view model
         viewModel = ViewModelProvider(
@@ -103,7 +102,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         (dialog as? BottomSheetDialog)?.setCanceledOnTouchOutside(false)
 
         binding.comment.text = comment
-        binding.count.text = count.toString()
+        binding.count.text = count
 
         binding.commentRecycler.addItemDecoration(
             androidx.recyclerview.widget.DividerItemDecoration(
@@ -144,17 +143,15 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                 setUpReply(it)
             },
             viewModel.userUid(),
-            moreClick = { action: String, id: String, replyText: String ->
+            deleteReply = { replyId ->
                 WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
-                when (action) {
-                    CommentsBottomSheet.UPDATE -> {
-                        setUpEditOfComment(id, replyText)
-                    }
-                    CommentsBottomSheet.DELETE -> {
-                        deleteComment(id)
-                    }
-                }
-            })
+                deleteReply(replyId)
+            },
+            editReply = { replyData: ReplyData? ->
+                WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
+                setUpEditOfReply(replyData)
+            }
+        )
         newReplyAdapter = NewReplyAdapter(
             arrayOfNewReplies,
             profileNameClick = { author: UserProfile ->
@@ -164,21 +161,19 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                 setUpReply(it)
             },
             viewModel.userUid(),
-            moreClick = { action: String, id: String, postText: String ->
+            deleteReply = { replyId ->
                 WHICH_ADAPTER_IS_TAKING_ACTION = NEW_ADAPTER
-                when (action) {
-                    UPDATE -> {
-                        setUpEditOfComment(id, postText)
-                    }
-                    DELETE -> {
-                        deleteComment(id)
-                    }
-                }
-            })
+                deleteReply(replyId)
+            },
+            editReply = { replyData: ReplyData? ->
+                WHICH_ADAPTER_IS_TAKING_ACTION = NEW_ADAPTER
+                setUpEditOfReply(replyData)
+            }
+        )
         concatAdapter = ConcatAdapter(newReplyAdapter, adapter)
     }
 
-    private fun deleteComment(id: String) {
+    private fun deleteReply(id: String) {
         _dialogBuilder = requireContext().showDialog(false,
             title = "Delete Reply?",
             positiveButtonText = "DELETE",
@@ -205,17 +200,16 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
     }
 
 
-    private fun setUpEditOfComment(id: String, comment: String) {
+    private fun setUpEditOfReply(replyData: ReplyData?) {
         val binding = spinUpTextLayoutDialog()
-        binding.textInputLayout.editText?.setText(comment)
+        binding.textInputLayout.editText?.setText(replyData?.reply!!.commentText)
         writeCommentDialog.show()
         binding.send.setOnClickListener {
             hideKeyboard()
             UPDATE.userFeedback()
-            viewModel.editReply(
-                id,
+            replyData?.reply!!.commentText =
                 binding.textInputLayout.editText?.text.toString().trim()
-            )
+            viewModel.editReply(replyData)
         }
     }
 
@@ -270,7 +264,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
                             arrayOfNewReplies.add(0, it.data as ReplyData)
-                            newReplyAdapter.notifyItemInserted(arrayOfNewReplies.size + 1)
+                            newReplyAdapter.notifyItemInserted(0)
                             makeEmptyResultLayoutInvisible()
                             makeErrorLayoutInvisible()
                             requireContext().showSnackbarShort(
@@ -290,10 +284,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
                         "comment_edited" -> {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
-                            if (WHICH_ADAPTER_IS_TAKING_ACTION == NEW_ADAPTER) newReplyAdapter.updateReply(
-                                it.data as String
-                            )
-                            else adapter.updateReply(it.data as String)
+                            updateReply(it.data as ReplyData)
                             requireContext().showSnackbarShort(
                                 binding.root,
                                 "Reply Updated"
@@ -388,6 +379,7 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
         binding.errorLayout.retryButton.makeVisible()
         binding.errorLayout.errorImage.makeVisible()
     }
+
     private fun makeEmptyResultLayoutVisible() {
         makeErrorLayoutInvisible()
         binding.errorLayout.progressCircular.makeInVisible()
@@ -413,12 +405,22 @@ class RepliesBottomSheet() : BottomSheetDialogFragment() {
             cancelable = false,
             message = when (this) {
                 CommentsBottomSheet.POST -> "Adding your reply..."
-                CommentsBottomSheet.UPDATE -> "Updating your reply"
+                UPDATE -> "Updating your reply"
                 else -> "Removing your reply"
             }
         )
         _dialog = _dialogBuilder?.create()
         _dialog?.show()
+    }
+
+    private fun updateReply(replyData: ReplyData) {
+        if (WHICH_ADAPTER_IS_TAKING_ACTION == PAGER_ADAPTER) {
+            adapter.removeReply()
+        } else {
+            newReplyAdapter.removeReply()
+        }
+        arrayOfNewReplies.add(0, replyData)
+        newReplyAdapter.notifyItemInserted(0)
     }
 
 

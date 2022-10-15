@@ -1,6 +1,7 @@
 package com.faithdeveloper.giveaway.ui.adapters
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.core.view.isVisible
@@ -8,6 +9,7 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.faithdeveloper.giveaway.R
+import com.faithdeveloper.giveaway.data.models.Comment
 import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.CommentsItemBinding
@@ -22,7 +24,7 @@ class CommentsPagerAdapter(
     private val reply: (commentId:String, text:String, count:Int) -> Unit,
     val userUid: String,
     val deleteComment: (commentId:String,replies:Int) -> Unit,
-    val editComment: (commentId:String, postText: String) -> String
+    val editComment: (comment:CommentData?) -> Unit
 ) :
     PagingDataAdapter<CommentData, CommentsPagerAdapter.CommentsViewHolder>
         (COMMENTS_ITEM_COMPARATOR) {
@@ -37,8 +39,8 @@ class CommentsPagerAdapter(
         }
     }
 
-    inner class CommentsViewHolder(val binding: CommentsItemBinding) :
-        RecyclerView.ViewHolder(binding.root), CommentsEditInterface {
+inner  class CommentsViewHolder(val binding: CommentsItemBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         private var mItem: CommentData? = null
         val more = binding.more
         val reply = binding.reply
@@ -48,13 +50,16 @@ class CommentsPagerAdapter(
         init {
             more.setOnClickListener {
                 val popup = PopupMenu(itemView.context, binding.commentsText)
-                if (mItem?.author!!.id == userUid ) popup.menuInflater.inflate(R.menu.comment_menu_edit_delete, popup.menu)
+                if (mItem?.author!!.id == userUid) popup.menuInflater.inflate(
+                    R.menu.comment_menu_edit_delete,
+                    popup.menu
+                )
                 else popup.menuInflater.inflate(R.menu.comment_menu_edit, popup.menu)
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
-                        binding.commentsText.text =  editComment.invoke(
-                            mItem?.comment!!.id,
-                            mItem?.comment!!.commentText
+                        positionOfItemToDelete = bindingAdapterPosition
+                        editComment.invoke(
+                            mItem
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
@@ -70,20 +75,15 @@ class CommentsPagerAdapter(
 
             reply.setOnClickListener {
                 this@CommentsPagerAdapter.reply.invoke(
-                    mItem?.comment!!.id, mItem?.comment!!.commentText, mItem?.comment!!.replies)
+                    mItem?.comment!!.id, mItem?.comment!!.commentText, mItem?.comment!!.replies
+                )
             }
 
             name.setOnClickListener {
                 profileNameClick.invoke(mItem?.author!!)
             }
-            profilePic.setOnClickListener{
+            profilePic.setOnClickListener {
                 profileNameClick.invoke(mItem?.author!!)
-            }
-        }
-
-        override fun updateComment(comment: String) {
-            with(binding) {
-                commentsText.text = comment
             }
         }
 
@@ -100,7 +100,7 @@ class CommentsPagerAdapter(
                     }
                     with(comment) {
                         replies.run {
-                            if (this > 0)  reply.text = "$replies replies"
+                            if (this > 0) reply.text = "$replies replies"
                         }
                         commentsText.text = commentText
                         binding.time.text = Extensions.convertTime(time)
@@ -127,5 +127,7 @@ class CommentsPagerAdapter(
         notifyItemRemoved(positionOfItemToDelete)
     }
 
+    fun updateComment(newComment:String){
 
+    }
 }

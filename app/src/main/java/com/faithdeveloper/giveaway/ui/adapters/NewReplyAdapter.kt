@@ -8,37 +8,33 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.faithdeveloper.giveaway.R
+import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.ReplyData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.ReplyItemBinding
-import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.DELETE
-import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.UPDATE
 import com.faithdeveloper.giveaway.utils.Extensions
 import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
 
 class NewReplyAdapter(
-    val replies: MutableList<ReplyData>,
+    private val replies: MutableList<ReplyData>,
     val profileNameClick: (author: UserProfile) -> Unit,
     private val reply: (userRepliedTo: UserProfile?) -> Unit,
     val userUid: String,
-    val moreClick: (action: String, id: String, postText: String) -> Unit
+    val deleteReply: (replyId: String) -> Unit,
+    val editReply: (reply: ReplyData?) -> Unit
 ) :
     RecyclerView.Adapter<NewReplyAdapter.ReplyViewHolder>() {
 
     //    this is used to note the position of the item user wants to delete
     var positionOfItemToDelete = -1
 
-    //    this interface is used for updating the comment
-    private var commentsEditInterface: CommentsEditInterface? = null
-
     override fun onBindViewHolder(holder: ReplyViewHolder, position: Int) {
         val currentItem = replies[position]
-        commentsEditInterface = holder.commentsInterface
         holder.bind(currentItem)
     }
 
     inner class ReplyViewHolder(val binding: ReplyItemBinding) :
-        RecyclerView.ViewHolder(binding.root), CommentsEditInterface {
+        RecyclerView.ViewHolder(binding.root){
         private var mItem: ReplyData? = null
         val more = binding.more
         val reply = binding.reply
@@ -55,18 +51,14 @@ class NewReplyAdapter(
                 else popup.menuInflater.inflate(R.menu.comment_menu_edit, popup.menu)
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
-                        moreClick.invoke(
-                            UPDATE,
-                            mItem?.reply!!.id,
-                            mItem?.reply!!.commentText
+                        positionOfItemToDelete = bindingAdapterPosition
+                        editReply.invoke(
+                            mItem
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
-                        moreClick.invoke(
-                            DELETE,
-                            mItem?.reply!!.id,
-                            mItem?.reply!!.commentText
-                        )
+                        deleteReply.invoke(
+                            mItem?.reply!!.id)
                     }
                     return@setOnMenuItemClickListener true
                 }
@@ -82,13 +74,6 @@ class NewReplyAdapter(
             }
             profilePic.setOnClickListener{
                 profileNameClick.invoke(mItem?.author!!)
-            }
-        }
-
-        val commentsInterface = this
-        override fun updateComment(comment: String) {
-            with(binding) {
-                commentsText.text = comment
             }
         }
 
@@ -127,10 +112,6 @@ class NewReplyAdapter(
                 false
             )
         )
-    }
-
-    fun updateReply(newComment: String) {
-        commentsEditInterface?.updateComment(newComment)
     }
 
     fun removeReply() {

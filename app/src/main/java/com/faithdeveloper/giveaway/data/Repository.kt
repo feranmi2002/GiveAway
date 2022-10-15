@@ -872,37 +872,36 @@ class Repository(
     fun getAuthorProfileForProfileView() = authorProfileForProfileView
 
     fun updateReply(
-        newReply: String,
+      replyData: ReplyData?,
         parentId: String,
-        commentId: String,
-        replyId: String
+        commentId: String
     ): Event {
         return try {
             val map = mutableMapOf<String, Any?>(
-                "commentText" to newReply,
+                "commentText" to replyData?.reply!!.commentText,
                 "updated" to true,
                 "time" to null
             )
             database().collection(POSTS).document(parentId).collection(
                 COMMENTS
-            ).document(commentId).collection(REPLIES).document(replyId).update(map)
-            Event.Success(newReply, "comment_edited")
+            ).document(commentId).collection(REPLIES).document(replyData.reply.id).update(map)
+            Event.Success(replyData, "comment_edited")
         } catch (e: Exception) {
             Event.Failure(null, "comment_unedited")
         }
     }
 
-    fun updateComment(newComment: String, parentId: String, commentId: String): Event {
+    fun updateComment( parentId: String, commentData: CommentData?): Event {
         return try {
             val map = mutableMapOf<String, Any?>(
-                "commentText" to newComment,
+                "commentText" to commentData?.comment?.commentText,
                 "updated" to true,
                 "time" to null
             )
             database().collection(POSTS).document(parentId).collection(
                 COMMENTS
-            ).document(commentId).update(map)
-            Event.Success(newComment, "comment_edited")
+            ).document(commentData?.comment!!.id).update(map)
+            Event.Success(commentData, "comment_edited")
         } catch (e: Exception) {
             Event.Failure(null, "comment_unedited")
         }

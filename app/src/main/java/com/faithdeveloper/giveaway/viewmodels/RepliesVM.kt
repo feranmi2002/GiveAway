@@ -7,6 +7,7 @@ import androidx.paging.cachedIn
 import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
 import com.faithdeveloper.giveaway.data.models.PagerKey
+import com.faithdeveloper.giveaway.data.models.ReplyData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.pagingsources.RepliesPagingSource
 import com.faithdeveloper.giveaway.utils.Event
@@ -47,9 +48,9 @@ class RepliesVM(private val repository: Repository) : ViewModel() {
         }
     }
 
-    fun editReply(id: String, text: String) {
+    fun editReply(replyData: ReplyData?) {
         viewModelScope.launch(Dispatchers.IO) {
-            _actionResult.postValue(repository.updateReply(text, parentId.value!!, commentID, id))
+            _actionResult.postValue(repository.updateReply(replyData, parentId.value!!, commentID))
         }
     }
 

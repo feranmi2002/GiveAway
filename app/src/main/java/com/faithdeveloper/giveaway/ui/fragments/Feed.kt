@@ -53,7 +53,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
     private var _binding: LayoutFeedBinding? = null
     private val binding get() = _binding!!
     private var pagerAdapterMadeIntentionallyMadeEmpty = false
-//    private var newFeed = mutableListOf<FeedData>()
+    private var explicitRefresh = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         /*
@@ -77,8 +77,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
                 ).get(FeedVM::class.java)
 
                 setUpAdapter()
-
-
             }
         }
         //        add lifecycle observer
@@ -134,7 +132,8 @@ class Feed : Fragment(), FragmentCommentsInterface {
                     viewModel.getUploadedPost()
                 )
                 mAdapter.data = viewModel.getCachedUploadedNewPosts(viewModel.filter())!!
-                mAdapter.notifyItemInserted(0)
+                mAdapter.notifyDataSetChanged()
+                viewModel.makeUploadedPostNull()
             }
             super.onStart()
         }
@@ -209,8 +208,8 @@ class Feed : Fragment(), FragmentCommentsInterface {
     //    refreshes the feed
     private fun handleRefresh() {
         binding.refresh.setOnRefreshListener {
-            viewModel.setExplicitRefresh(true)
             binding.latestFeed.makeGone()
+            explicitRefresh = true
             viewModel.stopPreloadingLatestFeed()
             viewModel.clearViewModelPreloadedData()
             viewModel.clearCachedLoadedData(viewModel.filter())
@@ -218,7 +217,6 @@ class Feed : Fragment(), FragmentCommentsInterface {
             mAdapter.data = viewModel.getCachedUploadedNewPosts(viewModel.filter())!!
             mAdapter.notifyDataSetChanged()
             adapter.refresh()
-
         }
     }
 
@@ -227,6 +225,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
 //    observe the feed result
         viewModel.feedResult.observe(viewLifecycleOwner) {
             adapter.submitData(viewLifecycleOwner.lifecycle, it)
+            explicitRefresh = false
         }
 
 //        observe latest feed result
@@ -352,7 +351,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
             //                        check any result is returned and show appropriate view
             adapter.loadStateFlow.collectLatest { loadStates ->
                 if (loadStates.source.refresh is LoadState.NotLoading && loadStates.append.endOfPaginationReached && adapter.itemCount == 0) {
-                    binding.refresh.isRefreshing = false
+                    if (!explicitRefresh) binding.refresh.isRefreshing = false
                     makeEmptyResultLayoutVisible()
                 } else {
                     makeEmptyResultLayoutInvisible()
@@ -364,7 +363,7 @@ class Feed : Fragment(), FragmentCommentsInterface {
                             binding.errorLayout.progressCircular.makeInVisible()
                         }
                         is LoadState.Loading -> {
-                            // initial load has begun
+//                             initial load has begun
                             binding.errorLayout.progressCircular.makeVisible()
                             makeErrorLayoutInvisible()
                         }

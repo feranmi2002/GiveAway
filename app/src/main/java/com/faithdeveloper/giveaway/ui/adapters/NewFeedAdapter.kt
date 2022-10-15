@@ -248,13 +248,13 @@ class NewFeedAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        data[position].let {
-            if (it.postData!!.mediaUrls.isEmpty()) {
-                R.layout.feed_item_layout
-            } else {
-                R.layout.feed_item_media_layout
+            data[position].let {
+                if (it.postData!!.mediaUrls.isEmpty()) {
+                    R.layout.feed_item_layout
+                } else {
+                    R.layout.feed_item_media_layout
+                }
             }
-        }
         return super.getItemViewType(position)
     }
 

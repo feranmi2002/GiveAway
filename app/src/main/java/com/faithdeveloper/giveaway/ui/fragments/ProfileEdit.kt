@@ -359,8 +359,8 @@ class ProfileEdit : Fragment() {
         dialog?.dismiss()
         dialogBuilder = requireContext().showDialog(
             cancelable = true,
-            title = getString(R.string.discard_post),
-            message = getString(R.string.discard_post_msg),
+            title = "Discard Profile Update",
+            message = "Your Profile will not be updated",
             positiveButtonText = "OK",
             positiveAction = {
                 findNavController().popBackStack()

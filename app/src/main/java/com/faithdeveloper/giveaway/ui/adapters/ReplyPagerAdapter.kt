@@ -16,13 +16,13 @@ import com.faithdeveloper.giveaway.ui.adapters.comparators.REPLY_ITEM_COMPARATOR
 import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.DELETE
 import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.UPDATE
 import com.faithdeveloper.giveaway.utils.Extensions
-import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
 
 class ReplyPagerAdapter(
     val profileNameClick: (author: UserProfile) -> Unit,
     private val reply: (userRepliedTo: UserProfile?) -> Unit,
     val userUid: String,
-    val moreClick: (action: String, id: String, postText: String) -> Unit
+    val deleteReply: (replyId: String) -> Unit,
+    val editReply: (reply: ReplyData?) -> Unit
 ) :
     PagingDataAdapter<ReplyData, ReplyPagerAdapter.ReplyViewHolder>
         (REPLY_ITEM_COMPARATOR) {
@@ -30,19 +30,15 @@ class ReplyPagerAdapter(
     //    this is used to note the position of the item user wants to delete
     var positionOfItemToDelete = -1
 
-    //    this interface is used for updating the comment
-    private var commentsEditInterface: CommentsEditInterface? = null
-
     override fun onBindViewHolder(holder: ReplyViewHolder, position: Int) {
         val currentItem = getItem(position)
         if (currentItem != null) {
-            commentsEditInterface = holder.commentsInterface
             holder.bind(currentItem)
         }
     }
 
     inner class ReplyViewHolder(val binding: ReplyItemBinding) :
-        RecyclerView.ViewHolder(binding.root), CommentsEditInterface {
+        RecyclerView.ViewHolder(binding.root) {
         private var mItem: ReplyData? = null
         val more = binding.more
         val reply = binding.reply
@@ -59,18 +55,14 @@ class ReplyPagerAdapter(
                 else popup.menuInflater.inflate(R.menu.comment_menu_edit, popup.menu)
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
-                        moreClick.invoke(
-                            UPDATE,
-                            mItem?.reply!!.id,
-                            mItem?.reply!!.commentText
+                        positionOfItemToDelete = bindingAdapterPosition
+                        editReply.invoke(
+                            mItem
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
-                        moreClick.invoke(
-                            DELETE,
-                            mItem?.reply!!.id,
-                            mItem?.reply!!.commentText
-                        )
+                        deleteReply.invoke(
+                            mItem?.reply!!.id)
                     }
                     return@setOnMenuItemClickListener true
                 }
@@ -84,15 +76,8 @@ class ReplyPagerAdapter(
             name.setOnClickListener {
                 profileNameClick.invoke(mItem?.author!!)
             }
-            profilePic.setOnClickListener{
+            profilePic.setOnClickListener {
                 profileNameClick.invoke(mItem?.author!!)
-            }
-        }
-
-        val commentsInterface = this
-        override fun updateComment(comment: String) {
-            with(binding) {
-                commentsText.text = comment
             }
         }
 
@@ -105,7 +90,7 @@ class ReplyPagerAdapter(
             with(binding) {
                 mReply?.let { reply ->
                     author?.let { author ->
-                        tag.isGone = userRepliedTo ==null
+                        tag.isGone = userRepliedTo == null
                         tag.text = "@${userRepliedTo?.name}"
                         name.text = author.name
                         binding.more.isVisible = author.id == userUid
@@ -131,10 +116,6 @@ class ReplyPagerAdapter(
                 false
             )
         )
-    }
-
-    fun updateReply(newComment: String) {
-        commentsEditInterface?.updateComment(newComment)
     }
 
     fun removeReply() {

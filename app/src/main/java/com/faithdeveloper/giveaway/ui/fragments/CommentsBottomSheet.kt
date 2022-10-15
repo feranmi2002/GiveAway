@@ -25,6 +25,7 @@ import com.faithdeveloper.giveaway.databinding.WriteCommentLayoutBinding
 import com.faithdeveloper.giveaway.ui.adapters.CommentsPagerAdapter
 import com.faithdeveloper.giveaway.ui.adapters.NewCommentsAdapter
 import com.faithdeveloper.giveaway.utils.Event
+import com.faithdeveloper.giveaway.utils.Extensions
 import com.faithdeveloper.giveaway.utils.Extensions.getUserProfilePicUrl
 import com.faithdeveloper.giveaway.utils.Extensions.makeInVisible
 import com.faithdeveloper.giveaway.utils.Extensions.makeVisible
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class CommentsBottomSheet : BottomSheetDialogFragment() {
+    private lateinit var viewToEdit: View
     private lateinit var viewModel: CommentsVM
     private lateinit var adapter: CommentsPagerAdapter
     private lateinit var newCommentsAdapter: NewCommentsAdapter
@@ -54,7 +56,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     private var fragmentCommentsInterface: FragmentCommentsInterface? = null
     private var newFragmentCommentsInterface: FragmentCommentsInterface? = null
     private var parentID: String = ""
-    private var commentsCount: Int = 0
+    private var commentsCount: String = "0"
 
     private lateinit var writeCommentDialog: BottomSheetDialog
     private var WHICH_ADAPTER_IS_TAKING_ACTION = -1
@@ -71,7 +73,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         ).get(CommentsVM::class.java)
         arguments?.let {
             parentID = it.getString(PARENT_ID)!!
-            commentsCount = it.getInt(COMMENTS_COUNT)
+            commentsCount = Extensions.formatCount(it.getInt(COMMENTS_COUNT))
         }
 
         setUpAdapter()
@@ -110,7 +112,11 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             return@setOnTouchListener true
         }
 
-        binding.count.text = commentsCount.toString()
+        binding.count.text = commentsCount
+        Glide.with(requireContext())
+            .load(requireContext().getUserProfilePicUrl())
+            .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
+            .into(binding.profile)
 
         handleObserver()
         setUpLoadState()
@@ -120,10 +126,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     }
 
     override fun onStart() {
-        Glide.with(requireContext())
-            .load(requireContext().getUserProfilePicUrl())
-            .placeholder(R.drawable.ic_baseline_account_circle_grey_24)
-            .into(binding.profile)
         super.onStart()
     }
 
@@ -138,7 +140,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
                             arrayOfNewComments.add(0, it.data as CommentData)
-                            newCommentsAdapter.notifyItemInserted(arrayOfNewComments.size + 1)
+                            newCommentsAdapter.notifyItemInserted(0)
                             makeEmptyResultLayoutInvisible()
                             makeErrorLayoutInvisible()
                             requireContext().showSnackbarShort(
@@ -157,6 +159,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                         "comment_edited" -> {
                             _dialog?.dismiss()
                             writeCommentDialog.dismiss()
+                            updateComment(it.data as CommentData)
                             requireContext().showSnackbarShort(
                                 binding.root,
                                 "Comment updated"
@@ -194,9 +197,9 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
                 deleteComment(commentID, replies)
             },
-            editComment = { commentID: String, commentText: String ->
+            editComment = { commentData ->
                 WHICH_ADAPTER_IS_TAKING_ACTION = PAGER_ADAPTER
-                setUpEditOfComment(commentID, commentText)
+                setUpEditOfComment(commentData)
             }
         )
 
@@ -212,18 +215,15 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                     openReplyDialog(commentId, text, count)
                 },
                 viewModel.userUid(),
-                moreClick = { action: String, commentID: String, commentText: String, replies: Int ->
-                    when (action) {
-                        UPDATE -> {
-                            WHICH_ADAPTER_IS_TAKING_ACTION = NEW_ADAPTER
-                            setUpEditOfComment(commentID, commentText)
-                        }
-                        DELETE -> {
-                            WHICH_ADAPTER_IS_TAKING_ACTION = NEW_ADAPTER
-                            deleteComment(commentID, replies)
-                        }
-                    }
-                })
+                deleteComment = { commentID: String, replies: Int ->
+                    WHICH_ADAPTER_IS_TAKING_ACTION = NEW_ADAPTER
+                    deleteComment(commentID, replies)
+                },
+                editComment = { commentData ->
+                    WHICH_ADAPTER_IS_TAKING_ACTION = NEW_ADAPTER
+                    setUpEditOfComment(commentData)
+                }
+            )
         concatAdapter = ConcatAdapter(newCommentsAdapter, adapter)
     }
 
@@ -348,21 +348,19 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         viewModel.deleteComment(commentID, replies)
     }
 
-    private fun setUpEditOfComment(commentId: String, comment: String): String {
-        var newComment = comment
+    private fun setUpEditOfComment(commentData: CommentData?) {
         val binding = writeCommentDialog()
-        binding.textInputLayout.editText?.setText(comment)
+        binding.textInputLayout.editText?.setText(commentData?.comment?.commentText)
         writeCommentDialog.show()
         binding.send.setOnClickListener {
             hideKeyboard(binding.root)
             UPDATE.userFeedback()
-            newComment = binding.textInputLayout.editText?.text.toString().trim()
-                viewModel.editComment(
-                commentId,
-                newComment
+            commentData?.comment?.commentText =
+                binding.textInputLayout.editText?.text.toString().trim()
+            viewModel.editComment(
+                commentData
             )
         }
-        return newComment
     }
 
     private fun failedOperation(operationType: String) {
@@ -430,6 +428,16 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 }
             }
         }
+    }
+
+    private fun updateComment(commentData: CommentData) {
+        if (WHICH_ADAPTER_IS_TAKING_ACTION == PAGER_ADAPTER){
+            adapter.removeComment()
+        }else{
+            newCommentsAdapter.removeComment()
+        }
+        arrayOfNewComments.add(0, commentData)
+        newCommentsAdapter.notifyItemInserted(0)
     }
 
 

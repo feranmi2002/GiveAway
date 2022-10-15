@@ -10,8 +10,6 @@ import com.faithdeveloper.giveaway.R
 import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.UserProfile
 import com.faithdeveloper.giveaway.databinding.CommentsItemBinding
-import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.DELETE
-import com.faithdeveloper.giveaway.ui.fragments.CommentsBottomSheet.Companion.UPDATE
 import com.faithdeveloper.giveaway.utils.Extensions
 import com.faithdeveloper.giveaway.utils.interfaces.CommentsEditInterface
 
@@ -20,18 +18,16 @@ class NewCommentsAdapter(
     val profileNameClick: (author: UserProfile) -> Unit,
     private val reply: (commentId: String, text: String, count: Int) -> Unit,
     val userUid: String,
-    val moreClick: (action: String, commentId: String, postText: String, replies: Int) -> Unit
+    val deleteComment: (commentId: String, replies: Int) -> Unit,
+    val editComment: (comment: CommentData?) -> Unit
 ) :
     RecyclerView.Adapter<NewCommentsAdapter.CommentsViewHolder>() {
 
     //    this is used to note the position of the item user wants to delete
     var positionOfItemToDelete = -1
 
-    //    this interface is used for updating the comment
-    private var commentsEditInterface: CommentsEditInterface? = null
-
     inner class CommentsViewHolder(val binding: CommentsItemBinding) :
-        RecyclerView.ViewHolder(binding.root), CommentsEditInterface {
+        RecyclerView.ViewHolder(binding.root){
         private var mItem: CommentData? = null
         val more = binding.more
         val reply = binding.reply
@@ -48,18 +44,14 @@ class NewCommentsAdapter(
                 else popup.menuInflater.inflate(R.menu.comment_menu_edit, popup.menu)
                 popup.setOnMenuItemClickListener {
                     if (it.itemId == R.id.edit) {
-                        moreClick.invoke(
-                            UPDATE,
-                            mItem?.comment!!.id,
-                            mItem?.comment!!.commentText,
-                            mItem?.comment!!.replies
+                        positionOfItemToDelete = bindingAdapterPosition
+                        editComment.invoke(
+                            mItem
                         )
                     } else {
                         positionOfItemToDelete = bindingAdapterPosition
-                        moreClick.invoke(
-                            DELETE,
+                        deleteComment.invoke(
                             mItem?.comment!!.id,
-                            mItem?.comment!!.commentText,
                             mItem?.comment!!.replies
                         )
                     }
@@ -77,15 +69,8 @@ class NewCommentsAdapter(
             name.setOnClickListener {
                 profileNameClick.invoke(mItem?.author!!)
             }
-            profilePic.setOnClickListener{
+            profilePic.setOnClickListener {
                 profileNameClick.invoke(mItem?.author!!)
-            }
-        }
-
-        val commentsInterface = this
-        override fun updateComment(comment: String) {
-            with(binding) {
-                commentsText.text = comment
             }
         }
 
@@ -127,15 +112,10 @@ class NewCommentsAdapter(
     }
 
     override fun onBindViewHolder(holder: CommentsViewHolder, position: Int) {
-        commentsEditInterface = holder.commentsInterface
         holder.bind(comments[position])
     }
 
     override fun getItemCount() = comments.size
-
-    fun updateComment(newComment: String) {
-        commentsEditInterface?.updateComment(newComment)
-    }
 
     fun removeComment() {
         notifyItemRemoved(positionOfItemToDelete)

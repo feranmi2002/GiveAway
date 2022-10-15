@@ -7,6 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.paging.liveData
 import com.faithdeveloper.giveaway.data.Repository
+import com.faithdeveloper.giveaway.data.models.CommentData
 import com.faithdeveloper.giveaway.data.models.PagerKey
 import com.faithdeveloper.giveaway.pagingsources.CommentsPagingSource
 import com.faithdeveloper.giveaway.utils.Event
@@ -39,9 +40,9 @@ class CommentsVM(private val repository: Repository, private val parentID: Strin
         }
     }
 
-    fun editComment(id: String, text: String) {
+    fun editComment(commentData: CommentData?) {
         viewModelScope.launch(Dispatchers.IO) {
-            _commentActionResult.postValue(repository.updateComment(text, parentID, id))
+            _commentActionResult.postValue(repository.updateComment(parentID, commentData))
         }
     }
 
