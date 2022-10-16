@@ -19,8 +19,6 @@
         <item name="android:fontFamily">@font/imprima</item>
     </style>
 
-
-
     <style name="CircularImage" parent="">
         <item name="cornerSize">50%</item>
     </style>

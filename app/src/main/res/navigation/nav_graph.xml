@@ -3,35 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/splashScreen">
+    app:startDestination="@id/signUp">
 
-    <fragment
-        android:id="@+id/splashScreen"
-        android:name="com.faithdeveloper.giveaway.ui.fragments.SplashScreen"
-        android:label="layout_splashscreen"
-        tools:layout="@layout/layout_splashscreen">
-        <action
-            android:id="@+id/action_splashScreen_to_signUp"
-            app:destination="@id/signUp"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@android:anim/slide_in_left"
-            app:popExitAnim="@android:anim/slide_out_right" />
-        <action
-            android:id="@+id/action_splashScreen_to_home2"
-            app:destination="@id/feed"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@android:anim/slide_in_left"
-            app:popExitAnim="@android:anim/slide_out_right"/>
-        <action
-            android:id="@+id/action_splashScreen_to_signIn"
-            app:destination="@id/signIn"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@android:anim/slide_in_left"
-            app:popExitAnim="@android:anim/slide_out_right" />
-    </fragment>
     <fragment
         android:id="@+id/signUp"
         android:name="com.faithdeveloper.giveaway.ui.fragments.SignUp"
